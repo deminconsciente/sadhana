@@ -1,3 +1,6 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sadhana Holistics</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Centro holístico en Satélite Acueducto, Monterrey. Agenda de clases, terapias con Isa y Diego, formación en terapias complementarias y certificación oficial SEP-CONOCER EC1375.">
@@ -238,6 +241,56 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .cupo i em{display:block;height:100%;border-radius:2px;background:var(--cat)}
 .price{font-family:var(--f-ui);font-weight:700;font-variant-numeric:tabular-nums}
 .tag{font-family:var(--f-ui);font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor;color:var(--cat);justify-self:start}
+/* Agenda visual */
+.chip .gl{width:16px;height:16px;vertical-align:-3px;margin-right:6px;color:var(--cat,currentColor)}
+.chip[aria-pressed="true"] .gl{color:inherit}
+.chip sup{font-size:.7em;opacity:.7;margin-left:4px}
+.ag-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.ag-strip::-webkit-scrollbar{display:none}
+.dd{flex:0 0 auto;scroll-snap-align:start;display:grid;justify-items:center;gap:2px;min-width:64px;padding:10px 10px 12px;border-radius:18px;border:1px solid var(--line);background:var(--glass);color:var(--ink);cursor:pointer;font-family:var(--f-ui);transition:transform .15s,background .2s}
+.dd:hover{transform:translateY(-2px)}
+.dd small{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.dd b{font-family:var(--f-display);font-weight:400;font-size:1.6rem;line-height:1}
+.dd .dots{display:flex;gap:3px;margin-top:4px}
+.dd .dots i{width:7px;height:7px;border-radius:50%;background:var(--cat)}
+.dd.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.dd.on small{color:inherit;opacity:.8}
+.dd.star{border-color:var(--c-evento);box-shadow:0 0 0 2px color-mix(in srgb,var(--c-evento) 30%,transparent)}
+.ag-days{display:grid;gap:34px;margin-top:6px}
+.ag-dh{display:flex;align-items:center;gap:14px;margin-bottom:14px;scroll-margin-top:96px}
+.ag-dh .n{font-family:var(--f-display);font-size:2.6rem;line-height:1}
+.ag-dh .t{display:grid;font-family:var(--f-ui)}
+.ag-dh .t b{font-size:1rem}
+.ag-dh .t small{font-size:.78rem;color:var(--ink-2)}
+.ag-dh .rel{margin-left:auto}
+.ag-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));grid-auto-flow:dense;gap:16px;margin-top:6px}
+.ev{position:relative;scroll-margin-top:110px;display:grid;grid-template-rows:auto 1fr;border-radius:22px;overflow:hidden;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:transform .2s,box-shadow .25s}
+.ev:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.ev.full{cursor:default;opacity:.6}
+.ev.full:hover{transform:none;box-shadow:none}
+.ev-art{position:relative;height:150px;color:#fff;overflow:hidden}
+.ev-art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(20,10,28,.55))}
+.ev-art svg{position:absolute;right:-14px;top:-10px;width:130px;height:130px;opacity:.5;stroke-width:1.2}
+.ev-hr{position:absolute;left:18px;bottom:12px;z-index:1;font-family:var(--f-display);font-size:2.4rem;line-height:1;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.ev-hr small{font-family:var(--f-ui);font-size:.8rem;margin-left:6px;opacity:.9}
+.ev-cat{position:absolute;left:14px;top:14px;z-index:1;font-family:var(--f-ui);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.22);backdrop-filter:blur(6px)}
+.ev-bd{display:grid;gap:12px;align-content:start;padding:16px 18px 18px}
+.ev-ti{font-family:var(--f-display);font-size:1.35rem;line-height:1.15}
+.ev-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
+.ev-ft .price{font-size:1.15rem}
+.ev .seats{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px}
+.ev .seats i{width:8px;height:8px;border-radius:50%;background:var(--cat)}
+.ev .seats i.o{background:var(--line-strong)}
+.ev .seats-l{font-family:var(--f-ui);font-size:.76rem;color:var(--ink-2)}
+.ev.star{grid-column:1/-1;border-color:var(--c-evento)}
+.ev-date{position:absolute;right:14px;top:12px;z-index:1;display:grid;justify-items:center;min-width:52px;padding:6px 8px;border-radius:14px;background:rgba(255,255,255,.92);color:#2c1f33;font-family:var(--f-ui);line-height:1.1;box-shadow:0 6px 18px -8px rgba(0,0,0,.4)}
+.ev-date small{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.ev-date b{font-family:var(--f-display);font-weight:400;font-size:1.5rem}
+.ev-rel{position:absolute;right:14px;bottom:14px;z-index:1;font-family:var(--f-ui);font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--accent,#c692bb);color:#fff}
+.ev-art svg{right:auto;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ev.star .ev-art{height:200px}
+.ev.star .ev-ti{font-size:1.9rem}
+@media (min-width:760px){.ev.star{grid-column:span 2;grid-template-columns:1.1fr 1fr;grid-template-rows:auto}.ev.star .ev-art{height:auto;min-height:240px}}
 .empty{padding:28px;border:1px dashed var(--line-strong);border-radius:16px;text-align:center;color:var(--ink-2)}
 
 /* Terapias */
@@ -541,13 +594,9 @@ textarea.inp{min-height:90px;resize:vertical}
   <!-- AGENDA -->
   <div class="band">
     <section class="wrap sec" id="agenda" aria-labelledby="h-ag">
-      <div class="s-head"><p class="eyebrow">Agenda maestra</p><h2 id="h-ag">Clases y eventos</h2><p>Toca un bloque para reservar.</p></div>
-      <div class="ag-tools">
-        <div class="seg" role="group" aria-label="Vista"><button id="vSemana" aria-pressed="true">Semana</button><button id="vLista" aria-pressed="false">Lista</button></div>
-        <div class="weekbar" id="weekbar"><button id="wkPrev" aria-label="Semana anterior">‹</button><span id="wkLbl"></span><button id="wkNext" aria-label="Semana siguiente">›</button></div>
-        <div class="legend" id="legend"></div>
-      </div>
+      <div class="s-head"><p class="eyebrow">Agenda maestra</p><h2 id="h-ag">Clases y eventos</h2><p>Solo lo que ya tiene clase. Elige y reserva.</p></div>
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
+      <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
       <div id="agView"></div>
     </section>
   </div>
@@ -938,64 +987,48 @@ function ocupados(x){
   return Math.min(x.cupo, base + mios);
 }
 const lunes = d => { const s = startOfDay(d); return addDays(s, -((s.getDay()+6)%7)); };
-let vista = matchMedia("(min-width: 760px)").matches ? "semana" : "lista";
-let semana = 0, fCat = "todas";
-const H0 = 8, H1 = 22, HH = 46;
-
+let fCat = "todas";
+const CAT_G = {yoga:"lotus", resp:"wave", sonido:"sound", evento:"star"};
+function relDia(d){
+  const k = Math.round((startOfDay(d)-startOfDay(NOW))/864e5);
+  return k===0?"Hoy":k===1?"Mañana":k<7?`En ${k} días`:"";
+}
 function paintAgenda(){
   INST = instancias(NOW, finAgenda());
-  $("#vSemana").setAttribute("aria-pressed", vista==="semana");
-  $("#vLista").setAttribute("aria-pressed", vista==="lista");
-  $("#weekbar").hidden = vista !== "semana";
-  $("#legend").innerHTML = Object.entries(CATS).map(([k,v]) => `<span style="--cat:var(--c-${k})"><i></i>${v}</span>`).join("");
-  $("#catChips").innerHTML = `<button class="chip" data-c="todas" aria-pressed="${fCat==="todas"}">Todo</button>` +
-    Object.entries(CATS).map(([k,v]) => `<button class="chip" data-c="${k}" aria-pressed="${fCat===k}">${v}</button>`).join("");
-  const okCat = x => fCat==="todas" || x.cat===fCat;
-  if (vista === "semana"){
-    const l = addDays(lunes(NOW), semana*7), f = addDays(l, 7);
-    $("#wkLbl").textContent = `${l.getDate()} ${MESES[l.getMonth()]} al ${addDays(f,-1).getDate()} ${MESES[addDays(f,-1).getMonth()]}`;
-    $("#wkPrev").disabled = semana <= 0; $("#wkNext").disabled = semana >= 2;
-    const items = instancias(l, f, true).filter(okCat);
-    let html = `<div class="wk-scroll"><div class="wk" style="--hh:${HH}px"><div class="hd"></div>`;
-    for (let i=0;i<7;i++){ const d = addDays(l,i); html += `<div class="hd ${ymd(d)===ymd(NOW)?"today":""}"><small>${DIAS[d.getDay()]}</small><b>${d.getDate()}</b></div>`; }
-    html += `<div class="hours" style="height:${(H1-H0)*HH}px">${Array.from({length:H1-H0},(_,k)=>k?`<span style="top:${k*HH}px">${fHora(new Date(2026,0,1,H0+k)).replace(":00","")}</span>`:"").join("")}</div>`;
-    for (let i=0;i<7;i++){
-      const d = addDays(l,i);
-      html += `<div class="col" style="height:${(H1-H0)*HH}px">` + items.filter(x => ymd(x.ini)===ymd(d)).map(x => {
-        const top = (x.ini.getHours()+x.ini.getMinutes()/60-H0)*HH, h = Math.max(x.dur/60*HH-4, 40);
-        const past = x.ini <= NOW, oc = ocupados(x), lleno = oc>=x.cupo;
-        return `<button class="blk ${past?"past":""} ${x.destacado?"star":""}" style="--cat:var(--c-${x.cat});top:${top+2}px;height:${h}px" ${past||lleno?"disabled":""} data-book="${x.id}" aria-label="${esc(x.titulo)}, ${fFechaL(x.ini)} ${fHora(x.ini)}, ${money(x.precio)}">
-          <b>${esc(x.titulo)}</b><small>${fHora(x.ini)} · ${lleno?"Lleno":money(x.precio)}</small>${past?"":`<span class="cap"><em style="width:${Math.round(oc/x.cupo*100)}%"></em></span>`}</button>`;
-      }).join("") + `</div>`;
-    }
-    html += `</div></div>`;
-    $("#agView").innerHTML = html;
-  } else {
-    const list = INST.filter(okCat);
-    if (!list.length){ $("#agView").innerHTML = `<div class="empty">No hay prácticas de este tipo en los próximos días.</div>`; }
-    else {
-      const g = {}; for (const x of list) (g[ymd(x.ini)] ||= []).push(x);
-      $("#agView").innerHTML = `<div class="ag-days">` + Object.values(g).map(arr => `<div class="ag-day"><h3>${fFechaL(arr[0].ini)}</h3><div class="ag-list">${arr.map(clsCard).join("")}</div></div>`).join("") + `</div>`;
-    }
-  }
+  const cuenta = c => INST.filter(x => c==="todas" || x.cat===c).length;
+  $("#catChips").innerHTML = `<button class="chip" data-c="todas" aria-pressed="${fCat==="todas"}">Todo<sup>${cuenta("todas")}</sup></button>` +
+    Object.entries(CATS).filter(([k]) => cuenta(k)).map(([k,v]) => `<button class="chip" data-c="${k}" style="--cat:var(--c-${k})" aria-pressed="${fCat===k}">${glyph(CAT_G[k],'class="gl"')}${v}<sup>${cuenta(k)}</sup></button>`).join("");
+  const list = INST.filter(x => fCat==="todas" || x.cat===fCat);
+  const g = {}; for (const x of list) (g[ymd(x.ini)] ||= []).push(x);
+  const dias = Object.entries(g);
+  $("#agStrip").innerHTML = dias.map(([k,arr],i) => `<button class="dd ${i===0?"on":""} ${arr.some(x=>x.destacado)?"star":""}" data-go="${k}" aria-label="${fFechaL(arr[0].ini)}, ${arr.length} ${arr.length>1?"prácticas":"práctica"}">
+    <small>${DIAS[arr[0].ini.getDay()]}</small><b>${arr[0].ini.getDate()}</b><small>${MESES[arr[0].ini.getMonth()]}</small>
+    <span class="dots">${arr.map(x=>`<i style="--cat:var(--c-${x.cat})"></i>`).join("")}</span></button>`).join("");
+  const vistos = new Set();
+  $("#agView").innerHTML = !dias.length ? `<div class="empty">Pronto abrimos nuevas fechas.</div>` :
+    `<div class="ag-list">` + list.map(x => { const k = ymd(x.ini), first = !vistos.has(k); vistos.add(k); return clsCard(x, first ? "dia-"+k : ""); }).join("") + `</div>`;
   $("#nextList").innerHTML = INST.slice(0,5).map(x => `<button class="nx" style="--cat:var(--c-${x.cat})" data-book="${x.id}">
     <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
 }
-function clsCard(x){
+function clsCard(x, anchorId){
   const oc = ocupados(x), libres = x.cupo - oc, lleno = libres <= 0;
-  return `<article class="cls ${x.destacado?"star":""}" style="--cat:var(--c-${x.cat})">
-    <div class="hr">${fHora(x.ini)}</div>
-    ${x.destacado ? `<span class="tag">Evento especial</span>` : ""}
-    <div class="ti">${esc(x.titulo)}</div>
-    <div class="pills">${pill(x.guia,"","user")}${pill(fDur(x.dur),"","clock")}${(x.modos||["Presencial"]).map(m=>pill(m,"line",m==="En línea"?"laptop":"pin")).join("")}</div>
-    <div class="ft"><div class="cupo"><span>${lleno ? "Cupo lleno" : `${libres} de ${x.cupo} lugares`}</span><i><em style="width:${Math.round(oc/x.cupo*100)}%"></em></i></div>
-      <div style="display:flex;align-items:center;gap:12px"><span class="price">${money(x.precio)}</span><button class="btn btn-p btn-s" data-book="${x.id}" ${lleno?"disabled":""}>${lleno?"Lleno":"Reservar"}</button></div></div></article>`;
+  const hs = fHora(x.ini), sp = hs.indexOf(" "), hh = sp>0 ? hs.slice(0,sp) : hs, ap = sp>0 ? hs.slice(sp+1) : "";
+  const nSeats = Math.min(x.cupo, 16), libresV = Math.round(libres/x.cupo*nSeats);
+  return `<article ${anchorId?`id="${anchorId}"`:""} class="ev ${x.destacado?"star":""} ${lleno?"full":""}" style="--cat:var(--c-${x.cat})" ${lleno?"":`data-book="${x.id}"`} aria-label="${esc(x.titulo)}, ${fFechaL(x.ini)} ${hs}">
+    <div class="ev-art" style="${aura(x.base||x.id)}">${glyph(x.destacado?"sun":CAT_G[x.cat])}<span class="ev-cat">${x.destacado?"★ Evento especial":CATS[x.cat]}</span><span class="ev-date"><small>${DIAS[x.ini.getDay()]}</small><b>${x.ini.getDate()}</b><small>${MESES[x.ini.getMonth()]}</small></span>${relDia(x.ini)?`<span class="ev-rel">${relDia(x.ini)}</span>`:""}<span class="ev-hr">${hh}<small>${ap}</small></span></div>
+    <div class="ev-bd">
+      <div class="ev-ti">${esc(x.titulo)}</div>
+      ${x.destacado?`<div class="pills">${pill("Soundbath","","star")}${pill("Breathwork","","star")}${pill("Meditación","","star")}</div>`:""}
+      <div class="pills">${pill(x.guia,"","user")}${pill(fDur(x.dur),"","clock")}${(x.modos||["Presencial"]).map(m=>pill(m,"line",m==="En línea"?"laptop":"pin")).join("")}</div>
+      <div><div class="seats" aria-hidden="true">${Array.from({length:nSeats},(_,i)=>`<i class="${i<nSeats-libresV?"o":""}"></i>`).join("")}</div>
+        <span class="seats-l">${lleno?"Cupo lleno":libres<=3?`¡Solo ${libres} ${libres>1?"lugares":"lugar"}!`:`${libres} lugares libres`}</span></div>
+      <div class="ev-ft"><span class="price">${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
+    </div></article>`;
 }
-$("#vSemana").onclick = () => { vista="semana"; paintAgenda(); };
-$("#vLista").onclick = () => { vista="lista"; paintAgenda(); };
-$("#wkPrev").onclick = () => { semana=Math.max(0,semana-1); paintAgenda(); };
-$("#wkNext").onclick = () => { semana=Math.min(2,semana+1); paintAgenda(); };
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
+$("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
+  document.querySelectorAll("#agStrip .dd").forEach(x => x.classList.toggle("on", x===b));
+  const t = document.getElementById("dia-"+b.dataset.go); if (t) t.scrollIntoView({behavior:"smooth", block:"start"}); });
 
 /* =====================================================================
    ¿Qué necesitas hoy?
