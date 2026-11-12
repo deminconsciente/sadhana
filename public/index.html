@@ -774,11 +774,107 @@ h1,h2,h3,.ev-ti{font-weight:400;letter-spacing:.01em}
 body[data-titulos="serif"]{--f-display:"Cormorant Garamond",Georgia,serif}
 
 /* Pie de página en incienso, sólido y profundo */
-:root[data-paleta="magenta"][data-acento="incienso"] footer.wrap{background:radial-gradient(50% 120% at 0% 0%,rgba(118,52,72,.75),transparent 70%),radial-gradient(45% 120% at 100% 100%,rgba(184,129,167,.28),transparent 70%),linear-gradient(120deg,#6f3324 0%,#8f4a25 45%,#a45a2a 100%);color:#fff7f0}
+:root[data-paleta="magenta"][data-acento="incienso"] footer.wrap{background:radial-gradient(50% 120% at 0% 0%,rgba(118,52,72,.45),transparent 70%),radial-gradient(45% 120% at 100% 100%,rgba(184,129,167,.22),transparent 70%),linear-gradient(120deg,rgba(111,51,36,.66) 0%,rgba(143,74,37,.6) 45%,rgba(164,90,42,.55) 100%);color:#fff7f0;backdrop-filter:blur(10px) saturate(1.1);-webkit-backdrop-filter:blur(10px) saturate(1.1);text-shadow:0 1px 2px rgba(40,15,5,.45)}
 :root[data-paleta="magenta"][data-acento="incienso"] footer.wrap a{color:#ffe9d8}
 :root[data-paleta="magenta"][data-acento="incienso"] footer.wrap .mk-sello{color:#ffe2cc!important}
 :root[data-paleta="magenta"][data-acento="incienso"] footer.wrap .cross{border-color:rgba(255,255,255,.7)!important;color:#fff!important}
 :root[data-paleta="magenta"][data-acento="incienso"] footer.wrap .proto{opacity:.85}
+
+/* ===== Mobile first: celular primero ===== */
+.sec,.ev{scroll-margin-top:calc(var(--toph,80px) + 14px)}
+@media (max-width:820px){
+  .opt-fab{left:auto;right:max(12px,env(safe-area-inset-right,0px));width:48px;min-height:48px;padding:0;justify-content:center;font-size:0;gap:0}
+  .opt-fab svg{width:20px;height:20px}
+  .opt-panel{left:auto;right:max(12px,env(safe-area-inset-right,0px))}
+}
+@media (max-width:640px){
+  /* Barra en una sola línea */
+  .top{top:calc(8px + env(safe-area-inset-top,0px));width:calc(100% - 16px);margin-top:8px;border-radius:999px;padding-block:6px}
+  .top .wrap{flex-wrap:nowrap!important;gap:6px!important;padding:0 6px 0 16px!important}
+  .top .brand{flex:0 0 auto!important;justify-items:start}
+  .top .brand .mk-logo2{height:21px!important}
+  .top .brand small{font-size:.42rem;letter-spacing:.26em}
+  #nav{display:none!important}
+  .top .vsw{order:0!important;margin-left:auto;padding:2px}
+  .top .vsw button{padding:7px 9px!important;font-size:.74rem!important;min-height:34px}
+  .top .mine{padding:0 10px!important;height:40px;gap:6px;flex-shrink:0}
+  .top .mine svg{width:18px;height:18px}
+  /* Hero */
+  .hero5 .in{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .door5{min-height:54px;font-size:1rem}
+  /* Secciones */
+  .band:has(> .sec.cerrada){padding-block:22px}
+  .band{padding-block:44px}
+  .s-head.tg{padding-right:52px}
+  .s-head.tg::after{width:38px;height:38px;margin-top:-19px}
+  /* Agenda: tarjetas horizontales compactas */
+  .ag-list{gap:10px!important}
+  .ev,.ev.star{grid-column:auto!important;grid-template-columns:108px 1fr!important;grid-template-rows:auto!important;border-radius:18px}
+  .ev-art,.ev.star .ev-art{height:auto!important;min-height:128px!important}
+  .ev-art svg{width:64px!important;height:64px!important;opacity:.3}
+  .ev-cat,.ev-rel{display:none}
+  .ev-date{left:8px;right:auto;top:8px;min-width:0;padding:4px 8px;border-radius:10px}
+  .ev-date b{font-size:1.1rem}
+  .ev-hr{left:10px;bottom:9px;font-size:1.55rem}
+  .ev-hr small{display:block;margin:2px 0 0;font-size:.68rem}
+  .ev-bd{padding:12px 14px 12px;gap:6px}
+  .ev-ti,.ev.star .ev-ti{font-size:1.12rem}
+  .ev .btn-s{min-height:40px;padding:0 16px}
+  .ev:hover{transform:none}
+  #panel-ter .card .art,#rentOpts .card .art{height:84px!important}
+  #panel-ter .card .art svg{width:48px;height:48px}
+}
+
+/* Agenda por día y listas cortas */
+.ag-dia{font-family:var(--f-ui);font-size:.95rem;color:var(--ink-2);margin:4px 0 -4px}
+.ag-dia::first-letter{text-transform:uppercase}
+:not(.ver-todo) > .extra{display:none!important}
+#agView .ev-date{display:none}
+.mas-lista{grid-column:1/-1;justify-self:center;min-height:44px;padding:0 22px}
+
+/* Modo oscuro: la foto mantiene el tono del hero al bajar */
+@media (prefers-color-scheme:dark){
+:root:not([data-theme="light"]) body[data-pagina="una"] .band,:root:not([data-theme="light"]) body[data-pagina="una"] .band.paper,:root:not([data-theme="light"]) body[data-pagina="una"] .band.dark{background:rgba(10,6,8,.10)!important}
+:root:not([data-theme="light"]) body[data-pagina="una"] .hero5::after,:root:not([data-theme="light"]) body[data-pagina="una"] .hero5[data-fondo]::after{background:none!important}
+:root:not([data-theme="light"]) body[data-pagina="una"] .band + .band{border-top-color:rgba(255,255,255,.12)}
+:root:not([data-theme="light"]) body[data-pagina="una"] .s-head h2,:root:not([data-theme="light"]) body[data-pagina="una"] .s-head .eyebrow,:root:not([data-theme="light"]) body[data-pagina="una"] .ag-dia{text-shadow:0 1px 3px rgba(0,0,0,.6),0 0 18px rgba(0,0,0,.35)}
+}
+:root[data-theme="dark"] body[data-pagina="una"] .band,:root[data-theme="dark"] body[data-pagina="una"] .band.paper,:root[data-theme="dark"] body[data-pagina="una"] .band.dark{background:rgba(10,6,8,.10)!important}
+:root[data-theme="dark"] body[data-pagina="una"] .hero5::after,:root[data-theme="dark"] body[data-pagina="una"] .hero5[data-fondo]::after{background:none!important}
+:root[data-theme="dark"] body[data-pagina="una"] .band + .band{border-top-color:rgba(255,255,255,.12)}
+:root[data-theme="dark"] body[data-pagina="una"] .s-head h2,:root[data-theme="dark"] body[data-pagina="una"] .s-head .eyebrow,:root[data-theme="dark"] body[data-pagina="una"] .ag-dia{text-shadow:0 1px 3px rgba(0,0,0,.6),0 0 18px rgba(0,0,0,.35)}
+
+/* Barra y pie fusionados con la foto, sin perder el degradado */
+:root[data-paleta="magenta"][data-acento="incienso"] .top{background:radial-gradient(40% 220% at 0% 50%,rgba(118,52,72,.40),transparent 75%),radial-gradient(45% 220% at 100% 50%,rgba(184,129,167,.26),transparent 75%),linear-gradient(90deg,rgba(143,74,37,.62) 0%,rgba(164,90,42,.52) 50%,rgba(201,135,90,.46) 100%);
+  backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 10px 30px -18px rgba(40,15,5,.5),inset 0 0 0 1px rgba(255,255,255,.14)}
+:root[data-paleta="magenta"][data-acento="incienso"] .top .brand,:root[data-paleta="magenta"][data-acento="incienso"] .top .nav a,:root[data-paleta="magenta"][data-acento="incienso"] .top .vsw button:not([aria-pressed="true"]){text-shadow:0 1px 3px rgba(40,15,5,.55)}
+:root[data-paleta="magenta"][data-acento="incienso"] footer.wrap{box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+
+/* v30: barra lean (sin filtro de vista), nav completo y avisos plegables */
+.top .vsw{display:none!important}
+.top .wrap{justify-content:space-between}
+.top .nav{justify-content:safe center;flex:1 1 auto}
+.top .nav a{padding:8px 10px}
+@media (max-width:1000px){#nav{display:none!important}.top .wrap{flex-wrap:nowrap!important}}
+footer.wrap{gap:10px;padding-block:32px 84px}
+footer.wrap .mk-sello{width:76px!important}
+footer .legal{font-family:var(--f-ui);font-size:.82rem}
+footer .legal summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;opacity:.85;text-decoration:underline;text-underline-offset:3px}
+footer .legal summary::-webkit-details-marker{display:none}
+footer .legal summary::after{content:"+";font-weight:700}
+footer .legal[open] summary::after{content:"–"}
+footer .legal p{margin:8px 0 0}
+body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cross[data-v="t"]{display:inline-flex;padding:0;min-height:0;border:0!important;background:none!important;font-family:var(--f-ui);font-size:.9rem;text-decoration:underline;text-underline-offset:3px;box-shadow:none}
+
+/* v31: menú compacto de secciones */
+.top .menu{display:none;width:40px;height:40px;border-radius:999px;border:0;align-items:center;justify-content:center;background:rgba(255,255,255,.18);color:#fff;cursor:pointer;flex-shrink:0;margin-left:auto}
+.top .menu[aria-expanded="true"]{background:rgba(255,255,255,.32)}
+@media (max-width:1000px){.top .menu{display:inline-flex}.top .mine{margin-left:0}}
+.menu-pop{position:absolute;top:calc(100% + 8px);right:0;min-width:220px;display:grid;gap:2px;padding:8px;border-radius:22px;background:linear-gradient(160deg,rgba(143,74,37,.82),rgba(164,90,42,.78) 60%,rgba(201,135,90,.74));backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 18px 40px -18px rgba(40,15,5,.6),inset 0 0 0 1px rgba(255,255,255,.16)}
+.menu-pop[hidden]{display:none}
+.menu-pop a{font-family:var(--f-ui);font-weight:600;font-size:1rem;color:#fff;text-decoration:none;padding:12px 14px;border-radius:14px;text-shadow:0 1px 3px rgba(40,15,5,.5)}
+.menu-pop a:hover,.menu-pop a:focus-visible{background:rgba(255,255,255,.18)}
+.menu-pop a.otra{font-size:.88rem;font-weight:500;opacity:.9;border-top:1px solid rgba(255,255,255,.22);border-radius:0 0 14px 14px;margin-top:4px}
 </style>
 
 <div class="lienzo" aria-hidden="true"></div>
@@ -787,9 +883,11 @@ body[data-titulos="serif"]{--f-display:"Cormorant Garamond",Georgia,serif}
   <div class="wrap">
     <a class="brand" href="#inicio" aria-label="Sadhana, centro holístico, inicio"><span class="mk mk-logo2"></span><small>CENTRO HOLÍSTICO</small></a>
     <nav class="nav" aria-label="Secciones" id="nav"></nav>
-    <div class="vsw" role="group" aria-label="Elige tu vista"><button type="button" data-vista="c" aria-pressed="false">Consultante</button><button type="button" data-vista="t" aria-pressed="false">Terapeuta</button></div>
+    <div class="vsw" role="group" aria-label="Elige tu vista" hidden><button type="button" data-vista="c" aria-pressed="false">Consultante</button><button type="button" data-vista="t" aria-pressed="false">Terapeuta</button></div>
+    <button class="menu" id="btnMenu" type="button" aria-label="Secciones" aria-expanded="false" aria-controls="menuPop"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
     <button class="mine" id="btnMine" type="button" aria-label="Mis reservas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 0 0 4v4h18v-4a2 2 0 0 1 0-4V4H3Z"/></svg><span class="lbl">Mis reservas</span> <span class="dot" id="mineCount">0</span></button>
   </div>
+  <nav class="menu-pop" id="menuPop" aria-label="Secciones" hidden></nav>
 </header>
 
 <div id="pageBg" aria-hidden="true"></div>
@@ -938,14 +1036,14 @@ body[data-titulos="serif"]{--f-display:"Cormorant Garamond",Georgia,serif}
   <footer class="wrap"><a data-v="c" class="cross btn btn-g" href="#terapeuta" style="justify-self:start;color:#fff;border-color:rgba(255,255,255,.5)">¿Eres terapeuta? Entra aquí →</a><a data-v="t" class="cross btn btn-g" href="#consultante" style="justify-self:start;color:#fff;border-color:rgba(255,255,255,.5)">¿Vienes a consulta? Entra aquí →</a><span class="mk mk-sello" style="width:110px;color:var(--mauve)" aria-hidden="true"></span>
     <p><b style="font-family:var(--f-display);color:var(--ink)">Sādhana</b> · Centro holístico · Satélite Acueducto, Monterrey, N.L.</p>
     <div class="links"><a href="https://maps.app.goo.gl/nGZ1RNxw5KACD8526" target="_blank" rel="noopener">Cómo llegar (Google Maps)</a><a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a><a href="#terapeutas">Renta el espacio</a><a href="#ec1375">Certifícate</a></div>
-    <p class="small">Terapias complementarias: no diagnostican ni tratan enfermedades. Certificado oficial SEP-CONOCER en el estándar EC1375, evaluado por Posturalia. Aviso de privacidad: pendiente.</p>
-  <p class="proto">Prototipo: pagos simulados. Horarios, precios de Diego, talleres y renta son de ejemplo.</p></footer>
+    <details class="legal"><summary>Avisos legales</summary><p class="small">Terapias complementarias: no diagnostican ni tratan enfermedades. Certificado oficial SEP-CONOCER en el estándar EC1375, evaluado por Posturalia. Aviso de privacidad: pendiente.</p>
+  <p class="proto">Prototipo: pagos simulados. Horarios, precios de Diego, talleres y renta son de ejemplo.</p></details></footer>
 </main>
 
 <div class="dock"><a data-v="c" class="btn btn-p" href="#agenda">Reservar</a><a data-v="c" class="btn btn-g" href="#terapias">Terapias</a><a data-v="t" class="btn btn-p" href="#ec1375">Certifícate</a><a data-v="t" class="btn btn-g" href="#terapeutas">Renta</a></div>
 
 
-<button class="opt-fab" id="optFab" type="button" aria-expanded="false" aria-controls="optPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Opciones</button>
+<button class="opt-fab" id="optFab" type="button" aria-label="Opciones" aria-expanded="false" aria-controls="optPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Opciones</button>
 <div class="opt-panel" id="optPanel" hidden role="dialog" aria-label="Probar opciones de diseño">
   <h3>PRUEBA LAS OPCIONES</h3>
   <div class="og"><b>Colores de la página</b><div class="seg" data-opt="paleta"><button data-val="magenta">Gray magenta</button><button data-val="ciruela">Ciruela #8F3572</button><button data-val="mauve">Mauve #C692BB</button><button data-val="incienso">Incienso (degradado)</button><button data-val="ambar">Ámbar (degradado)</button><button data-val="bosque">Bosque</button><button data-val="tierra">Tierra rosa</button><button data-val="agua">Agua</button><button data-val="lavanda">Lavanda</button></div><small>Gray magenta #b881a7: el color principal. Bosque: verde y crema. Tierra: ciruela y rosa viejo. Agua: teal. Lavanda: la anterior.</small></div>
@@ -1204,7 +1302,6 @@ const qsa = q => [...document.querySelectorAll(q)];
    Dos vistas: consultante (c) y terapeuta (t)
    ===================================================================== */
 const NAVS = {
-  "": [],
   c: [["#agenda","Agenda"],["#terapias","Terapias"],["#paquetes","Paquetes"],["#necesitas","Para ti"],["#equipo","Visítanos"]],
   t: [["#formacion","Formación"],["#ec1375","EC1375"],["#terapeutas","Renta"],["#equipo","Equipo"]]
 };
@@ -1213,7 +1310,9 @@ function setVista(v, irA){
   if (v) document.body.dataset.vista = v; else delete document.body.dataset.vista;
   try { v ? localStorage.setItem("sadhana.vista", v) : localStorage.removeItem("sadhana.vista"); } catch(e){}
   qsa(".vsw [data-vista]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vista === v));
-  $("#nav").innerHTML = NAVS[v||""].map(([h,t]) => `<a href="${h}">${t}</a>`).join("");
+  const lista = NAVS[v||"c"];
+  $("#nav").innerHTML = lista.map(([h,t]) => `<a href="${h}">${t}</a>`).join("");
+  $("#menuPop").innerHTML = lista.map(([h,t]) => `<a href="${h}">${t}</a>`).join("") + (v==="t" ? `<a class="otra" href="#consultante">¿Vienes a consulta? →</a>` : `<a class="otra" href="#terapeuta">¿Eres terapeuta? →</a>`);
   try {
     if (navIO) navIO.disconnect();
     const links = [...document.querySelectorAll("#nav a")];
@@ -1222,6 +1321,15 @@ function setVista(v, irA){
   } catch(e){}
   if (irA){ if (typeof abrirDe === "function") abrirDe(irA); const t = document.querySelector(irA); if (t) requestAnimationFrame(()=>t.scrollIntoView({behavior:"smooth", block:"start"})); }
 }
+(function(){
+  const btn = $("#btnMenu"), pop = $("#menuPop");
+  const cerrar = () => { pop.hidden = true; btn.setAttribute("aria-expanded","false"); };
+  btn.onclick = ev => { ev.stopPropagation(); const abrir = pop.hidden; pop.hidden = !abrir; btn.setAttribute("aria-expanded", String(abrir)); };
+  pop.addEventListener("click", e => { if (e.target.closest("a")) cerrar(); });
+  document.addEventListener("click", e => { if (!pop.hidden && !e.target.closest("#menuPop,#btnMenu")) cerrar(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
+  window.addEventListener("scroll", () => { if (!pop.hidden) cerrar(); }, {passive:true});
+})();
 function vistaDe(sel){ const el = document.querySelector(sel); const w = el && el.closest("[data-v]"); return w ? w.dataset.v : null; }
 document.addEventListener("click", e => {
   const a = e.target.closest('a[href^="#"]'); if (!a) return;
@@ -1273,6 +1381,7 @@ function relDia(d){
   const k = Math.round((startOfDay(d)-startOfDay(NOW))/864e5);
   return k===0?"Hoy":k===1?"Mañana":k<7?`En ${k} días`:"";
 }
+let fDia = "";
 function paintAgenda(){
   INST = instancias(NOW, finAgenda());
   const cuenta = c => INST.filter(x => c==="todas" || x.cat===c).length;
@@ -1281,12 +1390,13 @@ function paintAgenda(){
   const list = INST.filter(x => fCat==="todas" || x.cat===fCat);
   const g = {}; for (const x of list) (g[ymd(x.ini)] ||= []).push(x);
   const dias = Object.entries(g);
-  $("#agStrip").innerHTML = dias.map(([k,arr],i) => `<button class="dd ${i===0?"on":""} ${arr.some(x=>x.destacado)?"star":""}" data-go="${k}" aria-label="${fFechaL(arr[0].ini)}, ${arr.length} ${arr.length>1?"prácticas":"práctica"}">
+  if (!g[fDia]) fDia = dias.length ? dias[0][0] : "";
+  $("#agStrip").innerHTML = dias.map(([k,arr],i) => `<button class="dd ${k===fDia?"on":""} ${arr.some(x=>x.destacado)?"star":""}" aria-pressed="${k===fDia}" data-go="${k}" aria-label="${fFechaL(arr[0].ini)}, ${arr.length} ${arr.length>1?"prácticas":"práctica"}">
     <small>${DIAS[arr[0].ini.getDay()]}</small><b>${arr[0].ini.getDate()}</b><small>${MESES[arr[0].ini.getMonth()]}</small>
     <span class="dots">${arr.map(x=>`<i style="--cat:var(--c-${x.cat})"></i>`).join("")}</span></button>`).join("");
   const vistos = new Set();
   $("#agView").innerHTML = !dias.length ? `<div class="empty">Pronto abrimos nuevas fechas.</div>` :
-    `<div class="ag-list">` + list.map(x => { const k = ymd(x.ini), first = !vistos.has(k); vistos.add(k); return clsCard(x, first ? "dia-"+k : ""); }).join("") + `</div>`;
+    `<p class="ag-dia">${fFechaL(g[fDia][0].ini)} · ${g[fDia].length} ${g[fDia].length>1?"prácticas":"práctica"}</p><div class="ag-list">` + g[fDia].map(x => clsCard(x, "")).join("") + `</div>`;
   $("#nextList").innerHTML = INST.slice(0,5).map(x => `<button class="nx" style="--cat:var(--c-${x.cat})" data-book="${x.id}">
     <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
 }
@@ -1307,8 +1417,7 @@ function clsCard(x, anchorId){
 }
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
 $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
-  document.querySelectorAll("#agStrip .dd").forEach(x => x.classList.toggle("on", x===b));
-  const t = document.getElementById("dia-"+b.dataset.go); if (t) t.scrollIntoView({behavior:"smooth", block:"start"}); });
+  fDia = b.dataset.go; const sl = $("#agStrip").scrollLeft; paintAgenda(); $("#agStrip").scrollLeft = sl; });
 
 /* =====================================================================
    ¿Qué necesitas hoy?
@@ -1962,7 +2071,17 @@ qsa("section.sec").forEach(sec => {
   abrirSec(sec, ABIERTAS.has(sec.id));
 });
 document.addEventListener("click", e => { const a = e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) abrirDe(a.getAttribute("href")); }, true);
+const LIMITES = {"#panel-ter .grid3":3, "#talleres":3, "#rentOpts":2};
+function limitar(){
+  Object.entries(LIMITES).forEach(([sel,n]) => { const c = document.querySelector(sel); if (!c || c.querySelector(":scope > .mas-lista")) return;
+    const items = [...c.children].filter(x => x.tagName === "ARTICLE"); if (items.length <= n) return;
+    items.slice(n).forEach(x => x.classList.add("extra"));
+    const b = document.createElement("button"); b.type = "button"; b.className = "mas-lista btn btn-g"; b.textContent = `Ver ${items.length-n} más`;
+    b.onclick = () => { const o = c.classList.toggle("ver-todo"); b.textContent = o ? "Ver menos" : `Ver ${items.length-n} más`; };
+    c.appendChild(b); });
+}
 function compactar(){
+  limitar();
   qsa(".ev:not(.cmp), #panel-ter .card:not(.cmp), #talleres .card:not(.cmp), #rentOpts .card:not(.cmp)").forEach(c => {
     if (!c.querySelector(".pills")) return;
     c.classList.add("cmp");
