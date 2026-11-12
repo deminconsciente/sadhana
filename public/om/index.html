@@ -7,31 +7,34 @@
 <meta property="og:title" content="El Poder del OM · Sadhana">
 <meta property="og:description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Col. Satélite, Monterrey, y en línea. Aportación consciente $100 MXN.">
 <meta property="og:url" content="https://sadhanaholistics.com/om/">
-<meta name="theme-color" content="#3a1f29">
+<meta property="og:image" content="https://sadhanaholistics.com/assets/img/velas.jpg">
+<link rel="canonical" href="https://sadhanaholistics.com/om/">
+<link rel="preload" href="/assets/fonts/glacial-indifference-400.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="theme-color" content="#8f4a25">
 <title>El Poder del OM</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Col. Satélite, Monterrey, y en línea. Aportación consciente $100 MXN.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Tiro+Devanagari+Sanskrit&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&display=swap">
 <style>
 /* Layout: una sola columna estrecha sobre "lienzo" pintado (como los posts de @sadhana.holistics),
    con el sol del OM como eje visual que respira; barra de reserva fija en móvil. */
 :root{
-  --canvas:#3a1f29;        /* vino profundo, fondo */
-  --wine:#5b2c3a;          /* vino de las piezas */
-  --mauve:#8e6c8a;         /* malva */
-  --peach:#e7b296;         /* durazno */
-  --rose:#c8908b;          /* rosa empolvado, acento secundario */
-  --linen:#f6ebe3;         /* texto principal, color lino */
-  --linen-dim:#dcc8bf;     /* texto secundario */
-  --line:rgba(246,235,227,.22);
-  --panel:rgba(46,22,32,.55);
-  --panel-strong:rgba(40,18,27,.82);
+  --canvas:#22120a;        /* vino profundo, fondo */
+  --wine:#8f4a25;          /* vino de las piezas */
+  --mauve:#b881a7;         /* malva */
+  --peach:#f0cda8;         /* durazno */
+  --rose:#e2b3b8;          /* rosa empolvado, acento secundario */
+  --linen:#fff8f1;         /* texto principal, color lino */
+  --linen-dim:#f1e1d3;     /* texto secundario */
+  --line:rgba(255,240,226,.24);
+  --panel:rgba(38,19,10,.5);
+  --panel-strong:rgba(34,17,9,.78);
   --ok:#b9d3a8;
   --err:#ffb4a8;
-  --f-display:"Cinzel","Trajan Pro",Georgia,"Times New Roman",serif;
-  --f-body:"Lora",Georgia,"Times New Roman",serif;
+  --f-display:"Glacial Indifference",system-ui,sans-serif;
+  --f-body:"Glacial Indifference",system-ui,sans-serif;
   --f-om:"Tiro Devanagari Sanskrit","Noto Serif Devanagari","Kohinoor Devanagari",serif;
   color-scheme:dark;
 }
@@ -49,12 +52,12 @@ body{
 /* Lienzo: manchas de color + trama de lino */
 .lienzo{position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(60% 40% at 10% 8%, rgba(142,108,138,.75), transparent 70%),
-    radial-gradient(45% 35% at 92% 18%, rgba(91,44,58,.9), transparent 70%),
-    radial-gradient(55% 45% at 12% 62%, rgba(231,178,150,.38), transparent 70%),
+    radial-gradient(60% 40% at 10% 8%, rgba(184,129,167,.75), transparent 70%),
+    radial-gradient(45% 35% at 92% 18%, rgba(118,52,72,.9), transparent 70%),
+    radial-gradient(55% 45% at 12% 62%, rgba(236,196,160,.38), transparent 70%),
     radial-gradient(60% 40% at 85% 85%, rgba(200,144,139,.35), transparent 70%),
-    linear-gradient(90deg, transparent 38%, rgba(46,22,32,.35) 46%, transparent 56%),
-    linear-gradient(180deg,#6b3c4a 0%,#4c2734 45%,#3a1f29 100%);
+    linear-gradient(90deg, transparent 38%, rgba(38,19,10,.35) 46%, transparent 56%),
+    linear-gradient(180deg,#6b3c4a 0%,#4c2734 45%,#2a150b 100%);
 }
 .lienzo::after{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.08' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
@@ -76,13 +79,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
   padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  background:rgba(40,18,27,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  background:rgba(34,17,9,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .top .brand{font-family:var(--f-body);font-style:italic;color:var(--linen);text-decoration:none;font-size:.98rem}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;
   font-family:var(--f-display);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer;
   border:1px solid transparent;transition:transform .15s ease, background .2s ease}
 .btn:active{transform:scale(.98)}
-.btn-primary{background:var(--peach);color:#3a1f29}
+.btn-primary{background:var(--peach);color:#2a150b}
 .btn-primary:hover{background:#f0c3aa}
 .btn-ghost{background:transparent;color:var(--linen);border-color:var(--line)}
 .btn-ghost:hover{border-color:var(--peach)}
@@ -115,9 +118,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .check{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:16px 18px;border-radius:14px;
   background:var(--panel);border:1px solid var(--line);color:var(--linen);font:inherit;font-family:var(--f-display);letter-spacing:.04em;font-size:clamp(1rem,3.8vw,1.15rem);cursor:pointer}
 .check .box{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--linen-dim);display:grid;place-items:center;transition:background .2s}
-.check[aria-pressed="true"]{border-color:var(--peach);background:rgba(231,178,150,.14)}
+.check[aria-pressed="true"]{border-color:var(--peach);background:rgba(236,196,160,.14)}
 .check[aria-pressed="true"] .box{background:var(--peach);border-color:var(--peach)}
-.check[aria-pressed="true"] .box::after{content:"";width:8px;height:13px;border:solid #3a1f29;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.check[aria-pressed="true"] .box::after{content:"";width:8px;height:13px;border:solid #2a150b;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .verdict{text-align:center;min-height:3.2em;display:grid;gap:4px;align-content:center}
 .verdict .big{font-family:var(--f-display);font-size:clamp(1.6rem,7vw,2.4rem);font-weight:600;letter-spacing:.08em}
 .verdict .small{color:var(--linen-dim);font-style:italic}
@@ -126,7 +129,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .lead{font-size:1.08rem;text-align:center;color:var(--linen)}
 .moments{display:grid;gap:14px}
 .moment{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:start;padding:18px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
-.moment .ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(231,178,150,.12);border:1px solid rgba(231,178,150,.35)}
+.moment .ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(236,196,160,.12);border:1px solid rgba(236,196,160,.35)}
 .moment .ico svg{width:28px;height:28px;stroke:var(--peach);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .moment h3{font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
 .moment p{color:var(--linen-dim);font-size:.98rem}
@@ -134,7 +137,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* Ciencia */
 .facts-sci{display:grid;gap:16px}
-.sci{padding-left:18px;border-left:1px solid rgba(231,178,150,.5)}
+.sci{padding-left:18px;border-left:1px solid rgba(236,196,160,.5)}
 .sci .num{font-family:var(--f-display);font-size:1.6rem;color:var(--peach);letter-spacing:.04em;line-height:1.1}
 .sci p{color:var(--linen-dim);font-size:.98rem}
 .sci .src{font-size:.82rem;font-style:italic;color:var(--linen-dim);opacity:.8;margin-top:4px}
@@ -143,8 +146,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* Respira ahora */
 .breath{display:grid;justify-items:center;gap:14px;text-align:center}
 .orb{width:min(220px,58vw);aspect-ratio:1;max-width:100%;border-radius:50%;display:grid;place-items:center;position:relative;
-  background:radial-gradient(circle at 50% 45%, rgba(231,178,150,.55), rgba(142,108,138,.35) 55%, rgba(91,44,58,.2) 75%);
-  box-shadow:0 0 60px rgba(231,178,150,.18) inset, 0 0 40px rgba(231,178,150,.12);
+  background:radial-gradient(circle at 50% 45%, rgba(236,196,160,.55), rgba(184,129,167,.35) 55%, rgba(118,52,72,.2) 75%);
+  box-shadow:0 0 60px rgba(236,196,160,.18) inset, 0 0 40px rgba(236,196,160,.12);
   transform:scale(.72);transition:transform 4s cubic-bezier(.45,0,.35,1)}
 .orb .om{font-family:var(--f-om);font-size:clamp(3rem,14vw,4.6rem);line-height:1;color:var(--linen);opacity:.92}
 .orb-label{font-family:var(--f-display);font-size:1.25rem;letter-spacing:.18em;text-transform:uppercase;min-height:1.6em}
@@ -175,7 +178,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .bring ul{margin:0;padding-left:18px;color:var(--linen-dim);font-size:.96rem}
 
 /* Reserva */
-.reserve{background:var(--panel-strong);border:1px solid rgba(231,178,150,.4);border-radius:22px;padding:26px 20px;display:grid;gap:20px}
+.reserve{background:var(--panel-strong);border:1px solid rgba(236,196,160,.4);border-radius:22px;padding:26px 20px;display:grid;gap:20px}
 @media (min-width:560px){.reserve{padding:34px 34px}}
 .reserve h2{font-size:clamp(1.5rem,6vw,2rem)}
 form{display:grid;gap:18px}
@@ -187,7 +190,7 @@ legend,label.lbl{font-family:var(--f-display);font-size:.78rem;letter-spacing:.1
 .mode span{display:grid;gap:2px;padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(246,235,227,.04);text-align:center;height:100%}
 .mode b{font-family:var(--f-display);letter-spacing:.1em;font-weight:600;font-size:.98rem}
 .mode small{color:var(--linen-dim);font-size:.82rem;font-style:italic;line-height:1.35}
-.mode input:checked + span{border-color:var(--peach);background:rgba(231,178,150,.16)}
+.mode input:checked + span{border-color:var(--peach);background:rgba(236,196,160,.16)}
 .mode input:focus-visible + span{outline:2px solid var(--peach);outline-offset:2px}
 .field{display:grid;gap:0}
 .field input{width:100%;min-height:50px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(246,235,227,.06);color:var(--linen);
@@ -226,7 +229,7 @@ footer .igs{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center}
 /* Barra fija de reserva */
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:8;
   padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
-  background:rgba(40,18,27,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  background:rgba(34,17,9,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:12px;transition:transform .3s ease}
 .dock.hide{transform:translateY(110%)}
 .dock .info{font-size:.86rem;line-height:1.3;min-width:0}
@@ -239,7 +242,7 @@ footer .igs{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center}
 .lienzo{animation:lienzo-resp var(--ciclo) var(--suave) infinite;transform-origin:50% 35%}
 @keyframes lienzo-resp{0%,100%{transform:scale(1);filter:saturate(1) brightness(1)}40%{transform:scale(1.06);filter:saturate(1.18) brightness(1.06)}}
 .lienzo::before{content:"";position:absolute;inset:-25%;
-  background:radial-gradient(30% 26% at 30% 38%, rgba(231,178,150,.24), transparent 70%),radial-gradient(28% 24% at 72% 70%, rgba(142,108,138,.32), transparent 70%);
+  background:radial-gradient(30% 26% at 30% 38%, rgba(236,196,160,.24), transparent 70%),radial-gradient(28% 24% at 72% 70%, rgba(184,129,167,.32), transparent 70%);
   animation:deriva 48s ease-in-out infinite alternate}
 @keyframes deriva{to{transform:translate3d(9%,-7%,0) rotate(10deg)}}
 .progreso{position:fixed;top:env(safe-area-inset-top,0px);left:0;width:100%;height:2px;z-index:11;transform-origin:0 50%;transform:scaleX(var(--p,0));
@@ -260,7 +263,7 @@ footer .igs{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center}
 @keyframes bajar{0%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(7px);opacity:1}}
 /* Los botones principales respiran con la página */
 .btn-primary.respira{animation:halo var(--ciclo) var(--suave) infinite}
-@keyframes halo{0%,100%{box-shadow:0 0 0 0 rgba(231,178,150,0)}40%{box-shadow:0 0 0 7px rgba(231,178,150,.14),0 0 34px rgba(231,178,150,.3)}}
+@keyframes halo{0%,100%{box-shadow:0 0 0 0 rgba(236,196,160,0)}40%{box-shadow:0 0 0 7px rgba(236,196,160,.14),0 0 34px rgba(236,196,160,.3)}}
 /* Aparición al bajar (solo lo que está fuera de pantalla al cargar) */
 .rv{transition:opacity 1.1s ease,transform 1.1s cubic-bezier(.2,.7,.2,1),filter 1.1s ease}
 .rv.oculto{opacity:0;transform:translateY(26px);filter:blur(4px)}
@@ -287,30 +290,30 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
 /* ===== Ubicación, recorrido, boleto y pago ===== */
 .tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:999px;padding:4px;background:var(--panel)}
 .tab{position:relative;z-index:1;min-height:42px;border:0;background:none;color:var(--linen-dim);font-family:var(--f-display);letter-spacing:.14em;text-transform:uppercase;font-size:.8rem;cursor:pointer;border-radius:999px;transition:color .4s}
-.tab[aria-selected="true"]{color:#3a1f29;font-weight:600}
+.tab[aria-selected="true"]{color:#2a150b;font-weight:600}
 .tab-luz{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:var(--peach);transition:transform .55s cubic-bezier(.3,.8,.3,1)}
 .tabs.online .tab-luz{transform:translateX(100%)}
 .panel{display:grid;gap:14px;animation:subir .7s cubic-bezier(.2,.7,.2,1) both}
 .mapa{position:relative;display:block;border-radius:18px;overflow:hidden;border:1px solid var(--line);aspect-ratio:16/8.5;max-width:100%;text-decoration:none;color:var(--linen)}
 .mapa svg{display:block;width:100%;height:100%}
-.m-fondo{fill:#2c1620}
-.m-parque{fill:rgba(142,108,138,.28)}
-.m-rio{fill:none;stroke:rgba(231,178,150,.35);stroke-width:7;stroke-linecap:round}
+.m-fondo{fill:#24130a}
+.m-parque{fill:rgba(184,129,167,.28)}
+.m-rio{fill:none;stroke:rgba(236,196,160,.35);stroke-width:7;stroke-linecap:round}
 .m-calle path{fill:none;stroke:rgba(246,235,227,.16);stroke-width:3}
 .m-fina path{stroke-width:1.2;stroke:rgba(246,235,227,.08)}
 .mapa:hover .m-calle path{stroke:rgba(246,235,227,.24)}
 .pin{position:absolute;left:52%;top:46%;width:44px;height:44px;transform:translate(-50%,-80%);display:grid;place-items:center}
-.pin svg{width:40px;height:40px;fill:var(--peach);stroke:#3a1f29;stroke-width:1.2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));animation:pin-salta var(--ciclo) var(--suave) infinite}
-.pin svg circle{fill:#3a1f29}
+.pin svg{width:40px;height:40px;fill:var(--peach);stroke:#2a150b;stroke-width:1.2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));animation:pin-salta var(--ciclo) var(--suave) infinite}
+.pin svg circle{fill:#2a150b}
 .pin-onda{position:absolute;left:50%;top:88%;width:18px;height:8px;margin-left:-9px;border-radius:50%;border:1.5px solid var(--peach);opacity:0;animation:pin-onda 3s ease-out infinite}
 .pin-onda + .pin-onda{animation-delay:1.5s}
 @keyframes pin-salta{0%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
 @keyframes pin-onda{0%{transform:scale(.6);opacity:.8}100%{transform:scale(4);opacity:0}}
-.mapa-nombre{position:absolute;left:12px;bottom:12px;right:12px;display:grid;gap:0;padding:10px 14px;border-radius:12px;background:rgba(40,18,27,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:.9rem;color:var(--linen-dim)}
+.mapa-nombre{position:absolute;left:12px;bottom:12px;right:12px;display:grid;gap:0;padding:10px 14px;border-radius:12px;background:rgba(34,17,9,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:.9rem;color:var(--linen-dim)}
 .mapa-nombre b{font-family:var(--f-display);letter-spacing:.1em;color:var(--linen);font-size:1rem}
 .online-card{display:flex;gap:16px;align-items:center;padding:18px;border-radius:18px;border:1px solid var(--line);background:var(--panel)}
 .online-card p{color:var(--linen-dim)} .online-card b{color:var(--linen)}
-.ondas-online{flex:none;position:relative;width:54px;height:54px;border-radius:50%;background:rgba(231,178,150,.14)}
+.ondas-online{flex:none;position:relative;width:54px;height:54px;border-radius:50%;background:rgba(236,196,160,.14)}
 .ondas-online span{position:absolute;inset:0;border-radius:50%;border:1px solid var(--peach);opacity:0;animation:pin-onda 3s ease-out infinite}
 .ondas-online span:nth-child(2){animation-delay:1s}.ondas-online span:nth-child(3){animation-delay:2s}
 .panel .bring{grid-template-columns:1fr}
@@ -322,17 +325,17 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
 .flujo-linea .punto{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--linen-dim);transition:all .4s}
 .flujo-linea .nom{font-family:var(--f-display);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;line-height:1.2;text-align:center}
 .flujo-linea button[aria-selected="true"]{color:var(--linen)}
-.flujo-linea button[aria-selected="true"] .punto{background:var(--peach);border-color:var(--peach);box-shadow:0 0 0 5px rgba(231,178,150,.18);transform:scale(1.2)}
+.flujo-linea button[aria-selected="true"] .punto{background:var(--peach);border-color:var(--peach);box-shadow:0 0 0 5px rgba(236,196,160,.18);transform:scale(1.2)}
 .flujo-linea li{position:relative}
 .flujo-linea li + li::before{content:"";position:absolute;top:calc(.74rem * 1.65 + 6px + 5px);right:calc(50% + 10px);width:calc(100% - 20px);height:1px;background:var(--line);transition:background .6s}
 .flujo-linea li:has(button.hecho) + li::before,.flujo-linea li:has(button[aria-selected="true"])::before{background:var(--peach)}
-.flujo-linea button.hecho .punto{background:rgba(231,178,150,.45);border-color:rgba(231,178,150,.6)}
+.flujo-linea button.hecho .punto{background:rgba(236,196,160,.45);border-color:rgba(236,196,160,.6)}
 .flujo-texto{text-align:center;min-height:3.3em;font-size:1.02rem}
 .flujo-texto.cambia{animation:subir .6s cubic-bezier(.2,.7,.2,1) both}
 @media (max-width:420px){.flujo-linea .nom{font-size:.58rem}}
 
 .boleto{position:relative;display:grid;grid-template-columns:1fr auto;border-radius:16px;overflow:hidden;
-  background:linear-gradient(120deg,rgba(142,108,138,.55),rgba(91,44,58,.75) 55%,rgba(231,178,150,.35));border:1px solid rgba(231,178,150,.45);
+  background:linear-gradient(120deg,rgba(184,129,167,.55),rgba(118,52,72,.75) 55%,rgba(236,196,160,.35));border:1px solid rgba(236,196,160,.45);
   box-shadow:0 18px 40px rgba(0,0,0,.25);transition:transform .6s cubic-bezier(.3,.8,.3,1)}
 .boleto:hover{transform:rotate(-1deg) translateY(-2px)}
 .b-izq{display:grid;gap:4px;padding:16px 18px;min-width:0}
@@ -357,12 +360,105 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
   border:1px solid var(--line);background:rgba(246,235,227,.05);color:var(--linen);font:inherit;cursor:pointer;transition:background .3s,border-color .3s}
 .dato span{grid-column:1;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--linen-dim)}
 .dato b{grid-column:1;font-weight:500;font-size:.98rem;font-variant-numeric:tabular-nums;letter-spacing:0;min-width:0;overflow-wrap:anywhere}
-.dato i{grid-column:2;grid-row:1/3;font-style:normal;font-size:.75rem;color:var(--peach);border:1px solid rgba(231,178,150,.45);border-radius:999px;padding:3px 10px}
-.dato:hover{border-color:rgba(231,178,150,.5)}
+.dato i{grid-column:2;grid-row:1/3;font-style:normal;font-size:.75rem;color:var(--peach);border:1px solid rgba(236,196,160,.45);border-radius:999px;padding:3px 10px}
+.dato:hover{border-color:rgba(236,196,160,.5)}
 .dato.copiado{background:rgba(185,211,168,.14);border-color:var(--ok)}
 .dato.copiado i{color:var(--ok);border-color:var(--ok)}
 .dato.fijo{cursor:default;grid-template-columns:1fr}
 @media (prefers-reduced-motion:reduce){.pin svg,.pin-onda,.ondas-online span,.panel,.flujo-texto.cambia{animation:none!important}.tab-luz,.boleto{transition:none}}
+
+/* ===== Sistema Sadhana (igual que sadhanaholistics.com) =====
+   Foto de velas fija con fade, sin velo oscuro; tarjetas de vidrio incienso para el texto;
+   degradado ámbar → incienso con toque vino/rosa; barra y pie en píldora translúcida. */
+@font-face{font-family:"Glacial Indifference";font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/glacial-indifference-400.woff2) format("woff2")}
+@font-face{font-family:"Glacial Indifference";font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/glacial-indifference-400-italic.woff2) format("woff2")}
+@font-face{font-family:"Glacial Indifference";font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/glacial-indifference-700.woff2) format("woff2")}
+:root{--inc:radial-gradient(80% 160% at 0% 100%,rgba(128,60,82,.42),transparent 65%),radial-gradient(90% 160% at 100% 0%,rgba(184,129,167,.3),transparent 65%),linear-gradient(120deg,#b8723f 0%,#a45a2a 55%,#8f4a25 100%);
+  --inc-glass:radial-gradient(40% 220% at 0% 50%,rgba(118,52,72,.40),transparent 75%),radial-gradient(45% 220% at 100% 50%,rgba(184,129,167,.26),transparent 75%),linear-gradient(90deg,rgba(143,74,37,.66) 0%,rgba(164,90,42,.56) 50%,rgba(201,135,90,.5) 100%);
+  --sombra-txt:0 1px 3px rgba(30,12,4,.6),0 0 18px rgba(30,12,4,.35)}
+body{font-size:17.5px;letter-spacing:.005em;padding-bottom:96px}
+h1,h2,h3{font-weight:400;letter-spacing:.02em}
+.hero h1{font-weight:700;letter-spacing:.03em}
+.eyebrow{letter-spacing:.2em;font-weight:700}
+.it,.hero .sub,.closing blockquote{font-style:normal}
+.mk{display:inline-block;background:currentColor;-webkit-mask:var(--mk) center/contain no-repeat;mask:var(--mk) center/contain no-repeat;flex-shrink:0}
+.mk-logo2{--mk:url("/assets/img/logo-secundario.png");aspect-ratio:560/123;height:24px}
+.mk-sello{--mk:url("/assets/img/sello.png");aspect-ratio:1;width:76px}
+
+/* Foto de velas */
+.lienzo{background:url("/assets/img/velas.jpg") center 40%/cover no-repeat;animation:lienzo-resp-s var(--ciclo) var(--suave) infinite}
+@keyframes lienzo-resp-s{0%,100%{transform:scale(1.02)}40%{transform:scale(1.05)}}
+.lienzo::before{display:none}
+.lienzo::after{opacity:1;mix-blend-mode:normal;background:linear-gradient(180deg,transparent 0%,transparent 55%,rgba(34,17,9,.35) 100%)}
+
+/* Barra flotante en píldora, translúcida, una sola línea */
+body::before{display:none}
+.top{top:calc(8px + env(safe-area-inset-top,0px));margin:8px auto 0;width:min(720px,100%);border-radius:999px;border:0;
+  padding:6px 6px 6px 18px;background:var(--inc-glass);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+  box-shadow:0 10px 30px -18px rgba(40,15,5,.5),inset 0 0 0 1px rgba(255,255,255,.14)}
+.top .brand{display:grid;justify-items:start;gap:1px;color:#fff;font-style:normal;line-height:1}
+.top .brand small{font-size:.46rem;letter-spacing:.3em;text-shadow:0 1px 3px rgba(40,15,5,.55)}
+.top .brand .mk-logo2{filter:drop-shadow(0 1px 2px rgba(40,15,5,.45))}
+.top .btn{background:#fff;color:#2a150b;text-shadow:none}
+.top .btn:hover{background:#fff3e8}
+.progreso{background:linear-gradient(90deg,#c9875a,#e2b3b8)}
+
+/* Botones */
+.btn{font-family:var(--f-body);font-weight:700;letter-spacing:.12em}
+.btn-primary{background:var(--inc);color:#fff;text-shadow:0 1px 2px rgba(60,25,8,.35);box-shadow:0 10px 24px -14px rgba(60,25,8,.7)}
+.btn-primary:hover{background:var(--inc);filter:brightness(1.07)}
+.btn-ghost{background:rgba(34,17,9,.42);border-color:rgba(255,248,241,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.btn-ghost:hover{border-color:#fff}
+
+/* Hero sobre la foto, sin caja; la sombra da el contraste */
+.hero{padding-block:44px 30px}
+.hero .eyebrow,.hero h1,.hero .sub,.hero .price,.hero .countdown,.hero .desliza{text-shadow:var(--sombra-txt)}
+.hero .facts li{background:rgba(34,17,9,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-color:rgba(255,248,241,.32)}
+.countdown b{color:#ffe2c6}
+
+/* Cada sección es una tarjeta de vidrio incienso: la foto se ve, el texto se lee */
+main > section:not(.hero):not(#reservar){margin-block:14px;padding:30px 20px;border-radius:28px;
+  background:linear-gradient(180deg,rgba(38,19,10,.62),rgba(34,17,9,.7));backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
+  box-shadow:inset 0 0 0 1px rgba(255,240,226,.12)}
+@media (min-width:560px){main > section:not(.hero):not(#reservar){padding:36px 32px}}
+.reserve{background:linear-gradient(180deg,rgba(38,19,10,.74),rgba(30,15,8,.82));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:rgba(240,205,168,.45);border-radius:28px}
+.check,.moment,.panel .bring,.online-card{background:rgba(255,248,241,.06)}
+.check[aria-pressed="true"] .box::after{border-color:#2a150b}
+.boleto{background:var(--inc);border-color:rgba(255,226,198,.5)}
+.closing{margin-block:14px;border-radius:28px;padding:40px 20px}
+.closing blockquote{text-shadow:var(--sombra-txt)}
+
+/* Plegables: solo el título, con + que gira */
+.plegable{gap:0!important}
+.plegable > .pl-head{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:6px;justify-items:center;position:relative;padding:0 48px;text-align:center;-webkit-tap-highlight-color:transparent}
+.plegable > .pl-head h2{font-size:clamp(1.25rem,4.6vw,1.7rem)}
+.plegable > .pl-head::after{content:"";position:absolute;right:0;top:50%;width:38px;height:38px;margin-top:-19px;border-radius:50%;border:1.5px solid rgba(255,248,241,.45);
+  background:no-repeat center/16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E");transition:transform .3s}
+.plegable > .pl-head[aria-expanded="true"]::after{transform:rotate(45deg)}
+.plegable > .pl-head:focus-visible{outline:2px solid var(--peach);outline-offset:6px;border-radius:14px}
+.plegable > .pl-body{display:grid;gap:22px;padding-top:22px}
+.plegable > .pl-body[hidden]{display:none!important}
+main > section.plegable:not(.hero){padding-block:22px}
+
+/* Pie en píldora translúcida incienso */
+footer{margin:14px 0 0;padding:26px 20px;border-radius:28px;background:var(--inc-glass);backdrop-filter:blur(12px) saturate(1.1);-webkit-backdrop-filter:blur(12px) saturate(1.1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);color:#fff7f0;text-shadow:0 1px 2px rgba(40,15,5,.45);justify-items:center}
+footer a{color:#ffe9d8}
+footer .mk-sello{color:#ffe2cc;width:68px}
+footer .casa{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+footer .legal{border:0;background:none;padding:0;border-radius:0}
+footer .legal summary{padding:0;font-size:.85rem;font-family:var(--f-body);letter-spacing:0;list-style:none;display:inline-flex;gap:6px;opacity:.9;text-decoration:underline;text-underline-offset:3px}
+footer .legal summary::-webkit-details-marker{display:none}
+footer .legal summary::after{content:"+";position:static;transform:none;color:inherit;font-size:1rem;font-weight:700}
+footer .legal[open] summary::after{content:"–"}
+footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:.85rem}
+
+/* Barra de reserva en móvil: también píldora */
+.dock{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));border-radius:999px;border:0;padding:8px 8px 8px 20px;
+  background:var(--inc-glass);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 10px 30px -14px rgba(40,15,5,.6),inset 0 0 0 1px rgba(255,255,255,.14);text-shadow:0 1px 2px rgba(40,15,5,.5)}
+.dock.hide{transform:translateY(140%)}
+.dock .btn{background:#fff;color:#2a150b;text-shadow:none}
+@media (min-width:900px){body{padding-bottom:30px}}
 </style>
 </head>
 <body>
@@ -372,7 +468,7 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
 <div class="progreso" aria-hidden="true"></div>
 
 <header class="top">
-  <a class="brand" href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>
+  <a class="brand" href="https://sadhanaholistics.com/" aria-label="Sadhana, centro holístico, ir al inicio"><span class="mk mk-logo2" aria-hidden="true"></span><small>CENTRO HOLÍSTICO</small></a>
   <a class="btn btn-primary btn-sm" href="#reservar">Reservar</a>
 </header>
 
@@ -398,7 +494,6 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     <a class="desliza" href="#t-tension">Desliza<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
   </section>
 
-  <hr class="sep">
 
   <!-- AUTODIAGNÓSTICO -->
   <section aria-labelledby="t-tension">
@@ -414,7 +509,6 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     </div>
   </section>
 
-  <hr class="sep">
 
   <!-- EXPERIENCIA -->
   <section aria-labelledby="t-exp">
@@ -458,10 +552,9 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     </div>
   </section>
 
-  <hr class="sep">
 
   <!-- CIENCIA -->
-  <section aria-labelledby="t-sci">
+  <section class="plegable" aria-labelledby="t-sci">
     <p class="eyebrow" style="text-align:center">El porqué</p>
     <h2 id="t-sci">Lo que la ciencia ya sabe de respirar y vibrar</h2>
     <div class="facts-sci">
@@ -482,7 +575,6 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     <p class="note">Hay estudios pequeños que relacionan el canto del OM con menor actividad en zonas del cerebro ligadas a la alerta. Son resultados preliminares, y así te los contamos.</p>
   </section>
 
-  <hr class="sep">
 
   <!-- RESPIRA AHORA -->
   <section id="practica" aria-labelledby="t-breath">
@@ -501,10 +593,9 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     </div>
   </section>
 
-  <hr class="sep">
 
   <!-- FACILITADORES -->
-  <section aria-labelledby="t-fac">
+  <section class="plegable" aria-labelledby="t-fac">
     <p class="eyebrow" style="text-align:center">Te acompañan</p>
     <h2 id="t-fac">Facilitadores</h2>
     <div class="people">
@@ -525,7 +616,6 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
     </div>
   </section>
 
-  <hr class="sep">
 
   <!-- DETALLES -->
   <section id="detalles" aria-labelledby="t-det">
@@ -639,7 +729,7 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
   </section>
 
   <!-- FAQ -->
-  <section aria-labelledby="t-faq">
+  <section class="plegable" aria-labelledby="t-faq">
     <h2 id="t-faq">Preguntas frecuentes</h2>
     <div class="faq">
       <details><summary>¿Necesito experiencia en meditación?</summary><p>No. Todo es guiado paso a paso. Si nunca has meditado, esta es una buena primera vez.</p></details>
@@ -658,13 +748,15 @@ body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
   </section>
 
   <footer>
+    <span class="mk mk-sello" aria-hidden="true"></span>
+    <a class="casa" href="https://sadhanaholistics.com/">Conoce Sadhana →</a>
     <div class="igs">
       <a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>
       <a href="https://www.instagram.com/demin.consciente/" target="_blank" rel="noopener">@demin.consciente</a>
       <a href="https://www.instagram.com/dakini.isa/" target="_blank" rel="noopener">@dakini.isa</a>
     </div>
     <p>Sadhana · Satélite, Monterrey, N.L.</p>
-    <p>Práctica complementaria de bienestar. No sustituye atención médica ni psicológica.</p>
+    <details class="legal"><summary>Avisos</summary><p>Práctica complementaria de bienestar. No diagnostica ni trata enfermedades y no sustituye atención médica ni psicológica.</p></details>
   </footer>
 </main>
 
@@ -704,7 +796,7 @@ const waURL = text => (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "h
     <g class="rays" fill="#f6ebe3" opacity=".9">${rays}</g>
     <g class="core">
       <circle cx="100" cy="100" r="56" fill="none" stroke="#f6ebe3" stroke-width="2.2"/>
-      <circle cx="100" cy="100" r="49" fill="rgba(46,22,32,.35)" stroke="#f6ebe3" stroke-width=".8" opacity=".9"/>
+      <circle cx="100" cy="100" r="49" fill="rgba(38,19,10,.35)" stroke="#f6ebe3" stroke-width=".8" opacity=".9"/>
       <text x="100" y="101" text-anchor="middle" dominant-baseline="central" fill="#f6ebe3" font-size="54" font-family='"Tiro Devanagari Sanskrit","Noto Serif Devanagari",serif'>ॐ</text>
     </g></svg>`;
 })();
@@ -1063,6 +1155,20 @@ document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener(
   const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); dock.classList.toggle("hide", [...vis.values()].some(Boolean)); }, { threshold: .15 });
   io.observe($(".hero")); io.observe($("#reservar"));
 })();
+
+/* Plegables: el título abre y cierra; sin JS todo queda abierto */
+document.querySelectorAll('section.plegable').forEach((sec, i) => {
+  const h2 = sec.querySelector('h2'); if (!h2) return;
+  const eyebrow = h2.previousElementSibling && h2.previousElementSibling.classList.contains('eyebrow') ? h2.previousElementSibling : null;
+  const head = document.createElement('button'); head.type = 'button'; head.className = 'pl-head';
+  const body = document.createElement('div'); body.className = 'pl-body'; body.id = 'pl-' + i; body.hidden = true;
+  head.setAttribute('aria-expanded', 'false'); head.setAttribute('aria-controls', body.id);
+  [...sec.children].forEach(el => { if (el !== h2 && el !== eyebrow) body.appendChild(el); });
+  if (eyebrow) head.appendChild(eyebrow);
+  head.appendChild(h2);
+  sec.append(head, body);
+  head.addEventListener('click', () => { const abre = body.hidden; body.hidden = !abre; head.setAttribute('aria-expanded', String(abre)); });
+});
 </script>
 
 </body>

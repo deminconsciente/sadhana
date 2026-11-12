@@ -10,6 +10,7 @@ Sitio de Sadhana en un Cloudflare Worker, con el mismo flujo que www.deminconsci
 | sadhanaholistics.com/ | `public/index.html` (landing oficial de Sadhana) |
 | sadhanaholistics.com/om/ | `public/om/index.html` (El Poder del OM) |
 | audio de la prueba | `public/audios/om-prueba-1min.mp3` |
+| recursos compartidos | `public/assets/` (Glacial Indifference, logo secundario, sello, foto de velas) |
 
 Página nueva = carpeta nueva en `public/` con su `index.html` (ej. `public/residencia/index.html` → `/residencia/`).
 www.sadhanaholistics.com redirige al dominio sin www. Los audios pasan por `src/range.js`
