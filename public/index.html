@@ -886,6 +886,29 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
 .aporte input[type=range]{width:100%;height:30px;accent-color:#a45a2a}
 .aporte .chips{display:flex;gap:8px;flex-wrap:wrap}
 .aporte .chip[aria-pressed="true"]{background:#a45a2a;color:#fff;border-color:transparent}
+
+/* v35: boleto en vivo (de la /om) y datos de pago antes de apartar */
+.boleto{position:relative;display:grid;grid-template-columns:1fr auto;border-radius:18px;overflow:hidden;color:#fff7f0;
+  background:radial-gradient(80% 160% at 0% 100%,rgba(128,60,82,.42),transparent 65%),radial-gradient(90% 160% at 100% 0%,rgba(184,129,167,.3),transparent 65%),linear-gradient(120deg,#b8723f 0%,#a45a2a 55%,#8f4a25 100%);
+  border:1px solid rgba(255,226,198,.5);box-shadow:0 16px 34px -14px rgba(60,25,8,.55);text-shadow:0 1px 2px rgba(40,15,5,.35)}
+.b-izq{display:grid;gap:4px;padding:16px 18px;min-width:0}
+.b-eyebrow{font-family:var(--f-ui);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+.b-titulo{font-family:var(--f-display);font-size:1.22rem;letter-spacing:.04em;font-weight:700}
+.b-nombre{font-size:1.08rem;color:#ffe2cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s}
+.b-nombre.vacio{opacity:.6}
+.b-datos{font-family:var(--f-ui);font-size:.8rem;opacity:.9}
+.b-der{display:grid;place-items:center;gap:2px;padding:14px 18px;border-left:2px dashed rgba(255,240,228,.45);position:relative;min-width:84px}
+.b-der::before,.b-der::after{content:"";position:absolute;left:-10px;width:18px;height:18px;border-radius:50%;background:var(--surface,#fbf7f2)}
+.b-der::before{top:-9px}.b-der::after{bottom:-9px}
+.b-om{font-size:2rem;line-height:1}
+.b-precio{font-family:var(--f-ui);font-weight:700;font-size:.95rem;letter-spacing:.06em}
+.b-sello{position:absolute;right:96px;bottom:12px;transform:rotate(-8deg);font-family:var(--f-ui);font-weight:700;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;padding:3px 8px;border:1.5px solid #ffd9e6;color:#ffd9e6;border-radius:6px;opacity:.95}
+.pago-datos{display:grid;gap:10px}
+.pago-datos .num{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;text-align:right}
+.pago-datos .cp{min-height:30px;padding:4px 10px}
+.b-sello{top:12px;bottom:auto;right:98px}
+.ticket.con-boleto .tk-top,.ticket.con-boleto .tear{display:none}
+.ticket.con-boleto .tk-body{border-top-left-radius:inherit;border-top-right-radius:inherit}
 </style>
 
 <div class="lienzo" aria-hidden="true"></div>
@@ -1669,12 +1692,12 @@ function pasoDatos(){
   return {nombre:"Tus datos",
     pintar(el, o, err){
       o.datos ||= {...ST.datos};
-      el.innerHTML = `
+      el.innerHTML = `${F.simbolo ? `<div id="bolVivo">${boletoDe(o)}</div>` : ""}
       <div class="field"><label class="lbl" for="fNom">Nombre completo</label><input class="inp" id="fNom" autocomplete="name" value="${esc(o.datos.nombre)}">${err&&!o.datos.nombre.trim()?`<span class="err">Escribe tu nombre.</span>`:""}</div>
       <div class="field"><label class="lbl" for="fTel">WhatsApp</label><input class="inp" id="fTel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" value="${esc(o.datos.tel)}">${err&&o.datos.tel.replace(/\D/g,"").length<10?`<span class="err">Escribe un número de 10 dígitos para enviarte tu ticket.</span>`:""}</div>
       <div class="field"><label class="lbl" for="fMail">Correo</label><input class="inp" id="fMail" type="email" autocomplete="email" placeholder="tu@correo.com" value="${esc(o.datos.email)}">${err&&!/^\S+@\S+\.\S+$/.test(o.datos.email)?`<span class="err">Revisa tu correo, ahí llega tu acceso.</span>`:""}</div>
       <p class="note">Tu ticket llega a tu WhatsApp y a tu correo. Guardamos tus datos solo para tus reservas.</p>`;
-      el.querySelector("#fNom").oninput = e => o.datos.nombre = e.target.value;
+      el.querySelector("#fNom").oninput = e => { o.datos.nombre = e.target.value; const n = el.querySelector("#bolVivo .b-nombre"); if (n){ const v = o.datos.nombre.trim(); n.textContent = v || "Tu lugar en el círculo"; n.classList.toggle("vacio", !v); } };
       el.querySelector("#fTel").oninput = e => o.datos.tel = e.target.value;
       el.querySelector("#fMail").oninput = e => o.datos.email = e.target.value;
     },
@@ -1690,15 +1713,18 @@ function pasoPago(){
       const MET = {tarjeta:["tarjeta","Tarjeta de crédito o débito","Pago seguro con Stripe"], mercadopago:["mercadopago","Mercado Pago","Saldo, tarjeta o meses sin intereses"], transferencia:["transferencia","Transferencia u OXXO","Banorte. Tu lugar se aparta 24 h y mandas tu comprobante por WhatsApp"]};
       const lista = CONFIG.pagos.modo === "stripe" ? [MET.tarjeta, MET.transferencia] : CONFIG.pagos.modo === "mercadopago" ? [MET.mercadopago, MET.transferencia] : [MET.transferencia];
       if (!lista.some(m => m[0] === o.metodo)) o.metodo = lista[0][0];
-      el.innerHTML = `
-        <dl class="sum">${F.resumen(o).map(([k,v])=>`<div><span>${k}</span><span>${esc(v)}</span></div>`).join("")}<div><span>Total</span><span class="price">${money(total)} MXN</span></div></dl>
-        <div class="opts" role="radiogroup" aria-label="Método de pago">
+      o.folio ||= folio();
+      const concepto = `${o.folio} ${((o.datos||{}).nombre||"").trim()}`.trim();
+      el.innerHTML = `${F.simbolo ? boletoDe(o) : `<dl class="sum">${F.resumen(o).map(([k,v])=>`<div><span>${k}</span><span>${esc(v)}</span></div>`).join("")}<div><span>Total</span><span class="price">${money(total)} MXN</span></div></dl>`}
+        <div class="opts" role="radiogroup" aria-label="Método de pago" ${lista.length===1?"hidden":""}>
           ${lista
             .map(([v,a,b])=>`<label class="opt"><input type="radio" name="met" value="${v}" ${o.metodo===v?"checked":""}><span><b>${a}</b><small>${b}</small></span><span></span></label>`).join("")}
         </div>
+        ${o.metodo==="transferencia" ? datosPagoHTML(total, concepto) : ""}
         <button class="btn btn-p" id="payBtn" style="width:100%">${o.metodo==="transferencia"?"Apartar y enviar por WhatsApp":`Pagar ${money(total)}`}</button>
         <button class="btn btn-g" id="payBack" style="width:100%">Atrás</button>
-        <p class="note">${o.metodo==="transferencia"?"Se abre WhatsApp con tu reserva para Sadhana. Después verás la CLABE para pagar; tu lugar queda apartado 24 h.":"Serás redirigido a la pasarela de pago."}</p>`;
+        <p class="note">${o.metodo==="transferencia"?"Al apartar se abre WhatsApp con tu reserva para Sadhana. Tu lugar queda apartado 24 h mientras envías tu comprobante.":"Serás redirigido a la pasarela de pago."}</p>`;
+      montarCopias(el);
       el.querySelectorAll("input[name=met]").forEach(r => r.onchange = e => { o.metodo = e.target.value; pintar(); });
       el.querySelector("#payBack").onclick = () => { F.paso--; pintar(); };
       el.querySelector("#payBtn").onclick = async () => {
@@ -1751,7 +1777,7 @@ function folio(){ return "SAD-" + Math.random().toString(36).slice(2,6).toUpperC
 function emitir(o){
   if (o.ticket) return;
   const t = F.armar(o);
-  t.folio = folio(); t.creado = new Date().toISOString();
+  t.folio = o.folio || folio(); t.creado = new Date().toISOString();
   t.estado = o.pago && o.pago.pendiente ? "pendiente" : "confirmado";
   t.nombre = o.datos ? o.datos.nombre : ST.datos.nombre;
   t.pagado = F.total ? F.total(o) : 0; t.metodo = o.pago ? o.metodo : (t.credito ? "credito" : "sin costo");
@@ -1777,7 +1803,8 @@ function ticketHTML(t, nuevo){
   const ini = t.ini ? new Date(t.ini) : null;
   const pend = t.estado === "pendiente";
   return `${nuevo ? `<p style="font-size:1.06rem">${pend ? `Listo, ${esc(t.nombre.split(" ")[0])}. Tu lugar queda apartado 24 horas mientras envías tu comprobante.` : `Listo, ${esc(t.nombre.split(" ")[0])}. ${esc(t.mensaje || "Tu lugar está confirmado.")}`}</p>` : ""}
-  <div class="ticket">
+  ${t.simbolo ? boletoHTML({titulo:t.titulo, nombre:t.nombre, cuando: ini?`${fFecha(ini)} · ${fHora(ini)}`:"", modo:t.modo, monto:t.pagado, simbolo:t.simbolo, estado: pend ? "Por confirmar" : "Confirmado"}) : ""}
+  <div class="ticket ${t.simbolo?"con-boleto":""}">
     <div class="tk-top"><span class="mk mk-sello tk-seal" aria-hidden="true"></span><p class="eyebrow">${esc(t.tipo)}</p><h3>${esc(t.titulo)}</h3>${ini?`<p>${fFechaL(ini)} · ${fHora(ini)}</p>`:""}</div>
     <div class="tear"></div>
     <div class="tk-body">
@@ -1791,7 +1818,7 @@ function ticketHTML(t, nuevo){
     </div>
   </div>
   ${nuevo ? `<a class="btn btn-p wa-go" data-wa="1" href="${waLink(t)}" target="_blank" rel="noopener" style="width:100%">${t.enviado?"Volver a enviar por WhatsApp":"Enviar mi reserva por WhatsApp"}</a>${t.enviado?"":`<p class="note" style="margin:0">Sin este mensaje Sadhana no recibe tu reserva.</p>`}` : ""}
-  ${pend ? `<p class="lbl" style="margin:0">Datos para tu transferencia o depósito</p>` + bancoHTML(t.pagado) : ""}
+  ${pend ? datosPagoHTML(t.pagado, `${t.folio} ${t.nombre||""}`.trim()) : ""}
   <div class="tk-acts">
     ${ini?`<a class="btn btn-g btn-s" href="${gcal(t)}" target="_blank" rel="noopener">Agregar a Google Calendar</a>`:""}
     ${t.ini?`<a class="btn btn-g btn-s" href="${CONFIG.mapa}" target="_blank" rel="noopener">Cómo llegar</a>`:""}
@@ -1800,6 +1827,39 @@ function ticketHTML(t, nuevo){
   </div>
   ${t.siguiente ? `<p class="note">${esc(t.siguiente)}</p>` : ""}
   ${t.daCreditos && nuevo && !pend ? `<button class="btn btn-p" data-goto="agenda" style="width:100%">Reservar mi primera clase</button>` : ""}`;
+}
+function boletoHTML(b){
+  const nombre = (b.nombre||"").trim();
+  return `<div class="boleto ${b.estado?"listo":""}" aria-hidden="true">
+    <div class="b-izq"><span class="b-eyebrow">Sadhana Holistics</span><span class="b-titulo">${esc(b.titulo||"")}</span>
+      <span class="b-nombre ${nombre?"":"vacio"}">${nombre?esc(nombre):"Tu lugar en el círculo"}</span>
+      <span class="b-datos">${esc([b.cuando,b.modo].filter(Boolean).join(" · "))}</span></div>
+    <div class="b-der"><span class="b-om">${b.simbolo||"✦"}</span><span class="b-precio">${b.monto?money(b.monto):"Sin costo"}</span></div>
+    <span class="b-sello">${b.estado||"Por confirmar"}</span></div>`;
+}
+function boletoDe(o, estado){
+  const r = Object.fromEntries((F.resumen ? F.resumen(o) : []));
+  return boletoHTML({titulo:F.titulo, nombre:(o.datos||ST.datos||{}).nombre, cuando:F.cuando||r["Cuándo"], modo:r["Modalidad"], monto:F.total?F.total(o):0, simbolo:F.simbolo, estado});
+}
+function datosPagoHTML(monto, concepto){
+  const b = CONFIG.transferencia, fmt = n => n.replace(/(\d{4})(?=\d)/g,"$1 ");
+  const fila = (k, v, copia) => `<div><span>${k}</span><span class="num">${v}${copia!=null?` <button type="button" class="btn btn-g btn-s cp" data-copy="${esc(copia)}">Copiar</button>`:""}</span></div>`;
+  const todo = `Banco: ${b.banco}\nTitular: ${b.titular}\nCLABE: ${b.clabe}\nMonto: ${monto}\nConcepto: ${concepto}`;
+  return `<div class="pago-datos"><p class="lbl" style="margin:0">Paga por transferencia (SPEI) o depósito en OXXO</p><dl class="sum">
+    ${fila("Monto", `<b>${money(monto)} MXN</b>`, String(monto))}
+    ${fila("Banco", b.banco, null)}
+    ${fila("Titular", esc(b.titular), b.titular)}
+    ${fila("CLABE", fmt(b.clabe), b.clabe)}
+    ${fila("Tarjeta (OXXO)", fmt(b.tarjeta), b.tarjeta)}
+    ${fila("Concepto", esc(concepto), concepto)}</dl>
+    <button type="button" class="btn btn-g" data-copy="${esc(todo)}" style="width:100%">Copiar todos los datos</button>
+    <p class="note" style="margin:0">Abre la app de tu banco, pega la CLABE y el monto, y escribe el concepto. Luego manda tu comprobante por WhatsApp.</p></div>`;
+}
+function montarCopias(el){
+  el.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
+    const txt = b.textContent;
+    try { navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = "Copiado ✓"; setTimeout(()=>b.textContent = txt, 1600); }, () => {}); } catch(e){}
+  });
 }
 function bancoHTML(monto){
   const b = CONFIG.transferencia, fmt = n => n.replace(/(\d{4})(?=\d)/g,"$1 ");
@@ -1869,12 +1929,13 @@ function flujoClase(id, modoIni, aporteIni){
         }
       }},
     pasoDatos(), pasoPago(), pasoTicket()];
-  abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, pasosBase,
+  abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, pasosBase, simbolo: /^om-/.test(x.id) ? "ॐ" : "✦",
+    cuando: `${fFecha(x.ini)} · ${fHora(x.ini)}`,
     total: o => o.pagoCon==="credito" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
     resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
     armar: o => ({tipo: x.cat==="evento"?"Evento":"Clase", titulo:x.titulo, ref:x.id, ini:x.ini.toISOString(), dur:x.dur,
       usaCredito: o.pagoCon==="credito" ? "clases" : null, credito: o.pagoCon==="credito",
-      detalle:[["Guía",x.guia],["Modalidad",o.modo]],
+      detalle:[["Guía",x.guia],["Modalidad",o.modo]], simbolo: /^om-/.test(x.id) ? "ॐ" : "✦", modo:o.modo,
       siguiente: o.modo==="En línea" ? "El enlace de la transmisión llega a tu WhatsApp el día del evento." : "Llega 10 minutos antes y trae ropa cómoda. Usa el botón Cómo llegar para abrir la ubicación."})
   });
 }
