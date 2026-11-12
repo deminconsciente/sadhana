@@ -13,6 +13,12 @@
     // (El plan gratis da 100,000 visitas al día al Worker; sobra.)
     "run_worker_first": true
   },
+  // Reservas. Crear con: npx wrangler d1 create sadhana-reservas
+  // y aplicar el esquema: npx wrangler d1 migrations apply sadhana-reservas --remote
+  "d1_databases": [
+    { "binding": "DB", "database_name": "sadhana-reservas", "database_id": "PENDIENTE", "migrations_dir": "migrations" }
+  ],
+  // La contraseña de /admin es un secreto: npx wrangler secret put ADMIN_CLAVE
   "observability": { "enabled": true },
   // Se activan cuando el dominio ya esté en Cloudflare (ver README, paso 4).
   "routes": [
