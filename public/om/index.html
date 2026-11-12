@@ -459,6 +459,16 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 .dock.hide{transform:translateY(140%)}
 .dock .btn{background:#fff;color:#2a150b;text-shadow:none}
 @media (min-width:900px){body{padding-bottom:30px}}
+
+/* Pasos de la reserva estándar */
+.elige{gap:10px}
+#irReserva{width:100%;min-height:54px}
+.pasos-res{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;counter-reset:p}
+.pasos-res li{counter-increment:p;display:grid;gap:2px;justify-items:center;align-content:start;text-align:center;padding:12px 6px;border-radius:16px;background:rgba(255,248,241,.06);border:1px solid var(--line)}
+.pasos-res li::before{content:counter(p);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--inc);color:#fff;font-weight:700;font-size:.85rem;margin-bottom:4px}
+.pasos-res b{font-size:.92rem}
+.pasos-res span{font-size:.76rem;color:var(--linen-dim);line-height:1.3}
+.b-nombre{font-style:normal}
 </style>
 </head>
 <body>
@@ -666,64 +676,34 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
     <div class="reserve">
       <div style="display:grid;gap:8px;text-align:center">
         <p class="eyebrow">Aparta tu lugar</p>
-        <h2 id="t-res">Reserva en 30 segundos</h2>
+        <h2 id="t-res">Reserva en tres pasos</h2>
       </div>
 
       <div class="boleto" id="boleto" aria-hidden="true">
         <div class="b-izq">
           <span class="b-eyebrow">Sadhana Holistics</span>
           <span class="b-titulo">El Poder del OM</span>
-          <span class="b-nombre" id="bNombre">Tu nombre aquí</span>
+          <span class="b-nombre">Tu lugar en el círculo</span>
           <span class="b-datos">Dom 22 nov · 10:00 AM · <span id="bModo">Presencial</span></span>
         </div>
         <div class="b-der"><span class="b-om">ॐ</span><span class="b-precio">$100</span></div>
         <span class="b-sello" id="bSello">Por confirmar</span>
       </div>
 
-      <form id="form" novalidate>
-        <fieldset>
-          <legend>¿Cómo vas a vivirlo?</legend>
-          <div class="modes">
-            <label class="mode"><input type="radio" name="modo" id="m-pres" value="Presencial" checked><span><b>Presencial</b><small>Col. Satélite, MTY</small></span></label>
-            <label class="mode"><input type="radio" name="modo" id="m-online" value="En línea"><span><b>En línea</b><small>Desde donde estés</small></span></label>
-          </div>
-        </fieldset>
-        <div class="field">
-          <label class="lbl" for="nombre">Tu nombre</label>
-          <input id="nombre" name="nombre" type="text" autocomplete="name" placeholder="Nombre y apellido" required>
-          <p class="err" id="e-nombre" aria-live="polite"></p>
+      <fieldset class="elige">
+        <legend>¿Cómo vas a vivirlo?</legend>
+        <div class="modes">
+          <label class="mode"><input type="radio" name="modo" id="m-pres" value="Presencial" checked><span><b>Presencial</b><small>Col. Satélite, MTY</small></span></label>
+          <label class="mode"><input type="radio" name="modo" id="m-online" value="En línea"><span><b>En línea</b><small>Desde donde estés</small></span></label>
         </div>
-        <div class="field">
-          <label class="lbl" for="tel">Tu WhatsApp</label>
-          <input id="tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" required>
-          <p class="err" id="e-tel" aria-live="polite"></p>
-        </div>
-        <button class="btn btn-primary respira" type="submit">Continuar</button>
-        <p class="fine">El siguiente paso abre WhatsApp con tu mensaje listo. Tu lugar queda apartado cuando lo envías y mandas el comprobante de tu aportación.</p>
-      </form>
-
-      <div class="step2" id="step2" hidden>
-        <p class="eyebrow">Último paso</p>
-        <p style="font-size:1.08rem">Tu mensaje está listo, <span id="s2name"></span>. Ábrelo en WhatsApp y envíalo para apartar tu lugar.</p>
-        <a class="btn btn-primary" id="waSend" href="#" target="_blank" rel="noopener">Abrir WhatsApp y enviar</a>
-        <div class="msg" id="msgPreview"></div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="linkbtn" type="button" id="copyMsg">Copiar mensaje</button>
-          <button class="linkbtn" type="button" id="editForm">Cambiar mis datos</button>
-        </div>
-        <ol class="pasos">
-          <li><b>Envía tu mensaje</b> por WhatsApp con el botón de arriba.</li>
-          <li><b>Haz tu aportación</b> de $100 MXN. Toca un dato para copiarlo.</li>
-          <li><b>Manda tu comprobante</b> por el mismo chat y listo.</li>
-        </ol>
-        <div class="pay">
-          <h3>Datos para tu aportación · <span id="p-banco"></span></h3>
-          <button class="dato" type="button" data-copiar="clabe"><span>CLABE</span><b id="p-clabe"></b><i>Copiar</i></button>
-          <button class="dato" type="button" data-copiar="tarjeta"><span>Tarjeta</span><b id="p-tarjeta"></b><i>Copiar</i></button>
-          <div class="dato fijo"><span>A nombre de</span><b id="p-titular"></b></div>
-          <div class="dato fijo"><span>Concepto</span><b>OM + tu nombre</b></div>
-        </div>
-            </div>
+      </fieldset>
+      <a class="btn btn-primary respira" id="irReserva" href="https://sadhanaholistics.com/?reservar=om-2026-11-22">Continuar</a>
+      <ol class="pasos-res" aria-label="Así se reserva en Sadhana">
+        <li><b>Tus datos</b><span>Nombre, WhatsApp y correo</span></li>
+        <li><b>Aparta</b><span>Transferencia de $100 y comprobante por WhatsApp</span></li>
+        <li><b>Tu ticket</b><span>Con folio, en Mis reservas</span></li>
+      </ol>
+      <p class="fine">Es el mismo proceso para todo en Sadhana. Tu lugar queda apartado 24 horas mientras envías tu comprobante.</p>
       <p class="fine">¿Prefieres Instagram? Escribe <b>OM</b> en un mensaje a <a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>.</p>
     </div>
   </section>
@@ -769,10 +749,6 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 /* ===== CONFIGURACIÓN: cambia estos datos antes de compartir ===== */
 const CONFIG = {
   whatsapp: "528132458208",     // Número que recibe las reservas, con lada, solo dígitos. Vacío = WhatsApp deja elegir el contacto.
-  banco:   "Banorte",
-  clabe:   "072580002056012792",
-  tarjeta: "4189140052830113",
-  titular: "Ana Isabela Arciniega Guerra",
   maps:    "https://maps.app.goo.gl/nGZ1RNxw5KACD8526",
   inicio:  "2026-11-22T10:00:00-06:00",
   fin:     "2026-11-22T12:00:00-06:00"
@@ -1019,84 +995,14 @@ const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
   });
 })();
 
-/* Reserva */
-const form = $("#form"), nombre = $("#nombre"), tel = $("#tel");
-const KEY = "om-reserva-borrador";
-try {
-  const d = JSON.parse(localStorage.getItem(KEY) || "null");
-  if (d){ nombre.value = d.nombre || ""; tel.value = d.tel || ""; if (d.modo === "En línea") $("#m-online").checked = true; }
-} catch(e){}
-function save(){
-  try { localStorage.setItem(KEY, JSON.stringify({ nombre:nombre.value, tel:tel.value, modo:form.modo.value })); } catch(e){}
-}
-form.addEventListener("input", save);
-
-function setErr(input, id, msg){
-  $(id).textContent = msg;
-  input.setAttribute("aria-invalid", msg ? "true" : "false");
-}
-function cleanPhone(v){
-  let d = v.replace(/\D/g,"");
-  if (d.startsWith("521") && d.length === 13) d = d.slice(3);
-  else if (d.startsWith("52") && d.length === 12) d = d.slice(2);
-  return d;
-}
-function pretty(d){ return d.length === 10 ? `${d.slice(0,2)} ${d.slice(2,6)} ${d.slice(6)}` : d; }
-
-let lastMsg = "";
-form.addEventListener("submit", e => {
-  e.preventDefault();
-  const n = nombre.value.trim();
-  const p = cleanPhone(tel.value);
-  let ok = true;
-  if (n.length < 2){ setErr(nombre, "#e-nombre", "Escribe tu nombre para apartar tu lugar."); ok = false; } else setErr(nombre, "#e-nombre", "");
-  if (p.length !== 10){ setErr(tel, "#e-tel", "Escribe tu número de 10 dígitos, sin lada internacional."); ok = false; } else setErr(tel, "#e-tel", "");
-  if (!ok){ (n.length < 2 ? nombre : tel).focus(); return; }
-  const modo = form.modo.value;
-  lastMsg =
-`Hola Sadhana 🙏 Quiero reservar mi lugar en *El Poder del OM*.
-
-📅 Domingo 22 de noviembre, 10:00 AM
-🌀 Modalidad: ${modo}
-👤 Nombre: ${n}
-📱 WhatsApp: ${pretty(p)}
-
-¿Me confirman mi lugar? En un momento les comparto el comprobante de mi aportación de $100 MXN.`;
-  $("#s2name").textContent = n.split(" ")[0];
-  $("#boleto").classList.add("listo");
-  $("#msgPreview").textContent = lastMsg;
-  $("#waSend").href = waURL(lastMsg);
-  form.hidden = true;
-  $("#step2").hidden = false;
-  $("#waSend").focus();
-});
-$("#editForm").addEventListener("click", () => { $("#boleto").classList.remove("listo"); $("#step2").hidden = true; form.hidden = false; nombre.focus(); });
-
+/* Reserva: se elige la modalidad y se continúa en el flujo único de Sadhana */
+const RESERVA = "https://sadhanaholistics.com/?reservar=om-2026-11-22";
+function irReserva(){ const m = document.querySelector('input[name="modo"]:checked'); $("#irReserva").href = RESERVA + "&modo=" + encodeURIComponent(m ? m.value : "Presencial"); }
 function copy(text, btn, label){
   const done = () => { btn.textContent = "Copiado"; setTimeout(() => btn.textContent = label, 1800); };
-  try {
-    navigator.clipboard.writeText(text).then(done).catch(() => fallback());
-  } catch(e){ fallback(); }
-  function fallback(){
-    const r = document.createRange(); const el = btn.id === "copyMsg" ? $("#msgPreview") : btn;
-    r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-    btn.textContent = "Texto seleccionado, cópialo";
-  }
+  try { navigator.clipboard.writeText(text).then(done).catch(fallback); } catch(e){ fallback(); }
+  function fallback(){ const r = document.createRange(); r.selectNodeContents(btn); const g = getSelection(); g.removeAllRanges(); g.addRange(r); btn.textContent = "Texto seleccionado, cópialo"; }
 }
-$("#copyMsg").addEventListener("click", e => copy(lastMsg, e.currentTarget, "Copiar mensaje"));
-
-/* Datos de pago: se muestran agrupados y se copian sin espacios con un toque */
-const grupos = (v, n) => v.replace(new RegExp(`(.{${n}})(?=.)`, "g"), "$1 ");
-$("#p-banco").textContent = CONFIG.banco;
-$("#p-clabe").textContent = grupos(CONFIG.clabe, 3);
-$("#p-tarjeta").textContent = grupos(CONFIG.tarjeta, 4);
-$("#p-titular").textContent = CONFIG.titular;
-document.querySelectorAll(".dato[data-copiar]").forEach(b => b.addEventListener("click", () => {
-  const v = CONFIG[b.dataset.copiar], i = b.querySelector("i");
-  const ok = () => { b.classList.add("copiado"); i.textContent = "Copiado"; setTimeout(() => { b.classList.remove("copiado"); i.textContent = "Copiar"; }, 1800); };
-  try { navigator.clipboard.writeText(v).then(ok).catch(sel); } catch(e){ sel(); }
-  function sel(){ const r = document.createRange(); r.selectNodeContents(b.querySelector("b")); const g = getSelection(); g.removeAllRanges(); g.addRange(r); i.textContent = "Selecciona y copia"; }
-}));
 
 /* Ubicación y pestañas presencial / en línea (sincronizadas con el formulario) */
 ["#lugar","#mapsBtn"].forEach(s => $(s).href = CONFIG.maps);
@@ -1108,6 +1014,7 @@ function modo(online, desdeForm){
   $("#panel-pres").hidden = online; $("#panel-online").hidden = !online;
   if (!desdeForm) $(online ? "#m-online" : "#m-pres").checked = true;
   $("#bModo").textContent = online ? "En línea" : "Presencial";
+  irReserva();
 }
 $("#tab-pres").addEventListener("click", () => modo(false));
 $("#tab-online").addEventListener("click", () => modo(true));
@@ -1140,13 +1047,8 @@ document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener(
   }, { threshold: .5 }).observe($("#flujo"));
 })();
 
-/* Boleto que se llena mientras escribes */
-(function boleto(){
-  const n = $("#bNombre");
-  const pinta = () => { const v = nombre.value.trim(); n.textContent = v || "Tu nombre aquí"; n.classList.toggle("vacio", !v); };
-  nombre.addEventListener("input", pinta); pinta();
-  modo($("#m-online").checked, true);
-})();
+/* Boleto: muestra la modalidad elegida */
+modo(false, true);
 
 /* Barra fija: aparece al salir del inicio y se oculta cuando el formulario está a la vista */
 (function dock(){
