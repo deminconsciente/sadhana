@@ -399,10 +399,9 @@ h1,h2,h3{font-weight:400;letter-spacing:.02em}
 
 /* Barra flotante en píldora, translúcida, una sola línea */
 body::before{display:none}
-.top{top:calc(8px + env(safe-area-inset-top,0px));margin:8px auto 0;width:min(720px,100%);border-radius:999px;border:0;
-  padding:6px 6px 6px 18px;background:var(--inc-glass);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
-  box-shadow:0 10px 30px -18px rgba(40,15,5,.5),inset 0 0 0 1px rgba(255,255,255,.14)}
-.top .brand{display:grid;justify-items:start;gap:1px;color:#fff;font-style:normal;line-height:1}
+.top{position:relative;top:auto;margin:calc(14px + env(safe-area-inset-top,0px)) auto 0;width:100%;border:0;justify-content:center;
+  padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.top .brand{display:grid;justify-items:center;gap:1px;color:#fff;font-style:normal;line-height:1}
 .top .brand small{font-size:.46rem;letter-spacing:.3em;text-shadow:0 1px 3px rgba(40,15,5,.55)}
 .top .brand .mk-logo2{filter:drop-shadow(0 1px 2px rgba(40,15,5,.45))}
 .top .btn{background:#fff;color:#2a150b;text-shadow:none}
@@ -488,10 +487,8 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 .ap-chips button[aria-pressed="true"]{background:var(--inc);border-color:transparent;color:#fff}
 .ap-nota{font-size:.88rem;color:var(--linen-dim);min-height:1.4em}
 /* Un solo Reservar a la vista: en celular lo lleva la barra de abajo */
-@media (max-width:899px){.top .btn{display:none}}
-.top .btn{transition:opacity .3s}.cta-visible .top .btn{opacity:0;pointer-events:none}
-.top{transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
-body.arriba .top{opacity:0;transform:translateY(-14px);pointer-events:none}
+/* Arriba solo el logo, quieto y sin barra: se va con el scroll y no tapa nada */
+.top .btn{display:none}
 body.arriba .progreso{opacity:0}
 </style>
 </head>
@@ -1116,17 +1113,16 @@ modo(false, true);
   io.observe($(".hero .cta-row")); io.observe($("#reservar")); io.observe($(".closing"));
 })();
 
-/* Hero limpio: la barra de arriba y la de reservar aparecen al bajar o al terminar la práctica.
-   La de abajo nunca convive con otro botón Reservar en pantalla. */
+/* La barra de reservar aparece al llegar a «¿La tensión no te deja respirar?»
+   y nunca convive con otro botón Reservar en pantalla. */
 (function barras(){
   const b = document.body, dock = document.getElementById("dock"), tras = document.getElementById("tras");
-  let practicado = false;
+  const tension = document.getElementById("t-tension");
   window.__pintaBarras = () => {
-    const arriba = scrollY < 80 && !practicado;
+    const arriba = tension ? tension.getBoundingClientRect().top > innerHeight * 0.75 : scrollY < 80;
     b.classList.toggle("arriba", arriba);
     if (dock) dock.classList.toggle("hide", arriba || b.classList.contains("cta-visible"));
   };
-  if (tras) new MutationObserver(() => { if (!tras.hidden){ practicado = true; window.__pintaBarras(); } }).observe(tras, { attributes: true, attributeFilter: ["hidden"] });
   addEventListener("scroll", window.__pintaBarras, { passive: true });
   window.__pintaBarras();
 })();
