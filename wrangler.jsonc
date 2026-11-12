@@ -1,0 +1,23 @@
+// Worker de sadhanaholistics.com (mismo flujo que www.deminconsciente.com):
+// push a main → Workers Builds → npm run deploy.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sadhana-holistics",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    // Todo pasa por el Worker para poder mandar www → dominio sin www.
+    // (El plan gratis da 100,000 visitas al día al Worker; sobra.)
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true },
+  // Se activan cuando el dominio ya esté en Cloudflare (ver README, paso 4).
+  "routes": [
+    { "pattern": "sadhanaholistics.com", "custom_domain": true },
+    { "pattern": "www.sadhanaholistics.com", "custom_domain": true }
+  ],
+  "workers_dev": true
+}

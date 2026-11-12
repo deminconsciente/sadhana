@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta property="og:type" content="website">
+<meta property="og:title" content="El Poder del OM · Sadhana">
+<meta property="og:description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Col. Satélite, Monterrey, y en línea. Aportación consciente $100 MXN.">
+<meta property="og:url" content="https://sadhanaholistics.com/om/">
+<meta name="theme-color" content="#3a1f29">
+<title>El Poder del OM</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Col. Satélite, Monterrey, y en línea. Aportación consciente $100 MXN.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Tiro+Devanagari+Sanskrit&display=swap">
+<style>
+/* Layout: una sola columna estrecha sobre "lienzo" pintado (como los posts de @sadhana.holistics),
+   con el sol del OM como eje visual que respira; barra de reserva fija en móvil. */
+:root{
+  --canvas:#3a1f29;        /* vino profundo, fondo */
+  --wine:#5b2c3a;          /* vino de las piezas */
+  --mauve:#8e6c8a;         /* malva */
+  --peach:#e7b296;         /* durazno */
+  --rose:#c8908b;          /* rosa empolvado, acento secundario */
+  --linen:#f6ebe3;         /* texto principal, color lino */
+  --linen-dim:#dcc8bf;     /* texto secundario */
+  --line:rgba(246,235,227,.22);
+  --panel:rgba(46,22,32,.55);
+  --panel-strong:rgba(40,18,27,.82);
+  --ok:#b9d3a8;
+  --err:#ffb4a8;
+  --f-display:"Cinzel","Trajan Pro",Georgia,"Times New Roman",serif;
+  --f-body:"Lora",Georgia,"Times New Roman",serif;
+  --f-om:"Tiro Devanagari Sanskrit","Noto Serif Devanagari","Kohinoor Devanagari",serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--canvas);color:var(--linen);
+  font-family:var(--f-body);font-size:17px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-bottom:84px;
+}
+/* Lienzo: manchas de color + trama de lino */
+.lienzo{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(60% 40% at 10% 8%, rgba(142,108,138,.75), transparent 70%),
+    radial-gradient(45% 35% at 92% 18%, rgba(91,44,58,.9), transparent 70%),
+    radial-gradient(55% 45% at 12% 62%, rgba(231,178,150,.38), transparent 70%),
+    radial-gradient(60% 40% at 85% 85%, rgba(200,144,139,.35), transparent 70%),
+    linear-gradient(90deg, transparent 38%, rgba(46,22,32,.35) 46%, transparent 56%),
+    linear-gradient(180deg,#6b3c4a 0%,#4c2734 45%,#3a1f29 100%);
+}
+.lienzo::after{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.08' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.08 0.9' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");}
+
+.wrap{max-width:680px;margin:0 auto}
+a{color:var(--peach)}
+:focus-visible{outline:2px solid var(--peach);outline-offset:3px;border-radius:4px}
+h1,h2,h3{font-family:var(--f-display);font-weight:500;letter-spacing:.06em;text-wrap:balance;margin:0;line-height:1.15}
+h2{font-size:clamp(1.5rem,5.4vw,2.1rem);text-align:center}
+p{margin:0}
+.eyebrow{font-family:var(--f-display);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--peach)}
+.it{font-style:italic}
+section{padding-block:56px;display:grid;gap:22px}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);border:0;margin:0}
+
+/* Barra superior */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel-strong)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:rgba(40,18,27,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .brand{font-family:var(--f-body);font-style:italic;color:var(--linen);text-decoration:none;font-size:.98rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;
+  font-family:var(--f-display);font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer;
+  border:1px solid transparent;transition:transform .15s ease, background .2s ease}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--peach);color:#3a1f29}
+.btn-primary:hover{background:#f0c3aa}
+.btn-ghost{background:transparent;color:var(--linen);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--peach)}
+.btn-sm{min-height:38px;padding:0 16px;font-size:.72rem}
+
+/* Hero */
+.hero{padding-block:34px 40px;text-align:center;justify-items:center;gap:16px}
+.hero .handle{font-style:italic;color:var(--linen-dim);font-size:1rem}
+.hero h1{font-size:clamp(2.3rem,10vw,4rem);letter-spacing:.05em;font-weight:600}
+.hero h1 .om-word{font-weight:500}
+.hero .sub{font-style:italic;font-size:clamp(1.15rem,4.4vw,1.45rem);color:var(--linen)}
+.sun{width:min(260px,64vw);aspect-ratio:1;max-width:100%;display:block}
+.sun svg{width:100%;height:100%;overflow:visible}
+.sun .rays{transform-origin:50% 50%;animation:girar 120s linear infinite}
+.sun .core{transform-origin:50% 50%;animation:respirar 10s ease-in-out infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+@keyframes respirar{0%,100%{transform:scale(.94)}40%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.sun .rays,.sun .core{animation:none}}
+.facts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:4px 0 2px;padding:0;list-style:none}
+.chip-link{color:inherit;text-decoration:none}
+.facts li{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.92rem;background:var(--panel)}
+.price{font-family:var(--f-display);font-size:1rem;letter-spacing:.14em;text-transform:uppercase;color:var(--linen-dim)}
+.price strong{display:block;font-size:2.1rem;color:var(--linen);letter-spacing:.06em;font-weight:600}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.countdown{font-size:.92rem;color:var(--linen-dim)}
+.countdown b{color:var(--peach);font-weight:500}
+
+/* Autodiagnóstico */
+.checks{display:grid;gap:10px}
+.check{display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:16px 18px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--line);color:var(--linen);font:inherit;font-family:var(--f-display);letter-spacing:.04em;font-size:clamp(1rem,3.8vw,1.15rem);cursor:pointer}
+.check .box{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--linen-dim);display:grid;place-items:center;transition:background .2s}
+.check[aria-pressed="true"]{border-color:var(--peach);background:rgba(231,178,150,.14)}
+.check[aria-pressed="true"] .box{background:var(--peach);border-color:var(--peach)}
+.check[aria-pressed="true"] .box::after{content:"";width:8px;height:13px;border:solid #3a1f29;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.verdict{text-align:center;min-height:3.2em;display:grid;gap:4px;align-content:center}
+.verdict .big{font-family:var(--f-display);font-size:clamp(1.6rem,7vw,2.4rem);font-weight:600;letter-spacing:.08em}
+.verdict .small{color:var(--linen-dim);font-style:italic}
+
+/* Experiencia */
+.lead{font-size:1.08rem;text-align:center;color:var(--linen)}
+.moments{display:grid;gap:14px}
+.moment{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:start;padding:18px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
+.moment .ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(231,178,150,.12);border:1px solid rgba(231,178,150,.35)}
+.moment .ico svg{width:28px;height:28px;stroke:var(--peach);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.moment h3{font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.moment p{color:var(--linen-dim);font-size:.98rem}
+.moment > div{min-width:0}
+
+/* Ciencia */
+.facts-sci{display:grid;gap:16px}
+.sci{padding-left:18px;border-left:1px solid rgba(231,178,150,.5)}
+.sci .num{font-family:var(--f-display);font-size:1.6rem;color:var(--peach);letter-spacing:.04em;line-height:1.1}
+.sci p{color:var(--linen-dim);font-size:.98rem}
+.sci .src{font-size:.82rem;font-style:italic;color:var(--linen-dim);opacity:.8;margin-top:4px}
+.note{font-size:.86rem;font-style:italic;color:var(--linen-dim);text-align:center}
+
+/* Respira ahora */
+.breath{display:grid;justify-items:center;gap:14px;text-align:center}
+.orb{width:min(220px,58vw);aspect-ratio:1;max-width:100%;border-radius:50%;display:grid;place-items:center;position:relative;
+  background:radial-gradient(circle at 50% 45%, rgba(231,178,150,.55), rgba(142,108,138,.35) 55%, rgba(91,44,58,.2) 75%);
+  box-shadow:0 0 60px rgba(231,178,150,.18) inset, 0 0 40px rgba(231,178,150,.12);
+  transform:scale(.72);transition:transform 4s cubic-bezier(.45,0,.35,1)}
+.orb .om{font-family:var(--f-om);font-size:clamp(3rem,14vw,4.6rem);line-height:1;color:var(--linen);opacity:.92}
+.orb-label{font-family:var(--f-display);font-size:1.25rem;letter-spacing:.18em;text-transform:uppercase;min-height:1.6em}
+.orb-hint{color:var(--linen-dim);font-style:italic;min-height:1.6em;font-size:.95rem}
+
+/* Facilitadores */
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.person{padding:20px;border-radius:16px;background:var(--panel);border:1px solid var(--line);display:grid;gap:8px;align-content:start}
+.person .ini{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:1.3rem;
+  background:linear-gradient(140deg,var(--mauve),var(--wine));border:1px solid var(--line)}
+.person h3{font-size:1.15rem;letter-spacing:.08em}
+.person a.ig{font-style:italic;text-decoration:none}
+.person a.ig:hover{text-decoration:underline}
+.person p{color:var(--linen-dim);font-size:.96rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.tags li{font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--linen)}
+
+/* Detalles */
+.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.details > div{background:var(--panel-strong);padding:16px 18px;min-width:0}
+.details dt{font-family:var(--f-display);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--peach)}
+.details dd{margin:4px 0 0;font-size:1rem}
+.details .wide{grid-column:1/-1}
+@media (max-width:420px){.details{grid-template-columns:1fr}}
+.bring{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.bring div{padding:16px 18px;border:1px solid var(--line);border-radius:14px}
+.bring h3{font-size:.86rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+.bring ul{margin:0;padding-left:18px;color:var(--linen-dim);font-size:.96rem}
+
+/* Reserva */
+.reserve{background:var(--panel-strong);border:1px solid rgba(231,178,150,.4);border-radius:22px;padding:26px 20px;display:grid;gap:20px}
+@media (min-width:560px){.reserve{padding:34px 34px}}
+.reserve h2{font-size:clamp(1.5rem,6vw,2rem)}
+form{display:grid;gap:18px}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:10px}
+legend,label.lbl{font-family:var(--f-display);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--peach);padding:0;margin-bottom:8px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{position:relative}
+.mode input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.mode span{display:grid;gap:2px;padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(246,235,227,.04);text-align:center;height:100%}
+.mode b{font-family:var(--f-display);letter-spacing:.1em;font-weight:600;font-size:.98rem}
+.mode small{color:var(--linen-dim);font-size:.82rem;font-style:italic;line-height:1.35}
+.mode input:checked + span{border-color:var(--peach);background:rgba(231,178,150,.16)}
+.mode input:focus-visible + span{outline:2px solid var(--peach);outline-offset:2px}
+.field{display:grid;gap:0}
+.field input{width:100%;min-height:50px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(246,235,227,.06);color:var(--linen);
+  font:inherit;font-size:1.05rem}
+.field input::placeholder{color:rgba(246,235,227,.45)}
+.field input:focus{outline:none;border-color:var(--peach);background:rgba(246,235,227,.1)}
+.field .err{color:var(--err);font-size:.88rem;min-height:1.3em;margin-top:4px}
+.field input[aria-invalid="true"]{border-color:var(--err)}
+.reserve .btn-primary{width:100%;min-height:54px;font-size:.92rem}
+.fine{font-size:.86rem;color:var(--linen-dim);font-style:italic;text-align:center}
+.step2{display:grid;gap:16px;text-align:center}
+.step2 .msg{text-align:left;white-space:pre-wrap;font-size:.94rem;background:rgba(246,235,227,.06);border:1px dashed var(--line);border-radius:12px;padding:14px;color:var(--linen-dim)}
+.pay{display:grid;gap:8px;text-align:left;border:1px solid var(--line);border-radius:14px;padding:16px}
+.pay h3{font-size:.86rem;letter-spacing:.18em;text-transform:uppercase;color:var(--peach)}
+.pay .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.pay .row span{color:var(--linen-dim);font-size:.9rem}
+.pay .row b{font-weight:500;font-variant-numeric:tabular-nums;word-break:break-all}
+.pending{color:var(--rose);font-style:italic}
+.linkbtn{background:none;border:0;color:var(--peach);font:inherit;font-size:.9rem;text-decoration:underline;cursor:pointer;padding:4px}
+
+/* FAQ */
+.faq{display:grid;gap:10px}
+details{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:0 18px}
+summary{cursor:pointer;list-style:none;padding:16px 28px 16px 0;position:relative;font-family:var(--f-display);letter-spacing:.05em;font-size:1rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:0;top:50%;transform:translateY(-50%);color:var(--peach);font-size:1.4rem;font-family:var(--f-body)}
+details[open] summary::after{content:"–"}
+details p{padding-bottom:16px;color:var(--linen-dim);font-size:.98rem}
+
+/* Cierre */
+.closing{text-align:center;padding-block:56px 30px;gap:18px;justify-items:center}
+.closing blockquote{margin:0;font-style:italic;font-size:clamp(1.4rem,5.6vw,2rem);line-height:1.35;text-wrap:balance}
+footer{text-align:center;padding-block:10px 30px;color:var(--linen-dim);font-size:.85rem;display:grid;gap:8px}
+footer .igs{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center}
+
+/* Barra fija de reserva */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:8;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:rgba(40,18,27,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;transition:transform .3s ease}
+.dock.hide{transform:translateY(110%)}
+.dock .info{font-size:.86rem;line-height:1.3;min-width:0}
+.dock .info b{font-family:var(--f-display);letter-spacing:.06em;font-weight:600;display:block;font-size:.92rem}
+.dock .btn{flex:none;min-height:44px;padding:0 18px;font-size:.78rem}
+@media (min-width:900px){.dock{display:none}body{padding-bottom:0}}
+
+/* ===== Movimiento: la página respira a 6 por minuto (4 s entra, 6 s sale) ===== */
+:root{--ciclo:10s;--suave:cubic-bezier(.45,0,.35,1)}
+.lienzo{animation:lienzo-resp var(--ciclo) var(--suave) infinite;transform-origin:50% 35%}
+@keyframes lienzo-resp{0%,100%{transform:scale(1);filter:saturate(1) brightness(1)}40%{transform:scale(1.06);filter:saturate(1.18) brightness(1.06)}}
+.lienzo::before{content:"";position:absolute;inset:-25%;
+  background:radial-gradient(30% 26% at 30% 38%, rgba(231,178,150,.24), transparent 70%),radial-gradient(28% 24% at 72% 70%, rgba(142,108,138,.32), transparent 70%);
+  animation:deriva 48s ease-in-out infinite alternate}
+@keyframes deriva{to{transform:translate3d(9%,-7%,0) rotate(10deg)}}
+.progreso{position:fixed;top:env(safe-area-inset-top,0px);left:0;width:100%;height:2px;z-index:11;transform-origin:0 50%;transform:scaleX(var(--p,0));
+  background:linear-gradient(90deg,var(--mauve),var(--peach));pointer-events:none}
+/* Entrada del hero, en orden de lectura */
+.hero > *{animation:subir 1.2s cubic-bezier(.2,.7,.2,1) both}
+.hero > :nth-child(2){animation-delay:.12s}.hero > :nth-child(3){animation-delay:.24s}.hero > :nth-child(4){animation-delay:.36s;animation-duration:1.8s}
+.hero > :nth-child(5){animation-delay:.6s}.hero > :nth-child(6){animation-delay:.72s}.hero > :nth-child(7){animation-delay:.84s}.hero > :nth-child(8){animation-delay:.96s}.hero > :nth-child(9){animation-delay:1.1s}
+@keyframes subir{from{opacity:0;transform:translateY(16px);filter:blur(5px)}}
+/* Ondas del OM: salen del sol en cada exhalación */
+.sun{position:relative}
+.sun .onda{position:absolute;inset:22%;border-radius:50%;border:1px solid rgba(246,235,227,.55);opacity:0;animation:onda var(--ciclo) ease-out infinite;pointer-events:none}
+.sun .onda:nth-of-type(2){animation-delay:1.1s}.sun .onda:nth-of-type(3){animation-delay:2.2s}
+@keyframes onda{0%,40%{transform:scale(.95);opacity:0}46%{opacity:.6}100%{transform:scale(2);opacity:0}}
+/* Indicador para seguir bajando */
+.desliza{display:inline-grid;justify-items:center;gap:2px;color:var(--linen-dim);text-decoration:none;font-family:var(--f-display);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;margin-top:6px}
+.desliza svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;animation:bajar var(--ciclo) var(--suave) infinite}
+@keyframes bajar{0%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(7px);opacity:1}}
+/* Los botones principales respiran con la página */
+.btn-primary.respira{animation:halo var(--ciclo) var(--suave) infinite}
+@keyframes halo{0%,100%{box-shadow:0 0 0 0 rgba(231,178,150,0)}40%{box-shadow:0 0 0 7px rgba(231,178,150,.14),0 0 34px rgba(231,178,150,.3)}}
+/* Aparición al bajar (solo lo que está fuera de pantalla al cargar) */
+.rv{transition:opacity 1.1s ease,transform 1.1s cubic-bezier(.2,.7,.2,1),filter 1.1s ease}
+.rv.oculto{opacity:0;transform:translateY(26px);filter:blur(4px)}
+.verdict .big{animation:subir 1s cubic-bezier(.2,.7,.2,1) both}
+.moment .ico svg{animation:icono var(--ciclo) var(--suave) infinite}
+@keyframes icono{0%,100%{transform:scale(.92)}40%{transform:scale(1.06)}}
+/* Práctica: la página se apaga alrededor del orbe */
+main > section, main > hr, .top, footer{transition:opacity 1.2s ease, filter 1.2s ease}
+body.practicando main > section:not(#practica), body.practicando main > hr, body.practicando .top, body.practicando footer{opacity:.12;filter:blur(2px)}
+body.practicando .dock{transform:translateY(110%)}
+body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
+.orb::before,.orb::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(246,235,227,.45);opacity:0}
+.orb.sale::before{animation:onda-orb 6s ease-out forwards}
+.orb.sale::after{animation:onda-orb 6s ease-out 1.4s forwards}
+@keyframes onda-orb{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.7);opacity:0}}
+.tras{display:grid;gap:12px;justify-items:center;text-align:center;animation:subir 1s cubic-bezier(.2,.7,.2,1) both}
+.tras p{font-style:italic;font-size:1.1rem;max-width:30ch}
+@media (prefers-reduced-motion:reduce){
+  .lienzo,.lienzo::before,.hero > *,.sun .onda,.desliza svg,.btn-primary.respira,.moment .ico svg,.verdict .big,.tras{animation:none!important}
+  .rv,.rv.oculto{transition:none;opacity:1;transform:none;filter:none}
+  .orb.sale::before,.orb.sale::after{animation:none}
+}
+
+/* ===== Ubicación, recorrido, boleto y pago ===== */
+.tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:999px;padding:4px;background:var(--panel)}
+.tab{position:relative;z-index:1;min-height:42px;border:0;background:none;color:var(--linen-dim);font-family:var(--f-display);letter-spacing:.14em;text-transform:uppercase;font-size:.8rem;cursor:pointer;border-radius:999px;transition:color .4s}
+.tab[aria-selected="true"]{color:#3a1f29;font-weight:600}
+.tab-luz{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:var(--peach);transition:transform .55s cubic-bezier(.3,.8,.3,1)}
+.tabs.online .tab-luz{transform:translateX(100%)}
+.panel{display:grid;gap:14px;animation:subir .7s cubic-bezier(.2,.7,.2,1) both}
+.mapa{position:relative;display:block;border-radius:18px;overflow:hidden;border:1px solid var(--line);aspect-ratio:16/8.5;max-width:100%;text-decoration:none;color:var(--linen)}
+.mapa svg{display:block;width:100%;height:100%}
+.m-fondo{fill:#2c1620}
+.m-parque{fill:rgba(142,108,138,.28)}
+.m-rio{fill:none;stroke:rgba(231,178,150,.35);stroke-width:7;stroke-linecap:round}
+.m-calle path{fill:none;stroke:rgba(246,235,227,.16);stroke-width:3}
+.m-fina path{stroke-width:1.2;stroke:rgba(246,235,227,.08)}
+.mapa:hover .m-calle path{stroke:rgba(246,235,227,.24)}
+.pin{position:absolute;left:52%;top:46%;width:44px;height:44px;transform:translate(-50%,-80%);display:grid;place-items:center}
+.pin svg{width:40px;height:40px;fill:var(--peach);stroke:#3a1f29;stroke-width:1.2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));animation:pin-salta var(--ciclo) var(--suave) infinite}
+.pin svg circle{fill:#3a1f29}
+.pin-onda{position:absolute;left:50%;top:88%;width:18px;height:8px;margin-left:-9px;border-radius:50%;border:1.5px solid var(--peach);opacity:0;animation:pin-onda 3s ease-out infinite}
+.pin-onda + .pin-onda{animation-delay:1.5s}
+@keyframes pin-salta{0%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+@keyframes pin-onda{0%{transform:scale(.6);opacity:.8}100%{transform:scale(4);opacity:0}}
+.mapa-nombre{position:absolute;left:12px;bottom:12px;right:12px;display:grid;gap:0;padding:10px 14px;border-radius:12px;background:rgba(40,18,27,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:.9rem;color:var(--linen-dim)}
+.mapa-nombre b{font-family:var(--f-display);letter-spacing:.1em;color:var(--linen);font-size:1rem}
+.online-card{display:flex;gap:16px;align-items:center;padding:18px;border-radius:18px;border:1px solid var(--line);background:var(--panel)}
+.online-card p{color:var(--linen-dim)} .online-card b{color:var(--linen)}
+.ondas-online{flex:none;position:relative;width:54px;height:54px;border-radius:50%;background:rgba(231,178,150,.14)}
+.ondas-online span{position:absolute;inset:0;border-radius:50%;border:1px solid var(--peach);opacity:0;animation:pin-onda 3s ease-out infinite}
+.ondas-online span:nth-child(2){animation-delay:1s}.ondas-online span:nth-child(3){animation-delay:2s}
+.panel .bring{grid-template-columns:1fr}
+
+.flujo{display:grid;gap:14px;margin-top:10px;padding:20px 14px;border-radius:18px;border:1px solid var(--line);background:var(--panel)}
+.flujo-linea{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.flujo-linea button{width:100%;display:grid;justify-items:center;gap:6px;background:none;border:0;color:var(--linen-dim);cursor:pointer;padding:4px 0;font:inherit}
+.flujo-linea .hora{font-size:.74rem;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.flujo-linea .punto{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--linen-dim);transition:all .4s}
+.flujo-linea .nom{font-family:var(--f-display);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;line-height:1.2;text-align:center}
+.flujo-linea button[aria-selected="true"]{color:var(--linen)}
+.flujo-linea button[aria-selected="true"] .punto{background:var(--peach);border-color:var(--peach);box-shadow:0 0 0 5px rgba(231,178,150,.18);transform:scale(1.2)}
+.flujo-linea li{position:relative}
+.flujo-linea li + li::before{content:"";position:absolute;top:calc(.74rem * 1.65 + 6px + 5px);right:calc(50% + 10px);width:calc(100% - 20px);height:1px;background:var(--line);transition:background .6s}
+.flujo-linea li:has(button.hecho) + li::before,.flujo-linea li:has(button[aria-selected="true"])::before{background:var(--peach)}
+.flujo-linea button.hecho .punto{background:rgba(231,178,150,.45);border-color:rgba(231,178,150,.6)}
+.flujo-texto{text-align:center;min-height:3.3em;font-size:1.02rem}
+.flujo-texto.cambia{animation:subir .6s cubic-bezier(.2,.7,.2,1) both}
+@media (max-width:420px){.flujo-linea .nom{font-size:.58rem}}
+
+.boleto{position:relative;display:grid;grid-template-columns:1fr auto;border-radius:16px;overflow:hidden;
+  background:linear-gradient(120deg,rgba(142,108,138,.55),rgba(91,44,58,.75) 55%,rgba(231,178,150,.35));border:1px solid rgba(231,178,150,.45);
+  box-shadow:0 18px 40px rgba(0,0,0,.25);transition:transform .6s cubic-bezier(.3,.8,.3,1)}
+.boleto:hover{transform:rotate(-1deg) translateY(-2px)}
+.b-izq{display:grid;gap:4px;padding:16px 18px;min-width:0}
+.b-eyebrow{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--linen-dim)}
+.b-titulo{font-family:var(--f-display);font-size:1.25rem;letter-spacing:.06em;font-weight:600}
+.b-nombre{font-style:italic;font-size:1.1rem;color:var(--peach);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s}
+.b-nombre.vacio{opacity:.55}
+.b-datos{font-size:.82rem;color:var(--linen-dim)}
+.b-der{display:grid;place-items:center;gap:2px;padding:14px 18px;border-left:2px dashed rgba(246,235,227,.35);position:relative}
+.b-der::before,.b-der::after{content:"";position:absolute;left:-10px;width:18px;height:18px;border-radius:50%;background:var(--canvas)}
+.b-der::before{top:-9px}.b-der::after{bottom:-9px}
+.b-om{font-family:var(--f-om);font-size:2rem;line-height:1}
+.b-precio{font-family:var(--f-display);font-size:.9rem;letter-spacing:.1em}
+.b-sello{position:absolute;right:84px;bottom:14px;transform:rotate(-8deg);font-family:var(--f-display);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+  padding:3px 8px;border:1.5px solid var(--rose);color:var(--rose);border-radius:6px;opacity:0;transition:opacity .5s, transform .5s}
+.boleto.listo .b-sello{opacity:1;transform:rotate(-8deg) scale(1.05)}
+
+.pasos{margin:0;padding-left:22px;text-align:left;display:grid;gap:6px;color:var(--linen-dim);font-size:.95rem}
+.pasos b{color:var(--linen);font-weight:500}
+.pay{gap:10px}
+.dato{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 12px;width:100%;text-align:left;padding:12px 14px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(246,235,227,.05);color:var(--linen);font:inherit;cursor:pointer;transition:background .3s,border-color .3s}
+.dato span{grid-column:1;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--linen-dim)}
+.dato b{grid-column:1;font-weight:500;font-size:.98rem;font-variant-numeric:tabular-nums;letter-spacing:0;min-width:0;overflow-wrap:anywhere}
+.dato i{grid-column:2;grid-row:1/3;font-style:normal;font-size:.75rem;color:var(--peach);border:1px solid rgba(231,178,150,.45);border-radius:999px;padding:3px 10px}
+.dato:hover{border-color:rgba(231,178,150,.5)}
+.dato.copiado{background:rgba(185,211,168,.14);border-color:var(--ok)}
+.dato.copiado i{color:var(--ok);border-color:var(--ok)}
+.dato.fijo{cursor:default;grid-template-columns:1fr}
+@media (prefers-reduced-motion:reduce){.pin svg,.pin-onda,.ondas-online span,.panel,.flujo-texto.cambia{animation:none!important}.tab-luz,.boleto{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div class="lienzo" aria-hidden="true"></div>
+<div class="progreso" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="brand" href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>
+  <a class="btn btn-primary btn-sm" href="#reservar">Reservar</a>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="titulo">
+    <p class="eyebrow">Domingo 22 de noviembre · 10:00 AM</p>
+    <h1 id="titulo">El Poder del <span class="om-word">OM</span></h1>
+    <p class="sub">Meditación con soundbath y breathwork</p>
+    <div class="sun" id="sun" aria-hidden="true"></div>
+    <ul class="facts" aria-label="Datos del evento">
+      <li><a href="#detalles" class="chip-link">Presencial · Col. Satélite</a></li>
+      <li>En línea</li>
+      <li>2 horas</li>
+    </ul>
+    <p class="price">Aportación consciente <strong>$100 MXN</strong></p>
+    <div class="cta-row">
+      <a class="btn btn-primary respira" href="#reservar">Reservar mi lugar</a>
+      <a class="btn btn-ghost" id="waQuick" href="#" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
+    </div>
+    <p class="countdown" id="countdown"></p>
+    <a class="desliza" href="#t-tension">Desliza<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+  </section>
+
+  <hr class="sep">
+
+  <!-- AUTODIAGNÓSTICO -->
+  <section aria-labelledby="t-tension">
+    <h2 id="t-tension">¿La tensión no te deja respirar?</h2>
+    <p class="lead it">Toca las que sean ciertas para ti.</p>
+    <div class="checks" role="group" aria-label="Preguntas de autodiagnóstico">
+      <button class="check" type="button" aria-pressed="false" id="q1"><span class="box"></span>¿Quieres silenciar tu mente?</button>
+      <button class="check" type="button" aria-pressed="false" id="q2"><span class="box"></span>¿Sientes demasiado estrés?</button>
+      <button class="check" type="button" aria-pressed="false" id="q3"><span class="box"></span>¿Por más que duermes, no descansas?</button>
+    </div>
+    <div class="verdict" aria-live="polite" id="verdict">
+      <span class="small">Si respondiste sí a dos, ya sabes lo que sigue.</span>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- EXPERIENCIA -->
+  <section aria-labelledby="t-exp">
+    <p class="eyebrow" style="text-align:center">La experiencia</p>
+    <h2 id="t-exp">Lo que vas a vivir</h2>
+    <p class="lead">Dos horas para bajar el ritmo usando dos herramientas que llevas contigo siempre: tu respiración y tu voz. El sonido de los cuencos hace el resto.</p>
+    <div class="moments">
+      <article class="moment">
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c3 0 3-3 6-3s3 3 6 3 3-3 6-3"/><path d="M3 15c3 0 3-3 6-3s3 3 6 3 3-3 6-3"/></svg></div>
+        <div>
+          <h3>Breathwork</h3>
+          <p>Respiración consciente guiada para soltar la tensión que se acumula en el pecho, la mandíbula y los hombros. Ritmo suave y adaptable a ti.</p>
+        </div>
+      </article>
+      <article class="moment">
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5" opacity=".7"/><circle cx="12" cy="12" r="10" opacity=".4"/></svg></div>
+        <div>
+          <h3>El sonido del OM</h3>
+          <p>Aprenderás qué hacen tu respiración y la vibración del mantra OM en tu cuerpo, y lo practicarás en grupo.</p>
+        </div>
+      </article>
+      <article class="moment">
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11h18"/><path d="M4.5 11a7.5 7.5 0 0 0 15 0"/><path d="M9 20h6"/></svg></div>
+        <div>
+          <h3>Soundbath y meditación</h3>
+          <p>Meditación acompañada por la resonancia de cuencos tibetanos. Solo te recuestas, escuchas y dejas que el cuerpo descanse.</p>
+        </div>
+      </article>
+    </div>
+      <div class="flujo" id="flujo">
+      <p class="eyebrow" style="text-align:center">Así fluyen las dos horas</p>
+      <ol class="flujo-linea" role="tablist" aria-label="Recorrido de la sesión">
+        <li><button type="button" role="tab" data-i="0" aria-selected="true"><span class="hora">10:00</span><span class="punto"></span><span class="nom">Llegar</span></button></li>
+        <li><button type="button" role="tab" data-i="1" aria-selected="false"><span class="hora">10:15</span><span class="punto"></span><span class="nom">Respirar</span></button></li>
+        <li><button type="button" role="tab" data-i="2" aria-selected="false"><span class="hora">10:45</span><span class="punto"></span><span class="nom">OM</span></button></li>
+        <li><button type="button" role="tab" data-i="3" aria-selected="false"><span class="hora">11:15</span><span class="punto"></span><span class="nom">Cuencos</span></button></li>
+        <li><button type="button" role="tab" data-i="4" aria-selected="false"><span class="hora">11:45</span><span class="punto"></span><span class="nom">Integrar</span></button></li>
+      </ol>
+      <p class="flujo-texto" id="flujoTexto" aria-live="polite"></p>
+      <p class="note">Horarios aproximados: el ritmo lo marca el grupo.</p>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- CIENCIA -->
+  <section aria-labelledby="t-sci">
+    <p class="eyebrow" style="text-align:center">El porqué</p>
+    <h2 id="t-sci">Lo que la ciencia ya sabe de respirar y vibrar</h2>
+    <div class="facts-sci">
+      <div class="sci">
+        <p class="num">Exhalar más largo</p>
+        <p>Cuando la exhalación dura más que la inhalación, se activa más el nervio vago, la vía con la que el cuerpo frena. Por eso un suspiro largo se siente como soltar.</p>
+      </div>
+      <div class="sci">
+        <p class="num">~6 respiraciones por minuto</p>
+        <p>Respirar lento, cerca de este ritmo, se asocia con mayor variabilidad del ritmo cardiaco, un marcador de un sistema nervioso flexible.</p>
+      </div>
+      <div class="sci">
+        <p class="num">Zumbar multiplica el óxido nítrico</p>
+        <p>Al zumbar "mmm", como en el final del OM, el óxido nítrico en las fosas nasales sube muchas veces sobre lo normal. Es una molécula que ayuda a los senos paranasales a ventilarse.</p>
+        <p class="src">Weitzberg y Lundberg, 2002.</p>
+      </div>
+    </div>
+    <p class="note">Hay estudios pequeños que relacionan el canto del OM con menor actividad en zonas del cerebro ligadas a la alerta. Son resultados preliminares, y así te los contamos.</p>
+  </section>
+
+  <hr class="sep">
+
+  <!-- RESPIRA AHORA -->
+  <section id="practica" aria-labelledby="t-breath">
+    <p class="eyebrow" style="text-align:center">Pruébalo ahora</p>
+    <h2 id="t-breath">Un minuto antes de reservar</h2>
+    <div class="breath">
+      <div class="orb" id="orb" aria-hidden="true"><span class="om">ॐ</span></div>
+      <p class="orb-label" id="orbLabel" aria-live="polite">Listo cuando tú</p>
+      <p class="orb-hint" id="orbHint">Inhala 4 segundos por la nariz y exhala 6 zumbando "mmm".</p>
+      <button class="btn btn-ghost" type="button" id="orbBtn">Empezar 1 minuto</button>
+      <button class="linkbtn" type="button" id="soundBtn" aria-pressed="true">Sonido activado · mejor con audífonos</button>
+      <div class="tras" id="tras" hidden>
+        <p>Eso fue un minuto. Imagina dos horas, con los cuencos sonando a tu lado.</p>
+        <a class="btn btn-primary respira" href="#reservar">Reservar mi lugar</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- FACILITADORES -->
+  <section aria-labelledby="t-fac">
+    <p class="eyebrow" style="text-align:center">Te acompañan</p>
+    <h2 id="t-fac">Facilitadores</h2>
+    <div class="people">
+      <article class="person">
+        <div class="ini" aria-hidden="true">D</div>
+        <h3>Diego</h3>
+        <a class="ig" href="https://www.instagram.com/demin.consciente/" target="_blank" rel="noopener">@demin.consciente</a>
+        <p>Guía la parte de respiración. Trabaja con el cuerpo y la mente para soltar tensión acumulada.</p>
+        <ul class="tags"><li>Breathwork</li><li>Biodescodificación</li><li>Hipnosis no clínica</li></ul>
+      </article>
+      <article class="person">
+        <div class="ini" aria-hidden="true">I</div>
+        <h3>Isa</h3>
+        <a class="ig" href="https://www.instagram.com/dakini.isa/" target="_blank" rel="noopener">@dakini.isa</a>
+        <p>Guía el baño de sonido y la meditación. Crea el espacio para que el cuerpo descanse de verdad.</p>
+        <ul class="tags"><li>Sound healing</li><li>Reiki</li><li>Yoga</li><li>Meditación</li></ul>
+      </article>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- DETALLES -->
+  <section id="detalles" aria-labelledby="t-det">
+    <h2 id="t-det">Detalles</h2>
+    <dl class="details">
+      <div><dt>Fecha</dt><dd>Domingo 22 de noviembre</dd></div>
+      <div><dt>Hora</dt><dd>10:00 AM a 12:00 PM</dd></div>
+      <div class="wide"><dt>Aportación consciente</dt><dd>$100 MXN por persona, en cualquiera de las dos modalidades.</dd></div>
+    </dl>
+    <div class="tabs" role="tablist" aria-label="Modalidad">
+      <button class="tab" role="tab" type="button" id="tab-pres" aria-selected="true" aria-controls="panel-pres">Presencial</button>
+      <button class="tab" role="tab" type="button" id="tab-online" aria-selected="false" aria-controls="panel-online">En línea</button>
+      <span class="tab-luz" aria-hidden="true"></span>
+    </div>
+    <div class="panel" id="panel-pres" role="tabpanel" aria-labelledby="tab-pres">
+      <a class="mapa" id="lugar" href="#" target="_blank" rel="noopener" aria-label="Abrir la ubicación de Sadhana en Google Maps">
+        <svg viewBox="0 0 320 170" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+          <rect width="320" height="170" class="m-fondo"/>
+          <path class="m-parque" d="M18 112c22-14 50-10 64 6s-8 38-34 40-52-30-30-46z"/>
+          <path class="m-parque" d="M238 18c24-6 50 6 52 24s-26 28-48 22-28-40-4-46z"/>
+          <path class="m-rio" d="M-10 64C50 50 90 92 150 84s110-56 190-36"/>
+          <g class="m-calle"><path d="M0 132h320"/><path d="M0 30h320"/><path d="M70 0v170"/><path d="M196 0v170"/><path d="M128 0l40 170"/><path d="M0 98l320-30"/></g>
+          <g class="m-calle m-fina"><path d="M0 150h320"/><path d="M0 12h320"/><path d="M30 0v170"/><path d="M262 0v170"/><path d="M100 0v170"/><path d="M230 0v170"/></g>
+        </svg>
+        <span class="pin" aria-hidden="true"><span class="pin-onda"></span><span class="pin-onda"></span><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="mapa-nombre"><b>Sadhana</b>Satélite Acueducto · sur de Monterrey</span>
+      </a>
+      <div class="cta-row">
+        <a class="btn btn-primary btn-sm" id="mapsBtn" href="#" target="_blank" rel="noopener">Cómo llegar</a>
+        <button class="btn btn-ghost btn-sm" type="button" id="copyMaps">Copiar ubicación</button>
+      </div>
+      <div class="bring"><div><h3>Trae contigo</h3><ul><li>Ropa cómoda</li><li>Tu tapete, si tienes</li><li>Una cobija ligera</li><li>Agua</li><li>Llega 10 minutos antes</li></ul></div></div>
+    </div>
+    <div class="panel" id="panel-online" role="tabpanel" aria-labelledby="tab-online" hidden>
+      <div class="online-card">
+        <div class="ondas-online" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p><b>Desde tu casa.</b> Te mandamos el enlace por WhatsApp al confirmar tu lugar.</p>
+      </div>
+      <div class="bring"><div><h3>Prepara tu espacio</h3><ul><li>Audífonos (cambian todo en el soundbath)</li><li>Un lugar donde puedas recostarte</li><li>Celular en silencio</li><li>Conéctate 5 minutos antes</li></ul></div></div>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-ghost btn-sm" id="calLink" href="#" target="_blank" rel="noopener">Agregar a mi calendario</a>
+    </div>
+  </section>
+
+  <!-- RESERVA -->
+  <section id="reservar" aria-labelledby="t-res">
+    <div class="reserve">
+      <div style="display:grid;gap:8px;text-align:center">
+        <p class="eyebrow">Aparta tu lugar</p>
+        <h2 id="t-res">Reserva en 30 segundos</h2>
+      </div>
+
+      <div class="boleto" id="boleto" aria-hidden="true">
+        <div class="b-izq">
+          <span class="b-eyebrow">Sadhana Holistics</span>
+          <span class="b-titulo">El Poder del OM</span>
+          <span class="b-nombre" id="bNombre">Tu nombre aquí</span>
+          <span class="b-datos">Dom 22 nov · 10:00 AM · <span id="bModo">Presencial</span></span>
+        </div>
+        <div class="b-der"><span class="b-om">ॐ</span><span class="b-precio">$100</span></div>
+        <span class="b-sello" id="bSello">Por confirmar</span>
+      </div>
+
+      <form id="form" novalidate>
+        <fieldset>
+          <legend>¿Cómo vas a vivirlo?</legend>
+          <div class="modes">
+            <label class="mode"><input type="radio" name="modo" id="m-pres" value="Presencial" checked><span><b>Presencial</b><small>Col. Satélite, MTY</small></span></label>
+            <label class="mode"><input type="radio" name="modo" id="m-online" value="En línea"><span><b>En línea</b><small>Desde donde estés</small></span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label class="lbl" for="nombre">Tu nombre</label>
+          <input id="nombre" name="nombre" type="text" autocomplete="name" placeholder="Nombre y apellido" required>
+          <p class="err" id="e-nombre" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="tel">Tu WhatsApp</label>
+          <input id="tel" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" required>
+          <p class="err" id="e-tel" aria-live="polite"></p>
+        </div>
+        <button class="btn btn-primary respira" type="submit">Continuar</button>
+        <p class="fine">El siguiente paso abre WhatsApp con tu mensaje listo. Tu lugar queda apartado cuando lo envías y mandas el comprobante de tu aportación.</p>
+      </form>
+
+      <div class="step2" id="step2" hidden>
+        <p class="eyebrow">Último paso</p>
+        <p style="font-size:1.08rem">Tu mensaje está listo, <span id="s2name"></span>. Ábrelo en WhatsApp y envíalo para apartar tu lugar.</p>
+        <a class="btn btn-primary" id="waSend" href="#" target="_blank" rel="noopener">Abrir WhatsApp y enviar</a>
+        <div class="msg" id="msgPreview"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="linkbtn" type="button" id="copyMsg">Copiar mensaje</button>
+          <button class="linkbtn" type="button" id="editForm">Cambiar mis datos</button>
+        </div>
+        <ol class="pasos">
+          <li><b>Envía tu mensaje</b> por WhatsApp con el botón de arriba.</li>
+          <li><b>Haz tu aportación</b> de $100 MXN. Toca un dato para copiarlo.</li>
+          <li><b>Manda tu comprobante</b> por el mismo chat y listo.</li>
+        </ol>
+        <div class="pay">
+          <h3>Datos para tu aportación · <span id="p-banco"></span></h3>
+          <button class="dato" type="button" data-copiar="clabe"><span>CLABE</span><b id="p-clabe"></b><i>Copiar</i></button>
+          <button class="dato" type="button" data-copiar="tarjeta"><span>Tarjeta</span><b id="p-tarjeta"></b><i>Copiar</i></button>
+          <div class="dato fijo"><span>A nombre de</span><b id="p-titular"></b></div>
+          <div class="dato fijo"><span>Concepto</span><b>OM + tu nombre</b></div>
+        </div>
+            </div>
+      <p class="fine">¿Prefieres Instagram? Escribe <b>OM</b> en un mensaje a <a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section aria-labelledby="t-faq">
+    <h2 id="t-faq">Preguntas frecuentes</h2>
+    <div class="faq">
+      <details><summary>¿Necesito experiencia en meditación?</summary><p>No. Todo es guiado paso a paso. Si nunca has meditado, esta es una buena primera vez.</p></details>
+      <details><summary>¿Qué es una aportación consciente?</summary><p>Es una cuota accesible de $100 MXN que sostiene el espacio y a quienes facilitan. La mantenemos baja para que el precio no sea la razón para no venir.</p></details>
+      <details><summary>¿La respiración es intensa?</summary><p>Es una respiración suave y lenta, y siempre puedes ir a tu ritmo. Si estás embarazada o tienes epilepsia, alguna condición cardiaca, presión alta sin control o un diagnóstico psiquiátrico reciente, avísanos al reservar para adaptar la práctica.</p></details>
+      <details><summary>¿Funciona igual en línea?</summary><p>La respiración y la meditación sí. El sonido de los cuencos se siente más en persona, pero con audífonos la experiencia es muy completa.</p></details>
+      <details><summary>¿Esto sustituye una terapia o un tratamiento médico?</summary><p>No. Es una práctica complementaria de bienestar. No diagnostica ni trata enfermedades y no reemplaza la atención médica o psicológica.</p></details>
+      <details><summary>¿Y si ya no puedo asistir?</summary><p>Escríbenos por WhatsApp antes del evento y vemos contigo la mejor opción.</p></details>
+    </div>
+  </section>
+
+  <!-- CIERRE -->
+  <section class="closing">
+    <blockquote>“Volver a ti no es tan difícil como lo pensamos.”</blockquote>
+    <a class="btn btn-primary respira" href="#reservar">Reservar mi lugar</a>
+  </section>
+
+  <footer>
+    <div class="igs">
+      <a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a>
+      <a href="https://www.instagram.com/demin.consciente/" target="_blank" rel="noopener">@demin.consciente</a>
+      <a href="https://www.instagram.com/dakini.isa/" target="_blank" rel="noopener">@dakini.isa</a>
+    </div>
+    <p>Sadhana · Satélite, Monterrey, N.L.</p>
+    <p>Práctica complementaria de bienestar. No sustituye atención médica ni psicológica.</p>
+  </footer>
+</main>
+
+<div class="dock" id="dock">
+  <div class="info"><b>El Poder del OM</b>Dom 22 nov · 10 AM · $100</div>
+  <a class="btn btn-primary" href="#reservar">Reservar</a>
+</div>
+
+<script>
+/* ===== CONFIGURACIÓN: cambia estos datos antes de compartir ===== */
+const CONFIG = {
+  whatsapp: "528132458208",     // Número que recibe las reservas, con lada, solo dígitos. Vacío = WhatsApp deja elegir el contacto.
+  banco:   "Banorte",
+  clabe:   "072580002056012792",
+  tarjeta: "4189140052830113",
+  titular: "Ana Isabela Arciniega Guerra",
+  maps:    "https://maps.app.goo.gl/nGZ1RNxw5KACD8526",
+  inicio:  "2026-11-22T10:00:00-06:00",
+  fin:     "2026-11-22T12:00:00-06:00"
+};
+/* =============================================================== */
+
+const $ = s => document.querySelector(s);
+const waURL = text => (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "https://wa.me/") + "?text=" + encodeURIComponent(text);
+
+/* Sol del OM */
+(function drawSun(){
+  const n = 24, R1 = 62, R2 = 96;
+  let rays = "";
+  for (let i = 0; i < n; i++){
+    const a = i * 360 / n;
+    const long = i % 2 === 0;
+    const r2 = long ? R2 : R2 - 14;
+    rays += `<path transform="rotate(${a} 100 100)" d="M100 ${100-R1} C ${long?92:94} ${100-R1-14}, ${long?108:106} ${100-r2+18}, 100 ${100-r2} C ${long?104:103} ${100-r2+14}, ${long?96:97} ${100-R1-10}, 100 ${100-R1}Z"/>`;
+  }
+  $("#sun").innerHTML = `<span class="onda"></span><span class="onda"></span><span class="onda"></span><svg viewBox="0 0 200 200">
+    <g class="rays" fill="#f6ebe3" opacity=".9">${rays}</g>
+    <g class="core">
+      <circle cx="100" cy="100" r="56" fill="none" stroke="#f6ebe3" stroke-width="2.2"/>
+      <circle cx="100" cy="100" r="49" fill="rgba(46,22,32,.35)" stroke="#f6ebe3" stroke-width=".8" opacity=".9"/>
+      <text x="100" y="101" text-anchor="middle" dominant-baseline="central" fill="#f6ebe3" font-size="54" font-family='"Tiro Devanagari Sanskrit","Noto Serif Devanagari",serif'>ॐ</text>
+    </g></svg>`;
+})();
+
+/* Cuenta regresiva */
+(function countdown(){
+  const el = $("#countdown");
+  function pinta(){
+    const ms = new Date(CONFIG.inicio) - new Date();
+    if (ms <= 0){ el.textContent = new Date(CONFIG.fin) > new Date() ? "Estamos respirando ahora." : "Gracias por respirar con nosotros."; return; }
+    const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+    el.innerHTML = `Faltan <b>${d}</b> d · <b>${h}</b> h · <b>${m}</b> min`;
+  }
+  pinta(); setInterval(pinta, 30000);
+})();
+
+/* Enlaces */
+$("#waQuick").href = waURL("Hola Sadhana 🙏 Tengo una pregunta sobre El Poder del OM (domingo 22 de noviembre).");
+(function cal(){
+  const f = s => new Date(s).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+  const p = new URLSearchParams({
+    action:"TEMPLATE", text:"El Poder del OM · Sadhana",
+    dates:`${f(CONFIG.inicio)}/${f(CONFIG.fin)}`,
+    details:"Meditación con soundbath y breathwork. Facilitan @demin.consciente y @dakini.isa.",
+    location:"Sadhana, Col. Satélite, Monterrey, N.L."
+  });
+  $("#calLink").href = "https://calendar.google.com/calendar/render?" + p.toString();
+})();
+
+/* Autodiagnóstico */
+const checks = [...document.querySelectorAll(".check")];
+checks.forEach(b => b.addEventListener("click", () => {
+  b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true");
+  const yes = checks.filter(c => c.getAttribute("aria-pressed") === "true").length;
+  $("#verdict").innerHTML = yes >= 2
+    ? `<span class="small">Esta experiencia es</span><span class="big">para ti</span><a class="btn btn-primary" href="#reservar" style="justify-self:center;margin-top:10px">Reservar mi lugar</a>`
+    : `<span class="small">${yes === 1 ? "Una es suficiente para empezar a escucharte." : "Si respondiste sí a dos, ya sabes lo que sigue."}</span>`;
+}));
+
+/* Sonido sintetizado en el navegador (Web Audio): sin archivos ni licencias,
+   y siempre sincronizado con la animación. Aire al inhalar, OM al exhalar
+   ("Ooo" que se cierra en "mmm") y un cuenco al empezar y al terminar. */
+const Sonido = (() => {
+  let ctx = null, master = null, noiseBuf = null;
+  function init(){
+    if (ctx) { if (ctx.state === "suspended") ctx.resume(); return true; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = .9;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp); comp.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); let b = 0;
+    for (let i = 0; i < d.length; i++){ const w = Math.random()*2-1; b = (b + .02*w)/1.02; d[i] = (w*.35 + b*3.5); }
+    return true;
+  }
+  function env(g, t, pts){ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(.0001, t); pts.forEach(([dt,v]) => g.gain.linearRampToValueAtTime(v, t+dt)); }
+  /* Aire entrando por la nariz */
+  function inhala(dur){
+    if (!ctx) return; const t = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = .8;
+    bp.frequency.setValueAtTime(700, t); bp.frequency.linearRampToValueAtTime(1600, t+dur*.8);
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 300;
+    const g = ctx.createGain();
+    env(g, t, [[.4,.1],[dur*.7,.24],[dur-.1,.0001]]);
+    src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(master);
+    src.start(t); src.stop(t+dur);
+  }
+  /* OM: voz grave con formantes de "O" que se cierran en "M" */
+  function om(dur){
+    if (!ctx) return; const t = ctx.currentTime, f0 = 110;
+    const out = ctx.createGain();
+    env(out, t, [[.7,.32],[dur*.75,.28],[dur-.05,.0001]]);
+    const vib = ctx.createOscillator(), vibG = ctx.createGain();
+    vib.frequency.value = 4.6; vibG.gain.value = .6; vib.connect(vibG);
+    const voces = [[f0,"sawtooth",.5],[f0*1.003,"sawtooth",.35],[f0/2,"sine",.6]];
+    const mezcla = ctx.createGain(); mezcla.gain.value = .5;
+    voces.forEach(([f,type,amp]) => {
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; vibG.connect(o.frequency);
+      const a = ctx.createGain(); a.gain.value = amp; o.connect(a); a.connect(mezcla); o.start(t); o.stop(t+dur);
+    });
+    // Formantes de "O" (≈450 y 800 Hz). Al pasar a "M" se apagan y queda el zumbido nasal.
+    const vocal = ctx.createGain(); vocal.gain.setValueAtTime(1, t); vocal.gain.setValueAtTime(1, t+dur*.35); vocal.gain.linearRampToValueAtTime(.08, t+dur*.55);
+    [[450,6,1],[800,8,.5],[2830,10,.12]].forEach(([f,q,amp]) => {
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q;
+      const a = ctx.createGain(); a.gain.value = amp*2.2; mezcla.connect(bp); bp.connect(a); a.connect(vocal);
+    });
+    const nasal = ctx.createBiquadFilter(); nasal.type = "lowpass"; nasal.Q.value = 2;
+    nasal.frequency.setValueAtTime(600, t); nasal.frequency.setValueAtTime(600, t+dur*.35); nasal.frequency.linearRampToValueAtTime(280, t+dur*.6);
+    const nasalG = ctx.createGain(); nasalG.gain.setValueAtTime(.25, t); nasalG.gain.setValueAtTime(.25, t+dur*.35); nasalG.gain.linearRampToValueAtTime(1.1, t+dur*.6);
+    mezcla.connect(nasal); nasal.connect(nasalG); nasalG.connect(out);
+    vocal.connect(out); out.connect(master);
+    vib.start(t); vib.stop(t+dur);
+  }
+  /* Cuenco: parciales inarmónicos con batido lento */
+  function cuenco(f = 196){
+    if (!ctx) return; const t = ctx.currentTime;
+    [[1,.32,9],[2.76,.16,6],[5.4,.07,4],[8.93,.03,2.5]].forEach(([r,amp,dec]) => {
+      [0,1.6].forEach(det => {
+        const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = f*r + det;
+        const g = ctx.createGain(); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(amp*.5, t+.02); g.gain.exponentialRampToValueAtTime(.0001, t+dec);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t+dec);
+      });
+    });
+  }
+  function silencio(){ if (ctx) { const old = master; master = ctx.createGain(); master.gain.value = .9; const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination); old.gain.setTargetAtTime(0, ctx.currentTime, .15); } }
+  return { init, inhala, om, cuenco, silencio };
+})();
+
+/* Respiración guiada: cuenco 2.5 s, 6 ciclos (inhala 4 s, exhala 6 s), cierre en 62.5 s.
+   Con el audio mezclado, el reloj es el propio audio: la animación nunca se desfasa del sonido. */
+const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
+(function breath(){
+  const orb = $("#orb"), label = $("#orbLabel"), hint = $("#orbHint"), btn = $("#orbBtn"), sBtn = $("#soundBtn"), tras = $("#tras");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let conSonido = true, tick = null, t0 = 0, fase = "", usaAudio = false, audio = null;
+  if (AUDIO_SRC && !AUDIO_SRC.startsWith("__")) { audio = new Audio(); audio.preload = "none"; audio.src = AUDIO_SRC; }
+  sBtn.addEventListener("click", () => {
+    conSonido = !conSonido;
+    sBtn.setAttribute("aria-pressed", conSonido);
+    sBtn.textContent = conSonido ? "Sonido activado · mejor con audífonos" : "Sonido apagado · tócalo para activarlo";
+    if (audio) audio.muted = !conSonido;
+    if (!conSonido) Sonido.silencio(); else if (tick && !usaAudio) Sonido.init();
+  });
+  const reloj = () => usaAudio ? audio.currentTime : (performance.now() - t0) / 1000;
+  function faseEn(t){
+    if (t < 2.5) return "cuenco";
+    if (t >= 62.5) return "fin";
+    const i = Math.floor((t - 2.5) / 10), r = (t - 2.5) % 10;
+    return (r < 4 ? "in" : "out") + i;
+  }
+  function aplicar(f){
+    const synth = !usaAudio && conSonido;
+    orb.classList.remove("sale");
+    if (f === "cuenco"){
+      label.textContent = "Escucha el cuenco"; hint.textContent = "Acomódate y suelta los hombros";
+      if (synth) Sonido.cuenco(196);
+      return;
+    }
+    if (f === "fin") return terminar();
+    const i = +f.slice(f.startsWith("in") ? 2 : 3);
+    if (f.startsWith("in")){
+      label.textContent = "Inhala"; hint.textContent = `Por la nariz · ${i + 1} de 6`;
+      orb.style.transitionDuration = "4s"; orb.style.transform = reduce ? "scale(.9)" : "scale(1)";
+      if (synth) Sonido.inhala(4);
+    } else {
+      label.textContent = "Exhala"; hint.textContent = "Ooommm… zumba con el sonido";
+      orb.style.transitionDuration = "6s"; orb.style.transform = "scale(.72)";
+      void orb.offsetWidth; orb.classList.add("sale");
+      if (synth) Sonido.om(6);
+    }
+  }
+  function correr(){
+    fase = "";
+    tick = setInterval(() => { const f = faseEn(reloj()); if (f !== fase){ fase = f; aplicar(f); } }, 80);
+  }
+  function empezar(){
+    btn.textContent = "Detener";
+    tras.hidden = true;
+    document.body.classList.add("practicando");
+    orb.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    if (audio){
+      audio.muted = !conSonido;
+      try { audio.currentTime = 0; } catch(e){}
+      const p = audio.play();
+      usaAudio = true; correr();
+      if (p && p.catch) p.catch(() => { clearInterval(tick); usaAudio = false; audio = null; sintetico(); });
+    } else sintetico();
+  }
+  function sintetico(){
+    usaAudio = false;
+    if (conSonido) Sonido.init();
+    t0 = performance.now(); correr();
+  }
+  function reiniciar(){
+    clearInterval(tick); tick = null;
+    orb.classList.remove("sale");
+    orb.style.transitionDuration = "1.2s"; orb.style.transform = "scale(.72)";
+    document.body.classList.remove("practicando");
+  }
+  function detener(){
+    reiniciar();
+    if (audio) audio.pause();
+    Sonido.silencio();
+    label.textContent = "Listo cuando tú";
+    hint.textContent = "Inhala 4 segundos por la nariz y exhala 6 zumbando \"mmm\".";
+    btn.textContent = "Empezar 1 minuto";
+  }
+  function terminar(){
+    reiniciar();
+    if (!usaAudio && conSonido) Sonido.cuenco(196);
+    label.textContent = "Bien hecho";
+    hint.textContent = "Quédate un momento con lo que sientes ahora.";
+    btn.textContent = "Repetir";
+    tras.hidden = false;
+  }
+  btn.addEventListener("click", () => { tick ? detener() : empezar(); });
+})();
+
+/* Movimiento al bajar: barra de avance, apariciones y barra de reserva */
+(function movimiento(){
+  const raiz = document.documentElement;
+  const avance = () => { const m = raiz.scrollHeight - innerHeight; raiz.style.setProperty("--p", m > 0 ? Math.min(1, scrollY / m) : 0); };
+  addEventListener("scroll", avance, { passive: true }); avance();
+  if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const piezas = document.querySelectorAll("main > section:not(.hero) > *, .moment, .check, .sci, .person, .details > div, .bring > div, details");
+  const io = new IntersectionObserver(entradas => {
+    entradas.forEach(e => {
+      if (!e.isIntersecting) return;
+      const hermanos = [...e.target.parentElement.children].filter(n => n.classList.contains("oculto"));
+      e.target.style.transitionDelay = Math.min(hermanos.indexOf(e.target), 4) * 0.12 + "s";
+      e.target.classList.remove("oculto"); io.unobserve(e.target);
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: .12 });
+  piezas.forEach(el => {
+    if (el.getBoundingClientRect().top < innerHeight * .92) return;
+    el.classList.add("rv", "oculto"); io.observe(el);
+  });
+})();
+
+/* Reserva */
+const form = $("#form"), nombre = $("#nombre"), tel = $("#tel");
+const KEY = "om-reserva-borrador";
+try {
+  const d = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (d){ nombre.value = d.nombre || ""; tel.value = d.tel || ""; if (d.modo === "En línea") $("#m-online").checked = true; }
+} catch(e){}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify({ nombre:nombre.value, tel:tel.value, modo:form.modo.value })); } catch(e){}
+}
+form.addEventListener("input", save);
+
+function setErr(input, id, msg){
+  $(id).textContent = msg;
+  input.setAttribute("aria-invalid", msg ? "true" : "false");
+}
+function cleanPhone(v){
+  let d = v.replace(/\D/g,"");
+  if (d.startsWith("521") && d.length === 13) d = d.slice(3);
+  else if (d.startsWith("52") && d.length === 12) d = d.slice(2);
+  return d;
+}
+function pretty(d){ return d.length === 10 ? `${d.slice(0,2)} ${d.slice(2,6)} ${d.slice(6)}` : d; }
+
+let lastMsg = "";
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const n = nombre.value.trim();
+  const p = cleanPhone(tel.value);
+  let ok = true;
+  if (n.length < 2){ setErr(nombre, "#e-nombre", "Escribe tu nombre para apartar tu lugar."); ok = false; } else setErr(nombre, "#e-nombre", "");
+  if (p.length !== 10){ setErr(tel, "#e-tel", "Escribe tu número de 10 dígitos, sin lada internacional."); ok = false; } else setErr(tel, "#e-tel", "");
+  if (!ok){ (n.length < 2 ? nombre : tel).focus(); return; }
+  const modo = form.modo.value;
+  lastMsg =
+`Hola Sadhana 🙏 Quiero reservar mi lugar en *El Poder del OM*.
+
+📅 Domingo 22 de noviembre, 10:00 AM
+🌀 Modalidad: ${modo}
+👤 Nombre: ${n}
+📱 WhatsApp: ${pretty(p)}
+
+¿Me confirman mi lugar? En un momento les comparto el comprobante de mi aportación de $100 MXN.`;
+  $("#s2name").textContent = n.split(" ")[0];
+  $("#boleto").classList.add("listo");
+  $("#msgPreview").textContent = lastMsg;
+  $("#waSend").href = waURL(lastMsg);
+  form.hidden = true;
+  $("#step2").hidden = false;
+  $("#waSend").focus();
+});
+$("#editForm").addEventListener("click", () => { $("#boleto").classList.remove("listo"); $("#step2").hidden = true; form.hidden = false; nombre.focus(); });
+
+function copy(text, btn, label){
+  const done = () => { btn.textContent = "Copiado"; setTimeout(() => btn.textContent = label, 1800); };
+  try {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallback());
+  } catch(e){ fallback(); }
+  function fallback(){
+    const r = document.createRange(); const el = btn.id === "copyMsg" ? $("#msgPreview") : btn;
+    r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    btn.textContent = "Texto seleccionado, cópialo";
+  }
+}
+$("#copyMsg").addEventListener("click", e => copy(lastMsg, e.currentTarget, "Copiar mensaje"));
+
+/* Datos de pago: se muestran agrupados y se copian sin espacios con un toque */
+const grupos = (v, n) => v.replace(new RegExp(`(.{${n}})(?=.)`, "g"), "$1 ");
+$("#p-banco").textContent = CONFIG.banco;
+$("#p-clabe").textContent = grupos(CONFIG.clabe, 3);
+$("#p-tarjeta").textContent = grupos(CONFIG.tarjeta, 4);
+$("#p-titular").textContent = CONFIG.titular;
+document.querySelectorAll(".dato[data-copiar]").forEach(b => b.addEventListener("click", () => {
+  const v = CONFIG[b.dataset.copiar], i = b.querySelector("i");
+  const ok = () => { b.classList.add("copiado"); i.textContent = "Copiado"; setTimeout(() => { b.classList.remove("copiado"); i.textContent = "Copiar"; }, 1800); };
+  try { navigator.clipboard.writeText(v).then(ok).catch(sel); } catch(e){ sel(); }
+  function sel(){ const r = document.createRange(); r.selectNodeContents(b.querySelector("b")); const g = getSelection(); g.removeAllRanges(); g.addRange(r); i.textContent = "Selecciona y copia"; }
+}));
+
+/* Ubicación y pestañas presencial / en línea (sincronizadas con el formulario) */
+["#lugar","#mapsBtn"].forEach(s => $(s).href = CONFIG.maps);
+$("#copyMaps").addEventListener("click", e => copy(CONFIG.maps, e.currentTarget, "Copiar ubicación"));
+function modo(online, desdeForm){
+  $(".tabs").classList.toggle("online", online);
+  $("#tab-pres").setAttribute("aria-selected", !online);
+  $("#tab-online").setAttribute("aria-selected", online);
+  $("#panel-pres").hidden = online; $("#panel-online").hidden = !online;
+  if (!desdeForm) $(online ? "#m-online" : "#m-pres").checked = true;
+  $("#bModo").textContent = online ? "En línea" : "Presencial";
+}
+$("#tab-pres").addEventListener("click", () => modo(false));
+$("#tab-online").addEventListener("click", () => modo(true));
+document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener("change", () => modo(r.value === "En línea" && r.checked, true)));
+
+/* Recorrido de las dos horas: avanza solo hasta que la persona toca una etapa */
+(function flujo(){
+  const pasos = [
+    "Llegas, te acomodas y dejas el día afuera. Un primer cuenco marca el inicio.",
+    "Respiración guiada, suave y a tu ritmo, para soltar la tensión del pecho, la mandíbula y los hombros.",
+    "Entiendes qué hacen tu respiración y la vibración del OM en tu cuerpo, y lo cantamos en grupo.",
+    "Te recuestas. Los cuencos tibetanos suenan a tu alrededor y tu cuerpo descansa.",
+    "Regresas despacio. Si quieres, compartes lo que sentiste antes de irte."
+  ];
+  const btns = [...document.querySelectorAll(".flujo-linea button")], txt = $("#flujoTexto");
+  let auto = null, actual = -1;
+  function ir(i){
+    if (i === actual) return; actual = i;
+    btns.forEach((b, k) => b.setAttribute("aria-selected", k === i));
+    btns.forEach((b, k) => b.classList.toggle("hecho", k < i));
+    txt.classList.remove("cambia"); void txt.offsetWidth; txt.classList.add("cambia");
+    txt.textContent = pasos[i];
+  }
+  btns.forEach((b, i) => b.addEventListener("click", () => { clearInterval(auto); auto = null; ir(i); }));
+  ir(0);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && auto === null && actual === 0) auto = setInterval(() => ir((actual + 1) % btns.length), 4200);
+    else if (!e.isIntersecting && auto){ clearInterval(auto); auto = 0; }
+  }, { threshold: .5 }).observe($("#flujo"));
+})();
+
+/* Boleto que se llena mientras escribes */
+(function boleto(){
+  const n = $("#bNombre");
+  const pinta = () => { const v = nombre.value.trim(); n.textContent = v || "Tu nombre aquí"; n.classList.toggle("vacio", !v); };
+  nombre.addEventListener("input", pinta); pinta();
+  modo($("#m-online").checked, true);
+})();
+
+/* Barra fija: aparece al salir del inicio y se oculta cuando el formulario está a la vista */
+(function dock(){
+  const dock = $("#dock"); if (!("IntersectionObserver" in window)) return;
+  const vis = new Map();
+  const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); dock.classList.toggle("hide", [...vis.values()].some(Boolean)); }, { threshold: .15 });
+  io.observe($(".hero")); io.observe($("#reservar"));
+})();
+</script>
+
+</body>
+</html>

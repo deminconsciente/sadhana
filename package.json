@@ -1,0 +1,13 @@
+{
+  "name": "sadhana-holistics",
+  "private": true,
+  "description": "Sitio de sadhanaholistics.com en Cloudflare Workers. Ver README.md.",
+  "scripts": {
+    "sizes": "node tools/media-sizes.mjs",
+    "dev": "npm run sizes && wrangler dev",
+    "check": "npm run sizes && wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "npm run sizes && wrangler deploy",
+    "preview": "npm run sizes && wrangler versions upload"
+  },
+  "devDependencies": { "wrangler": "^4.138.0" }
+}
