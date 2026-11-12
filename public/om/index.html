@@ -490,6 +490,9 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 /* Un solo Reservar a la vista: en celular lo lleva la barra de abajo */
 @media (max-width:899px){.top .btn{display:none}}
 .top .btn{transition:opacity .3s}.cta-visible .top .btn{opacity:0;pointer-events:none}
+.top{transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+body.arriba .top{opacity:0;transform:translateY(-14px);pointer-events:none}
+body.arriba .progreso{opacity:0}
 </style>
 </head>
 <body>
@@ -1109,8 +1112,23 @@ modo(false, true);
 (function dock(){
   const dock = $("#dock"); if (!("IntersectionObserver" in window)) return;
   const vis = new Map();
-  const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); const otro = [...vis.values()].some(Boolean); dock.classList.toggle("hide", otro); document.body.classList.toggle("cta-visible", otro); }, { threshold: .15 });
+  const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); const otro = [...vis.values()].some(Boolean); document.body.classList.toggle("cta-visible", otro); window.__pintaBarras && window.__pintaBarras(); }, { threshold: .15 });
   io.observe($(".hero .cta-row")); io.observe($("#reservar")); io.observe($(".closing"));
+})();
+
+/* Hero limpio: la barra de arriba y la de reservar aparecen al bajar o al terminar la práctica.
+   La de abajo nunca convive con otro botón Reservar en pantalla. */
+(function barras(){
+  const b = document.body, dock = document.getElementById("dock"), tras = document.getElementById("tras");
+  let practicado = false;
+  window.__pintaBarras = () => {
+    const arriba = scrollY < 80 && !practicado;
+    b.classList.toggle("arriba", arriba);
+    if (dock) dock.classList.toggle("hide", arriba || b.classList.contains("cta-visible"));
+  };
+  if (tras) new MutationObserver(() => { if (!tras.hidden){ practicado = true; window.__pintaBarras(); } }).observe(tras, { attributes: true, attributeFilter: ["hidden"] });
+  addEventListener("scroll", window.__pintaBarras, { passive: true });
+  window.__pintaBarras();
 })();
 
 /* Plegables: el título abre y cierra; sin JS todo queda abierto */
