@@ -214,6 +214,9 @@ legend,label.lbl{font-family:var(--f-display);font-size:.78rem;letter-spacing:.1
 /* Voces */
 .voces-lista{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .voces-lista blockquote{margin:0;padding:14px 18px;border-left:2px solid var(--peach);font-size:1.08rem;line-height:1.45}
+.voces-lista cite{display:block;margin-top:8px;font-style:normal;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+html:has(body.practicando), body.practicando{overflow:hidden;overscroll-behavior:none}
+body.practicando{touch-action:none}
 .facts .primer{border-color:var(--peach);color:var(--peach);font-weight:700}
 .invita{justify-self:center;text-align:center}
 
@@ -461,7 +464,7 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 /* Barra de reserva en móvil: también píldora */
 .dock{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));border-radius:999px;border:0;padding:8px 8px 8px 20px;
   background:var(--inc-glass);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 10px 30px -14px rgba(40,15,5,.6),inset 0 0 0 1px rgba(255,255,255,.14);text-shadow:0 1px 2px rgba(40,15,5,.5)}
-.dock.hide{transform:translateY(140%)}
+.dock.hide, body.practicando .dock{transform:translateY(calc(100% + 24px + env(safe-area-inset-bottom,0px)))}
 .dock .btn{background:#fff;color:#2a150b;text-shadow:none}
 @media (min-width:900px){body{padding-bottom:30px}}
 
@@ -686,14 +689,13 @@ body.arriba .progreso{opacity:0}
 
   <!-- VOCES -->
   <section class="voces" aria-labelledby="t-voces">
-    <p class="eyebrow" style="text-align:center">Después de respirar con Diego</p>
+    <p class="eyebrow" style="text-align:center">Quienes ya respiraron con nosotros</p>
     <h2 id="t-voces">Lo que nos escribieron</h2>
     <ul class="voces-lista">
-      <li><blockquote>“Calma, ligereza, mente en silencio.”</blockquote></li>
-      <li><blockquote>“Me recuerda que no debo de cargar con emociones o situaciones que no son mías y que nada es personal.”</blockquote></li>
-      <li><blockquote>“Calmar la mente.”</blockquote></li>
+      <li><blockquote>“Me recuerda que no debo de cargar con emociones o situaciones que no son mías y que nada es personal.”<cite>Participante de breathwork · Demin Consciente</cite></blockquote></li>
+      <li><blockquote>“La lluvia de sonido con cuencos tibetanos y gong totalmente recomendados.”<cite>Reseña en Google · Sadhana, 5.0</cite></blockquote></li>
     </ul>
-    <p class="note">Palabras de participantes de las sesiones de breathwork de Demin Consciente, compartidas con su permiso. Este domingo es el primer círculo de El Poder del OM: las voces de este evento todavía las vamos a escribir juntos.</p>
+    <p class="note">Palabras reales, compartidas con permiso o publicadas en Google Maps. Este domingo es el primer círculo de El Poder del OM: sus voces todavía las vamos a escribir juntos.</p>
   </section>
 
   <!-- RESERVA -->
