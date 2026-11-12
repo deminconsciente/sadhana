@@ -211,6 +211,12 @@ legend,label.lbl{font-family:var(--f-display);font-size:.78rem;letter-spacing:.1
 .pending{color:var(--rose);font-style:italic}
 .linkbtn{background:none;border:0;color:var(--peach);font:inherit;font-size:.9rem;text-decoration:underline;cursor:pointer;padding:4px}
 
+/* Voces */
+.voces-lista{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.voces-lista blockquote{margin:0;padding:14px 18px;border-left:2px solid var(--peach);font-size:1.08rem;line-height:1.45}
+.facts .primer{border-color:var(--peach);color:var(--peach);font-weight:700}
+.invita{justify-self:center;text-align:center}
+
 /* FAQ */
 .faq{display:grid;gap:10px}
 details{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:0 18px}
@@ -512,9 +518,11 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
       <button class="linkbtn" type="button" id="soundBtn" aria-pressed="true">Sonido activado · mejor con audífonos</button>
       <div class="tras" id="tras" hidden>
         <p>Eso fue un minuto. El domingo son dos horas, con los cuencos de Isa sonando a tu lado.</p>
+        <a class="linkbtn invita" href="#" target="_blank" rel="noopener">Compártelo con alguien que lo necesite</a>
       </div>
     </div>
     <ul class="facts" aria-label="Datos del evento">
+      <li class="primer">Primer círculo</li>
       <li><a href="#detalles" class="chip-link">Presencial · Col. Satélite</a></li>
       <li>En línea</li>
       <li>2 horas</li>
@@ -676,11 +684,23 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
     </div>
   </section>
 
+  <!-- VOCES -->
+  <section class="voces" aria-labelledby="t-voces">
+    <p class="eyebrow" style="text-align:center">Después de respirar con Diego</p>
+    <h2 id="t-voces">Lo que nos escribieron</h2>
+    <ul class="voces-lista">
+      <li><blockquote>“Calma, ligereza, mente en silencio.”</blockquote></li>
+      <li><blockquote>“Me recuerda que no debo de cargar con emociones o situaciones que no son mías y que nada es personal.”</blockquote></li>
+      <li><blockquote>“Calmar la mente.”</blockquote></li>
+    </ul>
+    <p class="note">Palabras de participantes de las sesiones de breathwork de Demin Consciente, compartidas con su permiso. Este domingo es el primer círculo de El Poder del OM: las voces de este evento todavía las vamos a escribir juntos.</p>
+  </section>
+
   <!-- RESERVA -->
   <section id="reservar" aria-labelledby="t-res">
     <div class="reserve">
       <div style="display:grid;gap:8px;text-align:center">
-        <p class="eyebrow">Aparta tu lugar</p>
+        <p class="eyebrow">El primer círculo de El Poder del OM</p>
         <h2 id="t-res">Reserva en tres pasos</h2>
       </div>
 
@@ -806,6 +826,7 @@ const waURL = text => (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "h
 })();
 
 /* Enlaces */
+document.querySelectorAll(".invita").forEach(a => a.href = "https://wa.me/?text=" + encodeURIComponent("Te invito a El Poder del OM 🙏 Meditación con soundbath y breathwork, domingo 22 de noviembre a las 10:00 AM, presencial en Satélite o en línea. Aportación consciente desde $100. Pruébalo en un minuto aquí: https://sadhanaholistics.com/om/"));
 $("#waQuick").href = waURL("Hola Sadhana 🙏 Tengo una pregunta sobre El Poder del OM (domingo 22 de noviembre).");
 (function cal(){
   const f = s => new Date(s).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
