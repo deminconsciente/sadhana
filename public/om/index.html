@@ -272,7 +272,7 @@ footer .igs{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center}
 @keyframes icono{0%,100%{transform:scale(.92)}40%{transform:scale(1.06)}}
 /* Práctica: la página se apaga alrededor del orbe */
 main > section, main > hr, .top, footer{transition:opacity 1.2s ease, filter 1.2s ease}
-body.practicando main > section:not(#practica), body.practicando main > hr, body.practicando .top, body.practicando footer{opacity:.12;filter:blur(2px)}
+body.practicando main > section:not(.hero), body.practicando .hero > :not(.breath), body.practicando main > hr, body.practicando .top, body.practicando footer{opacity:.12;filter:blur(2px)}
 body.practicando .dock{transform:translateY(110%)}
 body.practicando .lienzo{animation-play-state:paused;filter:brightness(.7)}
 .orb::before,.orb::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(246,235,227,.45);opacity:0}
@@ -469,6 +469,21 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
 .pasos-res b{font-size:.92rem}
 .pasos-res span{font-size:.76rem;color:var(--linen-dim);line-height:1.3}
 .b-nombre{font-style:normal}
+/* Medidor de aportación */
+.aporte{gap:10px;justify-items:center;text-align:center}
+.ap-monto{font-size:2.4rem;font-weight:700;letter-spacing:.02em;line-height:1;color:#fff}
+#apRango{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:999px;margin:6px 0;cursor:pointer;
+  background:linear-gradient(90deg,#c9875a,#a45a2a var(--p,0%),rgba(255,248,241,.16) var(--p,0%))}
+#apRango::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+#apRango::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+#apRango:focus-visible{outline:2px solid var(--peach);outline-offset:6px}
+.ap-chips{display:flex;flex-wrap:nowrap;gap:6px;justify-content:center}
+.ap-chips button{min-height:40px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:rgba(255,248,241,.06);color:var(--linen);font:inherit;font-weight:700;cursor:pointer}
+.ap-chips button[aria-pressed="true"]{background:var(--inc);border-color:transparent;color:#fff}
+.ap-nota{font-size:.88rem;color:var(--linen-dim);min-height:1.4em}
+/* Un solo Reservar a la vista: en celular lo lleva la barra de abajo */
+@media (max-width:899px){.top .btn{display:none}}
+.top .btn{transition:opacity .3s}.cta-visible .top .btn{opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -489,16 +504,24 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
     <p class="eyebrow">Domingo 22 de noviembre · 10:00 AM</p>
     <h1 id="titulo">El Poder del <span class="om-word">OM</span></h1>
     <p class="sub">Meditación con soundbath y breathwork</p>
-    <div class="sun" id="sun" aria-hidden="true"></div>
+    <div class="breath" id="practica">
+      <div class="orb" id="orb" aria-hidden="true"><span class="om">ॐ</span></div>
+      <p class="orb-label" id="orbLabel" aria-live="polite">Siéntelo primero</p>
+      <p class="orb-hint" id="orbHint">Un minuto: inhala 4 segundos por la nariz y suelta un OM largo, hasta que la M deje de vibrar.</p>
+      <button class="btn btn-ghost" type="button" id="orbBtn">Probar 1 minuto</button>
+      <button class="linkbtn" type="button" id="soundBtn" aria-pressed="true">Sonido activado · mejor con audífonos</button>
+      <div class="tras" id="tras" hidden>
+        <p>Eso fue un minuto. El domingo son dos horas, con los cuencos de Isa sonando a tu lado.</p>
+      </div>
+    </div>
     <ul class="facts" aria-label="Datos del evento">
       <li><a href="#detalles" class="chip-link">Presencial · Col. Satélite</a></li>
       <li>En línea</li>
       <li>2 horas</li>
     </ul>
-    <p class="price">Aportación consciente <strong>$100 MXN</strong></p>
+    <p class="price">Aportación consciente <strong>desde $100 MXN</strong></p>
     <div class="cta-row">
       <a class="btn btn-primary respira" href="#reservar">Reservar mi lugar</a>
-      <a class="btn btn-ghost" id="waQuick" href="#" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
     </div>
     <p class="countdown" id="countdown"></p>
     <a class="desliza" href="#t-tension">Desliza<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
@@ -583,24 +606,6 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
       </div>
     </div>
     <p class="note">Hay estudios pequeños que relacionan el canto del OM con menor actividad en zonas del cerebro ligadas a la alerta. Son resultados preliminares, y así te los contamos.</p>
-  </section>
-
-
-  <!-- RESPIRA AHORA -->
-  <section id="practica" aria-labelledby="t-breath">
-    <p class="eyebrow" style="text-align:center">Pruébalo ahora</p>
-    <h2 id="t-breath">Un minuto antes de reservar</h2>
-    <div class="breath">
-      <div class="orb" id="orb" aria-hidden="true"><span class="om">ॐ</span></div>
-      <p class="orb-label" id="orbLabel" aria-live="polite">Listo cuando tú</p>
-      <p class="orb-hint" id="orbHint">Inhala 4 segundos por la nariz y exhala 6 zumbando "mmm".</p>
-      <button class="btn btn-ghost" type="button" id="orbBtn">Empezar 1 minuto</button>
-      <button class="linkbtn" type="button" id="soundBtn" aria-pressed="true">Sonido activado · mejor con audífonos</button>
-      <div class="tras" id="tras" hidden>
-        <p>Eso fue un minuto. Imagina dos horas, con los cuencos sonando a tu lado.</p>
-        <a class="btn btn-primary respira" href="#reservar">Reservar mi lugar</a>
-      </div>
-    </div>
   </section>
 
 
@@ -697,10 +702,19 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
           <label class="mode"><input type="radio" name="modo" id="m-online" value="En línea"><span><b>En línea</b><small>Desde donde estés</small></span></label>
         </div>
       </fieldset>
+      <fieldset class="aporte">
+        <legend>Tu aportación consciente</legend>
+        <output class="ap-monto" id="apMonto" for="apRango">$100</output>
+        <input type="range" id="apRango" min="100" max="1000" step="50" value="100" aria-label="Aportación en pesos, desde 100">
+        <div class="ap-chips" role="group" aria-label="Montos sugeridos">
+          <button type="button" data-ap="100" aria-pressed="true">$100</button><button type="button" data-ap="200" aria-pressed="false">$200</button><button type="button" data-ap="300" aria-pressed="false">$300</button><button type="button" data-ap="500" aria-pressed="false">$500</button>
+        </div>
+        <p class="ap-nota" id="apNota">El mínimo para que nadie se quede fuera.</p>
+      </fieldset>
       <a class="btn btn-primary respira" id="irReserva" href="https://sadhanaholistics.com/?reservar=om-2026-11-22">Continuar</a>
       <ol class="pasos-res" aria-label="Así se reserva en Sadhana">
         <li><b>Tus datos</b><span>Nombre, WhatsApp y correo</span></li>
-        <li><b>Aparta</b><span>Transferencia de $100 y comprobante por WhatsApp</span></li>
+        <li><b>Aparta</b><span>Transferencia y comprobante por WhatsApp</span></li>
         <li><b>Tu ticket</b><span>Con folio, en Mis reservas</span></li>
       </ol>
       <p class="fine">Es el mismo proceso para todo en Sadhana. Tu lugar queda apartado 24 horas mientras envías tu comprobante.</p>
@@ -713,10 +727,11 @@ footer .legal p{margin-top:6px;max-width:42ch;padding:0;color:#fff7f0;font-size:
     <h2 id="t-faq">Preguntas frecuentes</h2>
     <div class="faq">
       <details><summary>¿Necesito experiencia en meditación?</summary><p>No. Todo es guiado paso a paso. Si nunca has meditado, esta es una buena primera vez.</p></details>
-      <details><summary>¿Qué es una aportación consciente?</summary><p>Es una cuota accesible de $100 MXN que sostiene el espacio y a quienes facilitan. La mantenemos baja para que el precio no sea la razón para no venir.</p></details>
+      <details><summary>¿Qué es una aportación consciente?</summary><p>Es una cuota que tú eliges, desde $100 MXN. Sostiene el espacio y a quienes facilitan. El mínimo es bajo para que el precio no sea la razón para no venir; si quieres y puedes aportar más, al reservar mueves el medidor.</p></details>
       <details><summary>¿La respiración es intensa?</summary><p>Es una respiración suave y lenta, y siempre puedes ir a tu ritmo. Si estás embarazada o tienes epilepsia, alguna condición cardiaca, presión alta sin control o un diagnóstico psiquiátrico reciente, avísanos al reservar para adaptar la práctica.</p></details>
       <details><summary>¿Funciona igual en línea?</summary><p>La respiración y la meditación sí. El sonido de los cuencos se siente más en persona, pero con audífonos la experiencia es muy completa.</p></details>
       <details><summary>¿Esto sustituye una terapia o un tratamiento médico?</summary><p>No. Es una práctica complementaria de bienestar. No diagnostica ni trata enfermedades y no reemplaza la atención médica o psicológica.</p></details>
+      <details><summary>¿Tienes otra duda?</summary><p><a id="waQuick" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te respondemos.</p></details>
       <details><summary>¿Y si ya no puedo asistir?</summary><p>Escríbenos por WhatsApp antes del evento y vemos contigo la mejor opción.</p></details>
     </div>
   </section>
@@ -760,6 +775,7 @@ const waURL = text => (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "h
 
 /* Sol del OM */
 (function drawSun(){
+  if (!document.getElementById("sun")) return;
   const n = 24, R1 = 62, R2 = 96;
   let rays = "";
   for (let i = 0; i < n; i++){
@@ -884,7 +900,7 @@ const Sonido = (() => {
   return { init, inhala, om, cuenco, silencio };
 })();
 
-/* Respiración guiada: cuenco 2.5 s, 6 ciclos (inhala 4 s, exhala 6 s), cierre en 62.5 s.
+/* Respiración guiada: cuenco 2.5 s, 5 ciclos (inhala 4 s, OM 8 s para que la M termine de vibrar), cierre en 62.5 s.
    Con el audio mezclado, el reloj es el propio audio: la animación nunca se desfasa del sonido. */
 const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
 (function breath(){
@@ -903,7 +919,7 @@ const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
   function faseEn(t){
     if (t < 2.5) return "cuenco";
     if (t >= 62.5) return "fin";
-    const i = Math.floor((t - 2.5) / 10), r = (t - 2.5) % 10;
+    const i = Math.floor((t - 2.5) / 12), r = (t - 2.5) % 12;
     return (r < 4 ? "in" : "out") + i;
   }
   function aplicar(f){
@@ -917,14 +933,14 @@ const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
     if (f === "fin") return terminar();
     const i = +f.slice(f.startsWith("in") ? 2 : 3);
     if (f.startsWith("in")){
-      label.textContent = "Inhala"; hint.textContent = `Por la nariz · ${i + 1} de 6`;
+      label.textContent = "Inhala"; hint.textContent = `Por la nariz · ${i + 1} de 5`;
       orb.style.transitionDuration = "4s"; orb.style.transform = reduce ? "scale(.9)" : "scale(1)";
       if (synth) Sonido.inhala(4);
     } else {
-      label.textContent = "Exhala"; hint.textContent = "Ooommm… zumba con el sonido";
-      orb.style.transitionDuration = "6s"; orb.style.transform = "scale(.72)";
+      label.textContent = "Ooommm"; hint.textContent = "Abre en O y cierra en M: siente la vibración en los labios";
+      orb.style.transitionDuration = "8s"; orb.style.transform = "scale(.72)";
       void orb.offsetWidth; orb.classList.add("sale");
-      if (synth) Sonido.om(6);
+      if (synth) Sonido.om(8);
     }
   }
   function correr(){
@@ -959,9 +975,9 @@ const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
     reiniciar();
     if (audio) audio.pause();
     Sonido.silencio();
-    label.textContent = "Listo cuando tú";
-    hint.textContent = "Inhala 4 segundos por la nariz y exhala 6 zumbando \"mmm\".";
-    btn.textContent = "Empezar 1 minuto";
+    label.textContent = "Siéntelo primero";
+    hint.textContent = "Inhala 4 segundos por la nariz y suelta un OM largo, hasta que la M deje de vibrar.";
+    btn.textContent = "Probar 1 minuto";
   }
   function terminar(){
     reiniciar();
@@ -997,7 +1013,25 @@ const AUDIO_SRC = "/audios/om-prueba-1min.mp3";
 
 /* Reserva: se elige la modalidad y se continúa en el flujo único de Sadhana */
 const RESERVA = "https://sadhanaholistics.com/?reservar=om-2026-11-22";
-function irReserva(){ const m = document.querySelector('input[name="modo"]:checked'); $("#irReserva").href = RESERVA + "&modo=" + encodeURIComponent(m ? m.value : "Presencial"); }
+let aporte = 100;
+function irReserva(){ const m = document.querySelector('input[name="modo"]:checked'); $("#irReserva").href = RESERVA + "&modo=" + encodeURIComponent(m ? m.value : "Presencial") + "&aporte=" + aporte; }
+(function medidor(){
+  const r = $("#apRango"), out = $("#apMonto"), nota = $("#apNota"), precio = document.querySelector(".b-precio");
+  const NOTAS = [[100,"El mínimo para que nadie se quede fuera."],[200,"Sostiene el espacio y los materiales."],[300,"Ayuda a que otra persona pueda venir."],[500,"Sostiene el círculo completo. Gracias."]];
+  function pon(v, desdeChip){
+    aporte = Math.max(100, Math.round(v / 50) * 50);
+    if (desdeChip) r.value = Math.min(aporte, +r.max);
+    out.textContent = "$" + aporte.toLocaleString("es-MX");
+    if (precio) precio.textContent = "$" + aporte;
+    nota.textContent = NOTAS.filter(n => aporte >= n[0]).pop()[1];
+    r.style.setProperty("--p", ((Math.min(aporte, +r.max) - r.min) / (r.max - r.min) * 100) + "%");
+    document.querySelectorAll("[data-ap]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.ap === aporte));
+    irReserva();
+  }
+  r.addEventListener("input", () => pon(+r.value));
+  document.querySelectorAll("[data-ap]").forEach(b => b.addEventListener("click", () => pon(+b.dataset.ap, true)));
+  pon(100);
+})();
 function copy(text, btn, label){
   const done = () => { btn.textContent = "Copiado"; setTimeout(() => btn.textContent = label, 1800); };
   try { navigator.clipboard.writeText(text).then(done).catch(fallback); } catch(e){ fallback(); }
@@ -1054,8 +1088,8 @@ modo(false, true);
 (function dock(){
   const dock = $("#dock"); if (!("IntersectionObserver" in window)) return;
   const vis = new Map();
-  const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); dock.classList.toggle("hide", [...vis.values()].some(Boolean)); }, { threshold: .15 });
-  io.observe($(".hero")); io.observe($("#reservar"));
+  const io = new IntersectionObserver(es => { es.forEach(e => vis.set(e.target, e.isIntersecting)); const otro = [...vis.values()].some(Boolean); dock.classList.toggle("hide", otro); document.body.classList.toggle("cta-visible", otro); }, { threshold: .15 });
+  io.observe($(".hero .cta-row")); io.observe($("#reservar")); io.observe($(".closing"));
 })();
 
 /* Plegables: el título abre y cierra; sin JS todo queda abierto */
