@@ -1122,6 +1122,8 @@ const CONFIG = {
     modo: "transferencia",     // "transferencia" (solo transferencia u OXXO) | "stripe" | "mercadopago"
     stripeCheckoutEndpoint: "/api/stripe/checkout",          // crea una sesión de Checkout y devuelve {url}
     mercadoPagoEndpoint: "/api/mercadopago/preferencia",     // crea una preferencia y devuelve {init_point}
+    // Modalidad En línea de estos eventos: cobro con el Stripe de Diego (Checkout). Presencial sigue por transferencia.
+    stripeAporte: { endpoint: "https://www.deminconsciente.com/api/aporte-sadhana", eventos: ["om-2026-11-22"] },
   },
   diasAgenda: 14,
   cupoReal: false,   // true cuando las reservas vivan en la base de datos; mientras, no se muestran lugares libres
@@ -1711,7 +1713,9 @@ function pasoPago(){
     pintar(el, o){
       const total = F.total(o);
       const MET = {tarjeta:["tarjeta","Tarjeta de crédito o débito","Pago seguro con Stripe"], mercadopago:["mercadopago","Mercado Pago","Saldo, tarjeta o meses sin intereses"], transferencia:["transferencia","Transferencia u OXXO","Banorte. Tu lugar se aparta 24 h y mandas tu comprobante por WhatsApp"]};
-      const lista = CONFIG.pagos.modo === "stripe" ? [MET.tarjeta, MET.transferencia] : CONFIG.pagos.modo === "mercadopago" ? [MET.mercadopago, MET.transferencia] : [MET.transferencia];
+      MET.stripe = ["stripe","Tarjeta de crédito o débito","Pago seguro con Stripe. Aceptamos tarjetas de cualquier país"];
+      const sa = CONFIG.pagos.stripeAporte, conStripe = sa && F.ref && sa.eventos.includes(F.ref) && o.modo === "En línea";
+      const lista = conStripe ? [MET.stripe] : CONFIG.pagos.modo === "stripe" ? [MET.tarjeta, MET.transferencia] : CONFIG.pagos.modo === "mercadopago" ? [MET.mercadopago, MET.transferencia] : [MET.transferencia];
       if (!lista.some(m => m[0] === o.metodo)) o.metodo = lista[0][0];
       o.folio ||= folio();
       const concepto = `${o.folio} ${((o.datos||{}).nombre||"").trim()}`.trim();
@@ -1721,13 +1725,31 @@ function pasoPago(){
             .map(([v,a,b])=>`<label class="opt"><input type="radio" name="met" value="${v}" ${o.metodo===v?"checked":""}><span><b>${a}</b><small>${b}</small></span><span></span></label>`).join("")}
         </div>
         ${o.metodo==="transferencia" ? datosPagoHTML(total, concepto) : ""}
-        <button class="btn btn-p" id="payBtn" style="width:100%">${o.metodo==="transferencia"?"Apartar y enviar por WhatsApp":`Pagar ${money(total)}`}</button>
+        <button class="btn btn-p" id="payBtn" style="width:100%">${o.metodo==="transferencia"?"Apartar y enviar por WhatsApp":o.metodo==="stripe"?`Pagar ${money(total)} con tarjeta`:`Pagar ${money(total)}`}</button>
         <button class="btn btn-g" id="payBack" style="width:100%">Atrás</button>
-        <p class="note">${o.metodo==="transferencia"?"Al apartar se abre WhatsApp con tu reserva para Sadhana. Tu lugar queda apartado 24 h mientras envías tu comprobante.":"Serás redirigido a la pasarela de pago."}</p>`;
+        <p class="note">${o.metodo==="transferencia"?"Al apartar se abre WhatsApp con tu reserva para Sadhana. Tu lugar queda apartado 24 h mientras envías tu comprobante.":o.metodo==="stripe"?"Te llevamos a Stripe para pagar con tarjeta. Al terminar vuelves aquí con tu ticket pagado.":"Serás redirigido a la pasarela de pago."}</p>
+        <p class="err" id="payErr" hidden></p>`;
       montarCopias(el);
       el.querySelectorAll("input[name=met]").forEach(r => r.onchange = e => { o.metodo = e.target.value; pintar(); });
       el.querySelector("#payBack").onclick = () => { F.paso--; pintar(); };
       el.querySelector("#payBtn").onclick = async () => {
+        if (o.metodo === "stripe"){
+          const btn = el.querySelector("#payBtn"), er = el.querySelector("#payErr");
+          btn.disabled = true; btn.textContent = "Conectando con Stripe…"; er.hidden = true;
+          try {
+            const r = await fetch(CONFIG.pagos.stripeAporte.endpoint, {method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({evento:F.ref, aporte:total, folio:o.folio, nombre:(o.datos||{}).nombre||""})});
+            const j = await r.json().catch(()=>({}));
+            if (!r.ok || !j.url) throw new Error(j.error || ("HTTP " + r.status));
+            o.pago = {ok:false, pendiente:true, referencia:"STRIPE"}; emitir(o);
+            o.ticket.stripe = true; save();
+            location.href = j.url;
+          } catch(e){
+            btn.disabled = false; btn.textContent = `Pagar ${money(total)} con tarjeta`;
+            er.textContent = "No pudimos abrir el pago con tarjeta. Intenta de nuevo o escríbenos por WhatsApp."; er.hidden = false;
+          }
+          return;
+        }
         if (o.metodo === "transferencia"){
           const r = await Pagos.cobrar({concepto:F.titulo, total, datos:o.datos}, o.metodo);
           o.pago = r; emitir(o); enviarWA(o.ticket); siguiente(); return;
@@ -1795,14 +1817,14 @@ function gcal(t){
 }
 function waLink(t){
   const det = (t.detalle||[]).map(([k,v]) => `${k}: ${v}`).join(". ");
-  const pago = t.metodo==="credito" ? "Con 1 crédito de mi paquete" : t.pagado ? `${money(t.pagado)} por transferencia u OXXO` : "Sin costo";
-  const txt = `Hola Sadhana, soy ${t.nombre}. Reservé ${t.titulo}${t.ini?`, ${fFechaL(new Date(t.ini))} a las ${fHora(new Date(t.ini))}`:""}. Folio ${t.folio}.${det?` ${det}.`:""} Pago: ${pago}.${t.estado==="pendiente"?" Te envío mi comprobante.":""}`;
+  const pago = t.metodo==="credito" ? "Con 1 crédito de mi paquete" : t.metodo==="stripe" ? `${money(t.pagado)} con tarjeta (Stripe)${t.estado==="confirmado"?", pagado":""}` : t.pagado ? `${money(t.pagado)} por transferencia u OXXO` : "Sin costo";
+  const txt = `Hola Sadhana, soy ${t.nombre}. Reservé ${t.titulo}${t.ini?`, ${fFechaL(new Date(t.ini))} a las ${fHora(new Date(t.ini))}`:""}. Folio ${t.folio}.${det?` ${det}.`:""} Pago: ${pago}.${t.estado==="pendiente"&&t.metodo!=="stripe"?" Te envío mi comprobante.":""}`;
   return (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "https://wa.me/") + "?text=" + encodeURIComponent(txt);
 }
 function ticketHTML(t, nuevo){
   const ini = t.ini ? new Date(t.ini) : null;
   const pend = t.estado === "pendiente";
-  return `${nuevo ? `<p style="font-size:1.06rem">${pend ? `Listo, ${esc(t.nombre.split(" ")[0])}. Tu lugar queda apartado 24 horas mientras envías tu comprobante.` : `Listo, ${esc(t.nombre.split(" ")[0])}. ${esc(t.mensaje || "Tu lugar está confirmado.")}`}</p>` : ""}
+  return `${nuevo ? `<p style="font-size:1.06rem">${pend ? `Listo, ${esc(t.nombre.split(" ")[0])}. ${t.metodo==="stripe"?"Tu pago con tarjeta no se completó. Puedes intentarlo de nuevo desde la agenda.":"Tu lugar queda apartado 24 horas mientras envías tu comprobante."}` : `Listo, ${esc(t.nombre.split(" ")[0])}. ${esc(t.mensaje || "Tu lugar está confirmado.")}`}</p>` : ""}
   ${t.simbolo ? boletoHTML({titulo:t.titulo, nombre:t.nombre, cuando: ini?`${fFecha(ini)} · ${fHora(ini)}`:"", modo:t.modo, monto:t.pagado, simbolo:t.simbolo, estado: pend ? "Por confirmar" : "Confirmado"}) : ""}
   <div class="ticket ${t.simbolo?"con-boleto":""}">
     <div class="tk-top"><span class="mk mk-sello tk-seal" aria-hidden="true"></span><p class="eyebrow">${esc(t.tipo)}</p><h3>${esc(t.titulo)}</h3>${ini?`<p>${fFechaL(ini)} · ${fHora(ini)}</p>`:""}</div>
@@ -1811,14 +1833,14 @@ function ticketHTML(t, nuevo){
       <dl>
         <div><dt>Folio</dt><dd class="folio">${t.folio}</dd></div>
         ${t.detalle ? t.detalle.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("") : ""}
-        <div><dt>Pago</dt><dd>${t.metodo==="credito"?"Con 1 crédito de tu paquete":t.pagado?`${money(t.pagado)} · ${({tarjeta:"Tarjeta",mercadopago:"Mercado Pago",transferencia:"Transferencia u OXXO"})[t.metodo]||""}`:"Sin costo"}</dd></div>
-        <span class="status ${pend?"pend":"ok"}">${pend?"Apartado 24 h · pago pendiente":"Confirmado"}</span>
+        <div><dt>Pago</dt><dd>${t.metodo==="credito"?"Con 1 crédito de tu paquete":t.pagado?`${money(t.pagado)} · ${({tarjeta:"Tarjeta",mercadopago:"Mercado Pago",transferencia:"Transferencia u OXXO",stripe:"Tarjeta (Stripe)"})[t.metodo]||""}`:"Sin costo"}</dd></div>
+        <span class="status ${pend?"pend":"ok"}">${pend?(t.metodo==="stripe"?"Pago con tarjeta sin completar":"Apartado 24 h · pago pendiente"):(t.metodo==="stripe"?"Pagado":"Confirmado")}</span>
       </dl>
       <div class="qr" data-qr="${t.folio}" aria-label="Código QR del folio ${t.folio}"></div>
     </div>
   </div>
   ${nuevo ? `<a class="btn btn-p wa-go" data-wa="1" href="${waLink(t)}" target="_blank" rel="noopener" style="width:100%">${t.enviado?"Volver a enviar por WhatsApp":"Enviar mi reserva por WhatsApp"}</a>${t.enviado?"":`<p class="note" style="margin:0">Sin este mensaje Sadhana no recibe tu reserva.</p>`}` : ""}
-  ${pend ? datosPagoHTML(t.pagado, `${t.folio} ${t.nombre||""}`.trim()) : ""}
+  ${pend && t.metodo!=="stripe" ? datosPagoHTML(t.pagado, `${t.folio} ${t.nombre||""}`.trim()) : ""}
   <div class="tk-acts">
     ${ini?`<a class="btn btn-g btn-s" href="${gcal(t)}" target="_blank" rel="noopener">Agregar a Google Calendar</a>`:""}
     ${t.ini?`<a class="btn btn-g btn-s" href="${CONFIG.mapa}" target="_blank" rel="noopener">Cómo llegar</a>`:""}
@@ -1929,7 +1951,7 @@ function flujoClase(id, modoIni, aporteIni){
         }
       }},
     pasoDatos(), pasoPago(), pasoTicket()];
-  abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, pasosBase, simbolo: /^om-/.test(x.id) ? "ॐ" : "✦",
+  abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, ref:x.id, pasosBase, simbolo: /^om-/.test(x.id) ? "ॐ" : "✦",
     cuando: `${fFecha(x.ini)} · ${fHora(x.ini)}`,
     total: o => o.pagoCon==="credito" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
     resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
@@ -1942,7 +1964,23 @@ function flujoClase(id, modoIni, aporteIni){
 /* Enlace directo: ?reservar=<id>&modo=En%20línea abre el flujo de esa práctica o evento */
 window.addEventListener("load", () => {
   try {
-    const q = new URLSearchParams(location.search), id = q.get("reservar"); if (!id) return;
+    const q = new URLSearchParams(location.search);
+    const limpiar = () => { try { history.replaceState(null, "", location.pathname + location.hash); } catch(e){} };
+    const pagado = q.get("pagado");
+    if (pagado){
+      const t = ST.tickets.find(t => t.folio === pagado);
+      limpiar();
+      if (!t) return;
+      t.estado = "confirmado"; t.stripeSesion = q.get("session_id") || ""; t.enviado = false; save();
+      setVista("c");
+      setTimeout(() => abrir({tipo:t.tipo, titulo:t.titulo, pasosBase:[{nombre:"Tu ticket", final:true, pintar(el){ el.innerHTML = ticketHTML(t, true); montarTicket(el); }}]}), 300);
+      setTimeout(confeti, 500);
+      return;
+    }
+    const id = q.get("reservar"); if (!id) return;
+    // Si vuelve de cancelar Stripe, quita el ticket sin pagar que se creó antes de salir
+    ST.tickets = ST.tickets.filter(t => !(t.stripe && t.estado === "pendiente" && t.ref === id));
+    save();
     const x = INST.find(i => i.id === id); if (!x) return;
     setVista("c", "#agenda");
     setTimeout(() => flujoClase(id, q.get("modo"), q.get("aporte")), 350);
