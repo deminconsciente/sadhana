@@ -950,6 +950,33 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
   .pack ul{list-style:none;padding:0;justify-items:center}
   .pack .btn{width:100%;margin-top:auto}
 }
+
+/* v43 propuesta: paquetes y rutas con el lenguaje de las clases */
+.ev-cat.flag{background:var(--accent,#c692bb);color:#fff;backdrop-filter:none}
+.pack.arte .ev-cat,.path.arte .ev-cat{display:inline-block!important}
+.pack.arte .ev-date,.path.arte .ev-date{left:auto!important;right:14px!important;top:12px!important;min-width:52px!important;padding:6px 8px!important;border-radius:14px!important}
+.pack.arte .ev-date b,.path.arte .ev-date b{font-size:1.5rem!important}
+.packs.arte{grid-template-columns:repeat(5,minmax(0,1fr))}
+.pack.arte .pill,.path.arte .pill{white-space:normal}
+.calc .res[hidden]{display:none}
+.packs.arte{padding-top:4px!important}
+.pack.arte,.path.arte{display:grid!important;grid-template-rows:auto 1fr;padding:0!important;gap:0!important;border-radius:22px;overflow:hidden;text-align:left!important;align-items:stretch!important;transform:none}
+.pack.arte .ev-art,.path.arte .ev-art{height:150px!important;min-height:0!important}
+.pack.arte .ev-bd,.path.arte .ev-bd{display:grid;gap:12px;align-content:start;padding:16px 18px 18px}
+.pack.arte .ev-ti,.path.arte .ev-ti{font-size:1.3rem}
+.pack.arte .ev-hr,.path.arte .ev-hr{font-size:1.9rem}
+.pack.arte .ev-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
+.pack.arte .ev-ft .btn{width:auto;margin:0}
+.pack.arte .meta,.path.arte .meta{font-family:var(--f-ui);font-size:.8rem;color:var(--ink-2);margin:0}
+.path.arte .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.pack.arte.pick,.path.arte.pick{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+.pack.arte:hover,.path.arte:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+@media (min-width:701px){.packs.arte{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:1150px){.packs.arte{grid-template-columns:repeat(5,minmax(0,1fr))}.pack.arte .ev-hr{font-size:1.6rem}.pack.arte .ev-ft{flex-wrap:wrap}}
+@media (max-width:700px){.packs.arte > .pack{flex:0 0 82%!important}}
+
+/* v43: el deslizador solo se detiene en los paquetes */
+.calc .ticks{grid-column:1/-1;display:flex;justify-content:space-between;margin:-14px 4px 0;font-family:var(--f-ui);font-size:.78rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
 </style>
 
 <div class="lienzo" aria-hidden="true"></div>
@@ -1020,7 +1047,8 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="calc">
         <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
         <span class="big" id="nOut">8</span>
-        <input type="range" id="nClases" min="1" max="20" value="8">
+        <input type="range" id="nClases" min="0" max="4" step="1" value="2" aria-describedby="nTicks">
+        <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>4</span><span>8</span><span>12</span><span>20</span></div>
         <p class="res" id="calcRes"></p>
       </div>
       <div class="packs" id="packs"></div>
@@ -1127,6 +1155,7 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
   <div class="og"><b>Foto de fondo</b><div class="seg" data-opt="fondo"><button data-val="lupinos">Lupinos</button><button data-val="hoja">Hoja</button><button data-val="pasto">Pasto</button><button data-val="velas">Velas</button><button data-val="violeta">Color liso</button></div><small>Fotos de sus posts de Canva, sin el texto y suavizadas. Con la foto original en alta se ven más nítidas.</small></div>
   <div class="og"><b>Movimiento del sello</b><div class="seg" data-opt="anim"><button data-val="quieto">Quieto</button><button data-val="brillo">Brillo suave</button><button data-val="latido">Latido lento</button></div></div>
   <div class="og"><b>Al tocar el sello</b><div class="seg" data-opt="sello"><button data-val="agenda">Ir a la agenda</button><button data-val="eleccion">Abrir las 2 opciones</button><button data-val="nada">Solo decorativo</button></div></div>
+  <div class="og"><b>Tarjetas de paquetes y membresías</b><div class="seg" data-opt="paq"><button data-val="actual">Actuales</button><button data-val="arte">Como las clases</button></div><small>Propuesta: mismo lenguaje que las tarjetas de la agenda.</small></div>
   <div class="og"><b>Información</b><div class="seg" data-opt="despl"><button data-val="si">Desplegable</button><button data-val="no">Todo abierto</button></div></div>
   <div class="og"><b>Vistas</b><div class="seg" data-opt="modo"><button data-val="interruptor">Interruptor arriba</button><button data-val="enlaces">Dos enlaces</button></div>
     <small>Con dos enlaces se quita el interruptor y cada público entra por su liga:</small>
@@ -1555,16 +1584,40 @@ function mejorPaquete(n){
   const suelta = n*300;
   return suelta <= best.costo ? {p:PAQUETES[0], costo:suelta, extra:0} : best;
 }
+let PAQ = "arte";
+const PK_G = {suelta:"moon", try:"lotus", conexion:"spiral", practica:"sun", inmersion:"star"};
+const PK_K = {suelta:"Sin compromiso", try:"Para empezar", conexion:"Mensualidad", practica:"Mensualidad", inmersion:"Mensualidad"};
+function packArte(p, pick, b, n){
+  const c = p.creditos, flag = pick ? "★ Para ti" : p.badge || "";
+  const inc = [pill(`${c.clases} ${c.clases>1?"clases":"clase"}`,"","check")]
+    .concat(c.terapias?[pill(`${c.terapias} terapias 30 min`,"","hand")]:[])
+    .concat(c.tarot?[pill("Tarot","","star")]:[])
+    .concat(c.sonora?[pill("Armonización sonora","","dot")]:[]);
+  return `<article class="pack arte ${pick?"pick":""}">
+    <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id])}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]}</span>
+      <span class="ev-date"><small>${p.id==="suelta"?"una":"30 días"}</small><b>${p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
+      <span class="ev-hr">${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
+    <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
+      <div class="pills">${inc.join("")}</div>
+      <div class="pills">${p.clases*300>p.precio?pill(`Ahorras ${money(p.clases*300-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
+      <div class="ev-ft"><span class="meta">${p.id==="suelta"?"Pagas solo lo que tomas":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
+  </article>`;
+}
 function paintPacks(){
-  const n = +$("#nClases").value; $("#nOut").textContent = n;
+  const n = PAQUETES[+$("#nClases").value].clases; $("#nOut").textContent = n; $("#nClases").setAttribute("aria-valuetext", n+" clases");
   const b = mejorPaquete(n), suelta = n*300;
-  $("#calcRes").innerHTML = b.p.id==="suelta" ? `Con ${n} clase${n>1?"s":""} te conviene pagar <b>clase por clase</b>: ${money(suelta)}.`
+  $("#calcRes").hidden = true;
+  const ORD = [b.p].concat(PAQUETES.filter(p => p.id!==b.p.id));
+  if (false) $("#calcRes").innerHTML = b.p.id==="suelta" ? `Con ${n} clase${n>1?"s":""} te conviene pagar <b>clase por clase</b>: ${money(suelta)}.`
     : `Te conviene <b>${b.p.t}</b>${b.extra?` más ${b.extra} clase${b.extra>1?"s":""} suelta${b.extra>1?"s":""}`:""}: <b>${money(b.costo)}</b> al mes, contra ${money(suelta)} en clases sueltas. Ahorras <b>${money(suelta-b.costo)}</b>${b.p.creditos.terapias?` y te llevas ${b.p.creditos.terapias} terapias de 30 min`:""}.`;
-  $("#packs").innerHTML = PAQUETES.map(p => `<article class="pack ${p.id===b.p.id?"pick":""}">
+  $("#packs").classList.toggle("arte", PAQ==="arte");
+  if (PAQ==="arte"){ $("#packs").innerHTML = ORD.map(p => packArte(p, p.id===b.p.id, b, n)).join(""); $("#packs").scrollLeft = 0; return; }
+  $("#packs").scrollLeft = 0;
+  $("#packs").innerHTML = ORD.map(p => `<article class="pack ${p.id===b.p.id?"pick":""}">
     ${p.id===b.p.id?`<span class="badge">Tu mejor opción</span>`:p.badge?`<span class="badge">${p.badge}</span>`:""}
     <h3>${esc(p.t)}</h3>
     <div class="amt">${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
-    ${p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
+    ${p.id===b.p.id&&n*300>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*300-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
     <ul>${p.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>
     <button class="btn ${p.id===b.p.id?"btn-p":"btn-g"}" data-pack="${p.id}">Comprar</button></article>`).join("");
 }
@@ -1597,6 +1650,24 @@ $("#schools").addEventListener("click", e => { const b = e.target.closest("[data
 let rutaPick = null, tlPaso = 0;
 function paintRutas(){
   $("#paths").classList.toggle("picking", !!rutaPick);
+  $("#paths").classList.toggle("arte", PAQ==="arte");
+  if (PAQ==="arte"){
+    const RG = {directa:"eye", ruta:"spiral", residencia:"tree"};
+    const RB = {directa:["a distancia","1","evaluación"], ruta:["curso +","2","pasos"], residencia:["programa","6","meses"]};
+    $("#paths").innerHTML = RUTAS.map(r => `<article class="path arte ${rutaPick===r.id?"pick":""}">
+      <div class="ev-art" style="${aura("rt"+r.id)}">${glyph(RG[r.id])}<span class="ev-cat">${r.id==="residencia"?"★ Programa insignia":r.id==="ruta"?"Para terapeutas":"Vía rápida"}</span>
+        <span class="ev-date"><small>${RB[r.id][0]}</small><b>${RB[r.id][1]}</b><small>${RB[r.id][2]}</small></span>
+        ${rutaPick===r.id?`<span class="ev-rel">Tu ruta</span>`:""}
+        <span class="ev-hr">${money(r.precio)}<small>total</small></span></div>
+      <div class="ev-bd"><h3 class="ev-ti">${esc(r.t)}</h3>
+        <div class="pills">${r.pills.map(a=>pill(a,"","check")).join("")}</div>
+        <div class="pills">${pill("SEP-CONOCER","ok","star")}${pill("EC1375 nivel 3","ok","check")}${r.id==="residencia"?pill("Consultorio afiliado","ok","pin"):""}</div>
+        <p class="meta">${esc(r.detalle)}</p>
+        <div class="acts"><button class="btn btn-p btn-s" data-ruta="${r.id}:pago">${r.pagoLbl}</button><button class="btn btn-g btn-s" data-ruta="${r.id}:llamada">Llamada de orientación</button></div></div>
+    </article>`).join("");
+    document.querySelectorAll("[data-quiz]").forEach(b => b.setAttribute("aria-pressed", b.dataset.quiz===rutaPick));
+    return;
+  }
   $("#paths").innerHTML = RUTAS.map(r => `<article class="path ${rutaPick===r.id?"pick":""}">
     <p class="eyebrow">${r.id==="residencia"?"★ Programa insignia":r.id==="ruta"?"Para terapeutas":"Vía rápida"}</p>
     <h3 style="font-size:1.35rem">${esc(r.t)}</h3>
@@ -2201,7 +2272,7 @@ document.addEventListener("click", e => {
 
 /* Panel de opciones del prototipo */
 (function(){
-  const DEF = {titulos:"glacial", pagina:"una", anim:"quieto", despl:"si", paleta:"incienso", fondo:"velas", sello:"agenda", modo:"interruptor"};
+  const DEF = {titulos:"glacial", pagina:"una", anim:"quieto", despl:"si", paleta:"incienso", fondo:"velas", sello:"agenda", modo:"interruptor", paq:"arte"};
   let O = Object.assign({}, DEF);
   try { Object.assign(O, JSON.parse(localStorage.getItem("sadhana.opts4")) || {}); } catch(e){}
   if (!["agenda","eleccion","nada"].includes(O.sello)) O.sello = "agenda";
@@ -2218,6 +2289,7 @@ document.addEventListener("click", e => {
     document.documentElement.dataset.paleta = base; document.documentElement.dataset.acento = O.paleta;
     PAL = PALS[O.paleta] || PALS.magenta;
     if (cambio && typeof paintAll === "function") { try { paintAll(); } catch(e){} }
+    if (PAQ !== O.paq){ PAQ = O.paq; if (typeof paintRutas === "function"){ try { paintPacks(); paintRutas(); } catch(e){} } }
     document.body.dataset.sello = O.sello;
     document.body.dataset.modo = O.modo;
     document.body.dataset.despl = O.despl;
