@@ -909,6 +909,47 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
 .b-sello{top:12px;bottom:auto;right:98px}
 .ticket.con-boleto .tk-top,.ticket.con-boleto .tear{display:none}
 .ticket.con-boleto .tk-body{border-top-left-radius:inherit;border-top-right-radius:inherit}
+
+/* v40: en celular, opciones y recomendaciones deslizables en horizontal */
+@media (max-width:700px){
+  .need-grid,.recs{display:flex!important;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    margin-inline:calc(-1 * var(--gut-l,16px)) calc(-1 * var(--gut-r,16px));padding:4px var(--gut-r,16px) 10px var(--gut-l,16px);scroll-padding-inline:var(--gut-l,16px)}
+  .need-grid::-webkit-scrollbar,.recs::-webkit-scrollbar{display:none}
+  .need-grid{gap:8px}
+  .need-grid .need{flex:0 0 40%;min-width:136px;scroll-snap-align:start;padding:12px 14px;gap:6px;font-size:.92rem;min-height:0}
+  .need-grid .need svg{width:24px;height:24px}
+  .recs{gap:12px}
+  .recs .rec{flex:0 0 82%;scroll-snap-align:start}
+  .recs .rec .art{height:80px}
+}
+
+/* v41: en celular, todas las listas de tarjetas se deslizan en horizontal */
+@media (max-width:700px){
+  .grid3,.packs,.team,.paths{display:flex!important;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    gap:12px;margin-inline:calc(-1 * var(--gut-l,16px)) calc(-1 * var(--gut-r,16px));padding:4px var(--gut-r,16px) 12px var(--gut-l,16px);scroll-padding-inline:var(--gut-l,16px);align-items:stretch}
+  .grid3::-webkit-scrollbar,.packs::-webkit-scrollbar,.team::-webkit-scrollbar,.paths::-webkit-scrollbar{display:none}
+  .grid3 > *,.team > *,.paths > *{flex:0 0 82%;scroll-snap-align:start;min-width:0}
+  .packs > *{flex:0 0 62%;scroll-snap-align:start;min-width:0}
+  /* en carrusel se ven todas: sin "Ver más" */
+  .grid3 > .extra{display:revert!important}
+  .grid3 > .mas-lista{display:none!important}
+  .sec > *,#panel-ter{min-width:0;max-width:100%}
+}
+
+/* v42: Isa / Diego como dos pills-filtro; paquetes centrados y completos */
+#terapias .tabs{flex-wrap:nowrap;gap:10px;align-items:center}
+#terapias .tabp{padding:6px 18px 6px 6px;gap:10px;align-items:center}
+#terapias .tabp small{display:none}
+#terapias .tabp .avatar{width:34px;height:34px;font-size:.95rem;flex:0 0 auto}
+#terapias .tabp b{font-size:1rem;line-height:1}
+@media (max-width:700px){
+  .packs{padding-top:20px!important;padding-bottom:16px!important}
+  .packs > .pack{flex:0 0 76%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:26px 18px 20px}
+  .pack.pick{transform:none}
+  .pack .badge{left:50%;transform:translateX(-50%);white-space:nowrap}
+  .pack ul{list-style:none;padding:0;justify-items:center}
+  .pack .btn{width:100%;margin-top:auto}
+}
 </style>
 
 <div class="lienzo" aria-hidden="true"></div>
