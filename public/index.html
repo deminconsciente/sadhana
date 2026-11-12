@@ -879,6 +879,13 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
 /* v32 */
 .ev-link{font-family:var(--f-ui);font-size:.88rem;font-weight:600;color:var(--primary);text-decoration:underline;text-underline-offset:3px;justify-self:start}
 :root[data-acento="incienso"] .ev-link{color:#8f4a25}
+
+/* v34: aportación consciente */
+.aporte{display:grid;gap:8px;padding:14px;border-radius:16px;background:var(--surface-2)}
+.aporte .ap-val{font-family:var(--f-ui);font-size:1.6rem;font-weight:700;color:var(--ink)}
+.aporte input[type=range]{width:100%;height:30px;accent-color:#a45a2a}
+.aporte .chips{display:flex;gap:8px;flex-wrap:wrap}
+.aporte .chip[aria-pressed="true"]{background:#a45a2a;color:#fff;border-color:transparent}
 </style>
 
 <div class="lienzo" aria-hidden="true"></div>
@@ -1107,7 +1114,7 @@ const CLASES = [
 ];
 const EVENTOS = [
   {id:"om-2026-11-22", fecha:[2026,11,22], h:10, m:0, dur:120, titulo:"El Poder del OM", guia:"Isa y Diego", cat:"evento", cupo:30, precio:100,
-   desc:"Meditación con soundbath y breathwork. Presencial o en línea.", modos:["Presencial","En línea"], destacado:true, url:"https://sadhanaholistics.com/om/"},
+   desc:"Meditación con soundbath y breathwork. Presencial o en línea.", modos:["Presencial","En línea"], destacado:true, url:"https://sadhanaholistics.com/om/", aporte:{max:1000, paso:50, atajos:[100,200,300,500]}},
   {id:"circulo-2026-11-29", fecha:[2026,11,29], h:17, m:0, dur:120, titulo:"Círculo de mujeres", guia:"Isa", cat:"evento", cupo:16, precio:250},
 ];
 const CATS = {yoga:"Yoga", resp:"Respiración", sonido:"Sonido", evento:"Eventos"};
@@ -1404,7 +1411,7 @@ function paintAgenda(){
   $("#agView").innerHTML = !dias.length ? `<div class="empty">Pronto abrimos nuevas fechas.</div>` :
     `<p class="ag-dia">${fFechaL(g[fDia][0].ini)} · ${g[fDia].length} ${g[fDia].length>1?"prácticas":"práctica"}</p><div class="ag-list">` + g[fDia].map(x => clsCard(x, "")).join("") + `</div>`;
   $("#nextList").innerHTML = INST.slice(0,5).map(x => `<button class="nx" style="--cat:var(--c-${x.cat})" data-book="${x.id}">
-    <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
+    <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${x.aporte?"Desde ":""}${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
 }
 function clsCard(x, anchorId){
   const oc = ocupados(x), libres = x.cupo - oc, lleno = libres <= 0;
@@ -1419,7 +1426,7 @@ function clsCard(x, anchorId){
       ${CONFIG.cupoReal?`<div><div class="seats" aria-hidden="true">${Array.from({length:nSeats},(_,i)=>`<i class="${i<nSeats-libresV?"o":""}"></i>`).join("")}</div>
         <span class="seats-l">${lleno?"Cupo lleno":libres<=3?`¡Solo ${libres} ${libres>1?"lugares":"lugar"}!`:`${libres} lugares libres`}</span></div>`:""}
       ${x.url?`<a class="ev-link" href="${x.url}" target="_blank" rel="noopener">Ver evento →</a>`:""}
-      <div class="ev-ft"><span class="price">${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
+      <div class="ev-ft"><span class="price">${x.aporte?`<small style="font-size:.7em;font-weight:500">Desde </small>`:""}${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
     </div></article>`;
 }
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
@@ -1828,13 +1835,14 @@ function confeti(){
 /* =====================================================================
    Flujos
    ===================================================================== */
-function flujoClase(id, modoIni){
+function flujoClase(id, modoIni, aporteIni){
   const x = INST.find(i => i.id === id); if (!x) return false;
-  const conCredito = (ST.creditos.clases||0) > 0;
+  const conCredito = (ST.creditos.clases||0) > 0 && !x.aporte;
   const pasosBase = [
     {nombre:"Tu reserva",
       pintar(el, o){
         o.modo ||= x.modos ? (x.modos.includes(modoIni) ? modoIni : x.modos[0]) : "Presencial";
+        if (x.aporte && !o.aporte){ const a = parseInt(aporteIni,10); o.aporte = a >= x.precio ? Math.min(x.aporte.max, a) : x.precio; }
         o.pagoCon ||= conCredito ? "credito" : "pago";
         el.innerHTML = `<dl class="sum">
           <div><span>Cuándo</span><span>${fFechaL(x.ini)} · ${fHora(x.ini)}</span></div>
@@ -1844,16 +1852,26 @@ function flujoClase(id, modoIni){
           ${x.desc?`<p class="muted">${esc(x.desc)}</p>`:""}
           ${x.modos?`<div><span class="lbl">Cómo vas a asistir</span><div class="opts">${x.modos.map(m=>`<label class="opt"><input type="radio" name="modo" value="${m}" ${o.modo===m?"checked":""}><span><b>${m}</b><small>${m==="Presencial"?"En Sadhana, Satélite Acueducto":"El enlace llega a tu WhatsApp"}</small></span><span></span></label>`).join("")}</div></div>`:""}
           <div><span class="lbl">Cómo vas a pagar</span><div class="opts">
-            <label class="opt"><input type="radio" name="pc" value="credito" ${o.pagoCon==="credito"?"checked":""} ${conCredito?"":"disabled"}><span><b>Usar 1 crédito</b><small>${conCredito?`Te quedan ${ST.creditos.clases} clases en tu paquete`:"No tienes créditos. Compra un paquete en la sección Paquetes."}</small></span><span class="p">$0</span></label>
-            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>Pagar esta clase</b><small>Pago en línea</small></span><span class="p">${money(x.precio)}</span></label>
-          </div></div>`;
+            ${x.aporte?"":`<label class="opt"><input type="radio" name="pc" value="credito" ${o.pagoCon==="credito"?"checked":""} ${conCredito?"":"disabled"}><span><b>Usar 1 crédito</b><small>${conCredito?`Te quedan ${ST.creditos.clases} clases en tu paquete`:"No tienes créditos. Compra un paquete en la sección Paquetes."}</small></span><span class="p">$0</span></label>`}
+            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>${x.aporte?"Aportación consciente":"Pagar esta clase"}</b><small>${x.aporte?"Tú eliges cuánto, desde "+money(x.precio):"Pago en línea"}</small></span><span class="p">${money(x.aporte?o.aporte:x.precio)}</span></label>
+          </div></div>
+          ${x.aporte && o.pagoCon==="pago" ? `<div class="aporte"><span class="lbl">Tu aportación</span>
+            <output class="ap-val" id="apVal">${money(o.aporte)}</output>
+            <input type="range" id="apRange" min="${x.precio}" max="${x.aporte.max}" step="${x.aporte.paso}" value="${o.aporte}" aria-label="Monto de tu aportación">
+            <div class="chips">${x.aporte.atajos.map(v=>`<button type="button" class="chip" data-ap="${v}" aria-pressed="${o.aporte===v}">${money(v)}</button>`).join("")}</div></div>` : ""}`;
         el.querySelectorAll("input[name=modo]").forEach(r => r.onchange = e => o.modo = e.target.value);
         el.querySelectorAll("input[name=pc]").forEach(r => r.onchange = e => { o.pagoCon = e.target.value; pintar(); });
+        const ar = el.querySelector("#apRange");
+        if (ar){
+          ar.oninput = () => { o.aporte = +ar.value; el.querySelector("#apVal").textContent = money(o.aporte); const t = $("#shTot b"); if (t) t.textContent = money(o.aporte);
+            el.querySelectorAll("[data-ap]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.ap === o.aporte)); };
+          el.querySelectorAll("[data-ap]").forEach(b => b.onclick = () => { o.aporte = +b.dataset.ap; pintar(); });
+        }
       }},
     pasoDatos(), pasoPago(), pasoTicket()];
   abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, pasosBase,
-    total: o => o.pagoCon==="credito" ? 0 : x.precio,
-    resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]],
+    total: o => o.pagoCon==="credito" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
+    resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
     armar: o => ({tipo: x.cat==="evento"?"Evento":"Clase", titulo:x.titulo, ref:x.id, ini:x.ini.toISOString(), dur:x.dur,
       usaCredito: o.pagoCon==="credito" ? "clases" : null, credito: o.pagoCon==="credito",
       detalle:[["Guía",x.guia],["Modalidad",o.modo]],
@@ -1866,7 +1884,7 @@ window.addEventListener("load", () => {
     const q = new URLSearchParams(location.search), id = q.get("reservar"); if (!id) return;
     const x = INST.find(i => i.id === id); if (!x) return;
     setVista("c", "#agenda");
-    setTimeout(() => flujoClase(id, q.get("modo")), 350);
+    setTimeout(() => flujoClase(id, q.get("modo"), q.get("aporte")), 350);
   } catch(e){}
 });
 function flujoTerapia(key){
