@@ -1903,9 +1903,9 @@ document.addEventListener("click", e => {
 
 /* Panel de opciones del prototipo */
 (function(){
-  const DEF = {titulos:"glacial", pagina:"una", anim:"quieto", despl:"si", paleta:"incienso", fondo:"hoja", sello:"agenda", modo:"interruptor"};
+  const DEF = {titulos:"glacial", pagina:"una", anim:"quieto", despl:"si", paleta:"incienso", fondo:"velas", sello:"agenda", modo:"interruptor"};
   let O = Object.assign({}, DEF);
-  try { Object.assign(O, JSON.parse(localStorage.getItem("sadhana.opts3")) || {}); } catch(e){}
+  try { Object.assign(O, JSON.parse(localStorage.getItem("sadhana.opts4")) || {}); } catch(e){}
   if (!["agenda","eleccion","nada"].includes(O.sello)) O.sello = "agenda";
   if (!["lupinos","hoja","pasto","velas","violeta"].includes(O.fondo)) O.fondo = "hoja";
   if (!["magenta","ciruela","mauve","incienso","ambar","bosque","tierra","agua","lavanda"].includes(O.paleta)) O.paleta = "magenta";
@@ -1926,7 +1926,7 @@ document.addEventListener("click", e => {
     $("#selloCue").textContent = {agenda:"RESERVA", eleccion:"ELIGE TU CAMINO", nada:""}[O.sello];
     $("#selloBtn").setAttribute("aria-label", {agenda:"Ir a la agenda", eleccion:"Elige: consulta o terapeuta", nada:"Sello Sadhana"}[O.sello]);
     qsa("#optPanel [data-opt]").forEach(g => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", O[g.dataset.opt] === b.dataset.val)));
-    try { localStorage.setItem("sadhana.opts3", JSON.stringify(O)); } catch(e){}
+    try { localStorage.setItem("sadhana.opts4", JSON.stringify(O)); } catch(e){}
   }
   pan.addEventListener("click", e => { const b = e.target.closest("[data-val]"); if (!b) return; O[b.closest("[data-opt]").dataset.opt] = b.dataset.val; aplicar(); });
   fab.onclick = () => { pan.hidden = !pan.hidden; fab.setAttribute("aria-expanded", !pan.hidden); };
