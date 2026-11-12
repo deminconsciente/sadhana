@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Reservas · Sadhana</title>
+<style>
+@font-face{font-family:"Glacial Indifference";src:url(/assets/fonts/glacial-indifference-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Glacial Indifference";src:url(/assets/fonts/glacial-indifference-700.woff2) format("woff2");font-weight:700}
+:root{--bg:#f7f1ea;--card:#fffdf9;--ink:#2a1424;--ink-2:#6b5560;--line:#e6d9cc;--acc:#a45a2a;--acc-2:#8f4a25;--ok:#3d7a4a;--warn:#b0701d;--bad:#a33b3b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1418;--card:#261c22;--ink:#f5ece6;--ink-2:#c9b7ad;--line:#3d2f36;--acc:#d08c5c;--acc-2:#e0a074;--ok:#8fc79b;--warn:#e2b26b;--bad:#e48b8b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Glacial Indifference",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:2;background:var(--bg);padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+h1{font-size:1.25rem;margin:0 0 10px;letter-spacing:.02em}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:36px}
+.tabs button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+.bar{display:flex;gap:8px;margin-top:10px}
+.bar input{flex:1;font:inherit;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0}
+main{padding:12px 16px 40px;max-width:760px;margin:0 auto;display:grid;gap:10px}
+.r{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px}
+.r h2{font-size:1.02rem;margin:0}
+.meta{color:var(--ink-2);font-size:.92rem}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid currentColor}
+.pendiente{color:var(--warn)}.confirmado{color:var(--ok)}.cancelado{color:var(--bad)}.asistio{color:var(--acc)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.s{padding:5px 11px;min-height:32px;font-size:.92rem}
+textarea{font:inherit;width:100%;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:transparent;color:var(--ink);resize:vertical;min-height:36px}
+.empty{color:var(--ink-2);text-align:center;padding:40px 0}
+a{color:var(--acc-2)}
+.sum{color:var(--ink-2);font-size:.92rem;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reservas · Sadhana</h1>
+  <div class="tabs" role="group" aria-label="Filtro">
+    <button data-f="pendientes" aria-pressed="true">Por verificar</button>
+    <button data-f="proximas" aria-pressed="false">Próximas</button>
+    <button data-f="todas" aria-pressed="false">Todas</button>
+  </div>
+  <div class="bar"><input id="q" type="search" placeholder="Buscar nombre, folio o teléfono"><a class="btn" id="csv" href="/admin/api/reservas?filtro=todas&formato=csv">Excel</a></div>
+  <p class="sum" id="sum"></p>
+</header>
+<main id="lista"><p class="empty">Cargando…</p></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => "$" + Number(n||0).toLocaleString("es-MX");
+const fecha = iso => iso ? new Date(iso).toLocaleString("es-MX",{weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",timeZone:"America/Monterrey"}) : "";
+const NOMBRE = {pendiente:"Pago pendiente",confirmado:"Confirmado",cancelado:"Cancelado",asistio:"Asistió"};
+let filtro = "pendientes", datos = [];
+
+async function cargar(){
+  const r = await fetch("/admin/api/reservas?filtro=" + filtro, {cache:"no-store"});
+  datos = r.ok ? await r.json() : [];
+  pintar();
+}
+function pintar(){
+  const q = $("#q").value.trim().toLowerCase();
+  const lista = datos.filter(r => !q || [r.nombre,r.folio,r.tel,r.titulo].join(" ").toLowerCase().includes(q));
+  const pend = lista.filter(r => r.estado === "pendiente");
+  $("#sum").textContent = `${lista.length} reservas` + (pend.length ? ` · ${pend.length} por verificar (${money(pend.reduce((a,r)=>a+r.monto,0))})` : "");
+  $("#lista").innerHTML = lista.length ? lista.map(r => {
+    const vencida = r.estado === "pendiente" && Date.now() - new Date(r.creado) > 864e5;
+    const wa = `https://wa.me/${r.tel.length === 10 ? "52" + r.tel : r.tel}?text=` + encodeURIComponent(`Hola ${r.nombre.split(" ")[0]}, te escribimos de Sadhana sobre tu reserva ${r.folio} (${r.titulo}).`);
+    return `<article class="r" data-folio="${esc(r.folio)}">
+      <div class="row"><span class="chip ${r.estado}">${NOMBRE[r.estado]||esc(r.estado)}</span>${vencida?`<span class="chip cancelado">Más de 24 h</span>`:""}<span class="meta">${esc(r.folio)}</span></div>
+      <h2>${esc(r.titulo)}</h2>
+      <div class="meta">${r.ini?`${esc(fecha(r.ini))} · `:""}${esc(r.tipo||"")}${r.monto?` · ${money(r.monto)} por ${esc(r.metodo||"")}`:" · sin costo"}</div>
+      <div><b>${esc(r.nombre)}</b> · <a href="${wa}" target="_blank" rel="noopener">WhatsApp ${esc(r.tel)}</a>${r.email?` · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:""}${r.acepta_comunidad?" · quiere comunidad":""}</div>
+      <div class="meta">Reservó ${esc(fecha(r.creado))}</div>
+      <div class="row">
+        ${r.estado!=="confirmado"?`<button class="btn p s" data-e="confirmado">Pago recibido</button>`:""}
+        ${r.estado!=="asistio"?`<button class="btn s" data-e="asistio">Asistió</button>`:""}
+        ${r.estado!=="cancelado"?`<button class="btn s" data-e="cancelado">Cancelar</button>`:`<button class="btn s" data-e="pendiente">Reabrir</button>`}
+      </div>
+      <textarea placeholder="Nota interna" data-nota>${esc(r.nota||"")}</textarea>
+    </article>`;
+  }).join("") : `<p class="empty">Nada por aquí.</p>`;
+}
+async function cambiar(folio, cuerpo){
+  const r = await fetch("/admin/api/reservas/" + encodeURIComponent(folio), {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(cuerpo)});
+  if (!r.ok){ alert("No se pudo guardar. Intenta de nuevo."); return; }
+  const x = datos.find(d => d.folio === folio); Object.assign(x, cuerpo);
+  if (cuerpo.estado) pintar();
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-f]");
+  if (t){ filtro = t.dataset.f; document.querySelectorAll("[data-f]").forEach(b => b.setAttribute("aria-pressed", b === t)); cargar(); return; }
+  const b = e.target.closest("[data-e]");
+  if (b){ const folio = b.closest("[data-folio]").dataset.folio; if (b.dataset.e === "cancelado" && !confirm("¿Cancelar " + folio + "?")) return; cambiar(folio, {estado:b.dataset.e}); }
+});
+document.addEventListener("change", e => { if (e.target.matches("[data-nota]")) cambiar(e.target.closest("[data-folio]").dataset.folio, {nota:e.target.value}); });
+$("#q").addEventListener("input", pintar);
+cargar();
+</script>
+</body>
+</html>

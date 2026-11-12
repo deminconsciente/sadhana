@@ -1069,8 +1069,8 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
 
   <footer class="wrap"><a data-v="c" class="cross btn btn-g" href="#terapeuta" style="justify-self:start;color:#fff;border-color:rgba(255,255,255,.5)">¿Eres terapeuta? Entra aquí →</a><a data-v="t" class="cross btn btn-g" href="#consultante" style="justify-self:start;color:#fff;border-color:rgba(255,255,255,.5)">¿Vienes a consulta? Entra aquí →</a><span class="mk mk-sello" style="width:110px;color:var(--mauve)" aria-hidden="true"></span>
     <p><b style="font-family:var(--f-display);color:var(--ink)">Sādhana</b> · Centro holístico · Satélite Acueducto, Monterrey, N.L.</p>
-    <div class="links"><a href="https://maps.app.goo.gl/nGZ1RNxw5KACD8526" target="_blank" rel="noopener">Cómo llegar (Google Maps)</a><a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a><a href="#terapeutas">Renta el espacio</a><a href="#ec1375">Certifícate</a></div>
-    <details class="legal"><summary>Avisos legales</summary><p class="small">Terapias complementarias: no diagnostican ni tratan enfermedades. Certificado oficial SEP-CONOCER en el estándar EC1375, evaluado por Posturalia. Aviso de privacidad: pendiente.</p>
+    <div class="links"><a href="https://maps.app.goo.gl/nGZ1RNxw5KACD8526" target="_blank" rel="noopener">Cómo llegar (Google Maps)</a><a href="https://www.instagram.com/sadhana.holistics/" target="_blank" rel="noopener">@sadhana.holistics</a><a href="#terapeutas">Renta el espacio</a><a href="#ec1375">Certifícate</a><a id="lnkCom" href="#" target="_blank" rel="noopener" hidden>Comunidad de WhatsApp</a></div>
+    <details class="legal"><summary>Avisos legales</summary><p class="small">Terapias complementarias: no diagnostican ni tratan enfermedades. Certificado oficial SEP-CONOCER en el estándar EC1375, evaluado por Posturalia. <a href="/privacidad/">Aviso de privacidad</a> · <a href="/terminos/">Términos y cancelación</a>.</p>
   <p class="proto">Pagos por transferencia u OXXO; tu lugar se aparta 24 h. Horarios, precios de Diego, talleres y renta son de ejemplo.</p></details></footer>
 </main>
 
@@ -1124,6 +1124,8 @@ const CONFIG = {
     mercadoPagoEndpoint: "/api/mercadopago/preferencia",     // crea una preferencia y devuelve {init_point}
   },
   diasAgenda: 14,
+  comunidad: "",      // Liga de invitación a la Comunidad de WhatsApp; vacía = no se muestra
+  reservasAPI: "/api/reservas", // Copia de cada ticket en la base de datos de Sadhana
   cupoReal: false,   // true cuando las reservas vivan en la base de datos; mientras, no se muestran lugares libres
 };
 
@@ -1246,6 +1248,45 @@ const Pagos = {
     if (metodo === "transferencia") return {ok:true, referencia:"TRF", pendiente:true};
     await new Promise(r => setTimeout(r, 600));
     return {ok:false, pendiente:true, referencia:"SIN-PASARELA"};
+  }
+};
+
+/* =====================================================================
+   REGISTRO. Copia de cada ticket en la base de datos (Worker + D1),
+   para que ninguna reserva dependa solo de este navegador.
+   ===================================================================== */
+const Registro = {
+  guardar(t, d){
+    if (!CONFIG.reservasAPI) return;
+    d = d || ST.datos || {};
+    const cuerpo = {folio:t.folio, tipo:t.tipo, titulo:t.titulo, ini:t.ini||null, detalle:t.detalle||null,
+      nombre:t.nombre, tel:d.tel, email:d.email, monto:t.pagado||0, metodo:t.metodo, estado:t.estado,
+      aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad};
+    // keepalive: el envío sobrevive aunque WhatsApp se abra en el mismo clic.
+    try {
+      fetch(CONFIG.reservasAPI, {method:"POST", keepalive:true, headers:{"Content-Type":"application/json"}, body:JSON.stringify(cuerpo)})
+        .then(r => { if (r.ok || r.status === 400) { t.registrado = true; save(); } }).catch(() => {});
+    } catch(e){}
+  },
+  // Reintenta los tickets que no llegaron y trae el estado que marcó Sadhana (pago recibido, cancelado…).
+  async sincronizar(){
+    if (!CONFIG.reservasAPI || !ST.tickets.length) return false;
+    ST.tickets.filter(t => !t.registrado && t.nombre).slice(0,5).forEach(t => Registro.guardar(t));
+    try {
+      const folios = ST.tickets.slice(0,30).map(t => t.folio).join(",");
+      const r = await fetch(CONFIG.reservasAPI + "/estado?folios=" + encodeURIComponent(folios), {cache:"no-store"});
+      if (!r.ok) return false;
+      const est = await r.json(); let cambio = false;
+      for (const t of ST.tickets){
+        const e = est[t.folio];
+        if (!e || e === t.estado) continue;
+        if (t.estado === "pendiente" && e === "confirmado" && t.daCreditos){ for (const [k,v] of Object.entries(t.daCreditos)) ST.creditos[k] = (ST.creditos[k]||0)+v; }
+        if (e === "cancelado" && t.usaCredito && !t.devuelto){ ST.creditos[t.usaCredito] = (ST.creditos[t.usaCredito]||0)+1; t.devuelto = true; }
+        t.estado = e === "asistio" ? "confirmado" : e; cambio = true;
+      }
+      if (cambio) save();
+      return cambio;
+    } catch(e){ return false; }
   }
 };
 
@@ -1696,10 +1737,12 @@ function pasoDatos(){
       <div class="field"><label class="lbl" for="fNom">Nombre completo</label><input class="inp" id="fNom" autocomplete="name" value="${esc(o.datos.nombre)}">${err&&!o.datos.nombre.trim()?`<span class="err">Escribe tu nombre.</span>`:""}</div>
       <div class="field"><label class="lbl" for="fTel">WhatsApp</label><input class="inp" id="fTel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" value="${esc(o.datos.tel)}">${err&&o.datos.tel.replace(/\D/g,"").length<10?`<span class="err">Escribe un número de 10 dígitos para enviarte tu ticket.</span>`:""}</div>
       <div class="field"><label class="lbl" for="fMail">Correo</label><input class="inp" id="fMail" type="email" autocomplete="email" placeholder="tu@correo.com" value="${esc(o.datos.email)}">${err&&!/^\S+@\S+\.\S+$/.test(o.datos.email)?`<span class="err">Revisa tu correo, ahí llega tu acceso.</span>`:""}</div>
-      <p class="note">Tu ticket llega a tu WhatsApp y a tu correo. Guardamos tus datos solo para tus reservas.</p>`;
+      <label class="opt" style="grid-template-columns:auto 1fr"><input type="checkbox" id="fCom" ${o.datos.comunidad?"checked":""}><span><b>Quiero unirme a la comunidad</b><small>Avisos de eventos y prácticas por WhatsApp. Puedes salir cuando quieras.</small></span></label>
+      <p class="note">Tu ticket llega a tu WhatsApp y a tu correo. Usamos tus datos solo para tus reservas, como dice el <a href="/privacidad/" target="_blank" rel="noopener">aviso de privacidad</a>; al reservar aceptas los <a href="/terminos/" target="_blank" rel="noopener">términos y la política de cancelación</a>.</p>`;
       el.querySelector("#fNom").oninput = e => { o.datos.nombre = e.target.value; const n = el.querySelector("#bolVivo .b-nombre"); if (n){ const v = o.datos.nombre.trim(); n.textContent = v || "Tu lugar en el círculo"; n.classList.toggle("vacio", !v); } };
       el.querySelector("#fTel").oninput = e => o.datos.tel = e.target.value;
       el.querySelector("#fMail").oninput = e => o.datos.email = e.target.value;
+      el.querySelector("#fCom").onchange = e => o.datos.comunidad = e.target.checked;
     },
     valido: o => o.datos.nombre.trim() && o.datos.tel.replace(/\D/g,"").length>=10 && /^\S+@\S+\.\S+$/.test(o.datos.email),
     alSeguir: o => { ST.datos = {...o.datos}; save(); }
@@ -1784,6 +1827,7 @@ function emitir(o){
   if (t.usaCredito){ ST.creditos[t.usaCredito] = Math.max(0,(ST.creditos[t.usaCredito]||0)-1); }
   if (t.daCreditos && t.estado === "confirmado"){ for (const [k,v] of Object.entries(t.daCreditos)) ST.creditos[k] = (ST.creditos[k]||0)+v; }
   ST.tickets.unshift(t); save();
+  Registro.guardar(t, o.datos);
   o.ticket = t;
 }
 function gcal(t){
@@ -1826,6 +1870,7 @@ function ticketHTML(t, nuevo){
     <button class="btn btn-g btn-s" data-copy="${t.folio}">Copiar folio</button>
   </div>
   ${t.siguiente ? `<p class="note">${esc(t.siguiente)}</p>` : ""}
+  ${nuevo && CONFIG.comunidad ? `<a class="btn btn-g" href="${CONFIG.comunidad}" target="_blank" rel="noopener" style="width:100%">Únete a la comunidad Sadhana en WhatsApp</a>` : ""}
   ${t.daCreditos && nuevo && !pend ? `<button class="btn btn-p" data-goto="agenda" style="width:100%">Reservar mi primera clase</button>` : ""}`;
 }
 function boletoHTML(b){
@@ -2088,6 +2133,7 @@ function paintMine(bump){
   prevCount = ST.tickets.length;
 }
 function abrirMias(){
+  Registro.sincronizar().then(c => { if (c && document.querySelector(".mylist")) abrirMias(); });
   const c = ST.creditos;
   const paso = {nombre:"Tus reservas y créditos", final:true, pintar(el){
     el.innerHTML = `<div class="credits"><div><b>${c.clases||0}</b>clases</div><div><b>${c.terapias||0}</b>terapias de 30 min</div><div><b>${(c.tarot||0)+(c.sonora||0)}</b>extras</div></div>
@@ -2205,4 +2251,8 @@ document.addEventListener("click", e => { const b = e.target.closest(".mas"); if
 try { new MutationObserver(compactar).observe(document.querySelector("main") || document.body, {childList:true, subtree:true}); } catch(e){}
 compactar();
 
+
+/* Comunidad en el pie y estado de las reservas al cargar */
+if (CONFIG.comunidad){ const l = $("#lnkCom"); if (l){ l.href = CONFIG.comunidad; l.hidden = false; } }
+Registro.sincronizar();
 </script>
