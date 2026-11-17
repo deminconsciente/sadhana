@@ -504,6 +504,18 @@ details.why .hint{margin:8px 0}
 .agsum .pos{color:var(--good)}.agsum .neg{color:var(--bad)}
 .ag-opts .stp{flex-wrap:wrap;justify-content:flex-start;gap:6px 8px}
 .cal.heatmode .cal-c:not(.heat){opacity:.3}
+
+/* horarios de clase editables */
+.ag-hrs{flex-basis:100%;display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.ag-hrs .hrs-t{display:grid;gap:2px}.ag-hrs .hrs-t small{color:var(--ink-2)}
+.ag-hrs .hrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px;align-items:center}
+.ag-hrs .hr{display:flex;min-width:0;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:2px 2px 2px 10px}
+.ag-hrs .hr input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;font-variant-numeric:tabular-nums;width:100%;min-width:0;padding:6px 0;min-height:34px}
+.ag-hrs .hx{flex:none;border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:1.1rem;width:32px;height:32px;border-radius:50%;cursor:pointer}
+.ag-hrs .hx:hover{background:var(--line)}
+.ag-hrs .hrs-w{color:var(--wine)}
+.ro .ag-hrs .hx,.ro .ag-hrs [data-rowadd],.ro .ag-hrs [data-rowauto]{display:none}
+.ag-hrs .hr input::-webkit-calendar-picker-indicator{display:none}
 </style>
 
 <div class="wrap">
@@ -838,7 +850,8 @@ const STD=()=>{const o=[];for(let d=0;d<5;d++)[420,495,1170,1245].forEach(m=>o.p
 const mOf=x=>x.m!=null?n(x.m):n(x.h)*60;
 const tm=m=>Math.floor(m/60)+":"+String(m%60).padStart(2,"0");
 const stepOf=s=>Math.max(15,n(s.classMin)+n(s.gapMin));
-function rowsOf(s){const o=[];for(let t=n(s.hFrom)*60;t<=n(s.hTo)*60;t+=stepOf(s))o.push(t);return o}
+const hhmm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+function rowsOf(s){if(Array.isArray(s.rows)&&s.rows.length)return [...new Set(s.rows.map(n))].filter(m=>m>=0&&m<1440).sort((a,b)=>a-b);const o=[];for(let t=n(s.hFrom)*60;t<=n(s.hTo)*60;t+=stepOf(s))o.push(t);return o}
 // acomoda cada horario al bloque más cercano de la rejilla (clase + transición)
 function snap(s,sl){if(!Array.isArray(sl))return sl;const R=rowsOf(s);if(!R.length)return sl;
   sl.forEach(x=>{if(x.m==null)x.m=n(x.h)*60;delete x.h});
@@ -1038,6 +1051,13 @@ function renderTeachers(){const s=cur();if(!s)return;const own=s.payModel==="lev
     ${own?"":packsEditor(t,i)}
     <div class="tc-out" data-tcout="${i}"></div></div>`).join("")||`<p class="hint">Agrega un maestro desde la agenda.</p>`}
 
+function hrsBox(s){const R=rowsOf(s),dur=n(s.classMin);
+  const ov=[];for(let i=1;i<R.length;i++)if(R[i]-R[i-1]<dur)ov.push(`${tm(R[i-1])} y ${tm(R[i])}`);
+  return `<div class="ag-hrs"><div class="hrs-t"><b>Horarios de clase</b><small>${s.rows?"Ajustados a mano. Toca una hora para cambiarla.":"Se calculan solos con la duración y el primer bloque. Toca una hora para moverla."}</small></div>
+    <div class="hrs">${R.map(m=>`<span class="hr"><input type="time" step="300" value="${hhmm(m)}" data-row="${m}" class="needw" aria-label="Horario de ${tm(m)}"><button class="hx needw" data-rowdel="${m}" aria-label="Quitar ${tm(m)}">×</button></span>`).join("")}
+    <button class="btn sm needw" data-rowadd>+ Horario</button>${s.rows?`<button class="btn sm ghost needw" data-rowauto>Volver a automático</button>`:""}</div>
+    ${ov.length?`<small class="hrs-w">Ojo: ${ov.join(", ")} se enciman, la clase dura ${dur} min.</small>`:""}</div>`}
+function moveRow(s,from,to){s.rows=rowsOf(s).map(m=>m===from?to:m);[s.slots,s.slotsReal].forEach(sl=>(sl||[]).forEach(x=>{if(mOf(x)===from){x.m=to;delete x.h}}));if(selCell&&selCell[1]===from)selCell=null}
 function renderEditors(){
   const s=cur();const box=$("#m-escenarios");
   box.querySelectorAll(".sec,.card,.hero").forEach(e=>e.hidden=!s);$("#scenEmpty").hidden=!!s;
@@ -1046,6 +1066,7 @@ function renderEditors(){
   $("#scenName").value=s.name;
   $("#agOpts").innerHTML=`<div class="stp"><span>Clase de</span>${stepBtns("classMin",30,120,15,true)}<span class="ag-l">min, más</span>${stepBtns("gapMin",0,30,5,true)}<span class="ag-l">de limpieza y transición</span></div>
     <div class="stp"><span>Primer bloque a las</span>${stepBtns("hFrom",5,12,1,true)}<span class="ag-l">y el último empieza antes de las</span>${stepBtns("hTo",13,23,1,true)}</div>
+    ${hrsBox(s)}
     <div class="stp"><span>Máximo de clases al día por maestro</span>${stepBtns("maxDay",1,6,1,true)}</div>
     <div class="brs"><button class="btn sm needw" data-tpl="std">Agenda estándar</button><button class="btn sm needw" data-tpl="even">Repartir parejo</button><button class="btn sm ghost needw" data-tpl="clear">Vaciar</button><button class="btn sm" id="agExport" ${dlNS?"":"hidden"}>Guardar como imagen</button></div>`;
   renderAgenda();
@@ -1270,11 +1291,15 @@ $("#m-escenarios").addEventListener("input",e=>{
   if(k.endsWith(".name"))return;
   softOut();
 });
-$("#m-escenarios").addEventListener("change",e=>{if(e.target.id==="agHeat"){agHeat=e.target.checked;selCell=null;renderAgenda()}});
+$("#m-escenarios").addEventListener("change",e=>{if(e.target.id==="agHeat"){agHeat=e.target.checked;selCell=null;renderAgenda();return}
+  const r=e.target.dataset.row;if(r==null||!canWrite)return;const s=curRaw();if(!s)return;norm(s);
+  const from=+r,[h,mi]=(e.target.value||"").split(":").map(Number);if(!isFinite(h)||!isFinite(mi)){e.target.value=hhmm(from);return}
+  const to=h*60+mi;if(to===from)return;if(rowsOf(s).includes(to)){toast(`Ya hay un horario a las ${tm(to)}.`);e.target.value=hhmm(from);return}
+  moveRow(s,from,to);put(COL,s,0);e.target.blur();renderEditors();toast(`Movido: ${tm(from)} → ${tm(to)}`)});
 $("#m-escenarios").addEventListener("keydown",e=>{const tr=e.target.closest&&e.target.closest("tr[data-att]");if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();tr.click()}});
 $("#m-escenarios").addEventListener("click",e=>{
   if(e.target.closest("#agExport")){exportAgenda();return}
-  const t=e.target.closest("[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go]");if(!t)return;
+  const t=e.target.closest("[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto]");if(!t)return;
   if(t.dataset.tab){curId=t.dataset.tab;try{localStorage.setItem(CURKEY,curId)}catch(x){}renderTabs();renderEditors();return}
   if(t.dataset.brush!=null){brush=t.dataset.brush;renderAgenda();return}
   if(t.dataset.ficha!=null){ficha(+t.dataset.ficha);return}
@@ -1304,8 +1329,15 @@ $("#m-escenarios").addEventListener("click",e=>{
   if(t.dataset.pm){s.payModel=t.dataset.pm;put(COL,s,0);renderEditors();return}
   if(t.dataset.tgsrc!=null){const x=s.sources[+t.dataset.tgsrc];x.on=!x.on;put(COL,s,0);renderEditors();return}
   if(t.dataset.ap!=null){const x=s.expenses[+t.dataset.ap];x.on=!x.on;put(COL,s,0);renderEditors();return}
+  if(t.dataset.rowdel!=null){const m=+t.dataset.rowdel;const cnt=[...(s.slots||[]),...(s.slotsReal||[])].filter(x=>mOf(x)===m).length;
+    if(cnt&&!confirm(`A las ${tm(m)} hay ${cnt} ${cnt===1?"cosa agendada":"cosas agendadas"}. ¿Quitar el horario y lo que tiene?`))return;
+    s.rows=rowsOf(s).filter(x=>x!==m);s.slots=(s.slots||[]).filter(x=>mOf(x)!==m);s.slotsReal=(s.slotsReal||[]).filter(x=>mOf(x)!==m);
+    put(COL,s,0);renderEditors();toast(`Quité el horario de las ${tm(m)}`);return}
+  if(t.dataset.rowadd!=null){const R=rowsOf(s),st=stepOf(s);let m=R.length?R[R.length-1]+st:420;if(m>=1440-n(s.classMin))m=720;while(R.includes(m))m+=5;
+    s.rows=[...R,m];put(COL,s,0);renderEditors();const i=document.querySelector(`[data-row="${m}"]`);if(i)i.focus();toast(`Agregué las ${tm(m)}. Cámbiala tocando la hora.`);return}
+  if(t.dataset.rowauto!=null){delete s.rows;snap(s,s.slots);snap(s,s.slotsReal);put(COL,s,0);renderEditors();toast("Horarios automáticos otra vez");return}
   if(t.dataset.step){const k=t.dataset.step;let v=n(getP(s,k))+n(t.dataset.d);v=Math.max(n(t.dataset.min),Math.min(n(t.dataset.max),v));setPath(s,k,v);put(COL,s);
-    if(["cap","hFrom","hTo","maxDay","classMin","gapMin"].includes(k)){if(["hFrom","hTo","classMin","gapMin"].includes(k)){snap(s,s.slots);snap(s,s.slotsReal)}renderEditors()}else renderOut();return}
+    if(["cap","hFrom","hTo","maxDay","classMin","gapMin"].includes(k)){if(["hFrom","hTo","classMin","gapMin"].includes(k)){if(s.rows&&(k==="hFrom"||k==="hTo"))delete s.rows;if(!s.rows){snap(s,s.slots);snap(s,s.slotsReal)}}renderEditors()}else renderOut();return}
   if(t.dataset.add){const path=t.dataset.add,key=path.split(".").pop();
     const tpl={packages:{name:"Nuevo paquete",price:1000,classes:4,months:1,mix:0},teachers:{name:"Maestro "+((s.teachers||[]).length+1),packs:TPACKS()},packs:{name:"Nuevo paquete",price:800,classes:4},
       therapists:{name:"Terapeuta "+((s.therapists||[]).length+1)},terms:{m:12,price:1400,mix:0},
