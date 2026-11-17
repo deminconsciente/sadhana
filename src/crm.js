@@ -18,7 +18,11 @@
 // Solo administradores:
 //   GET  /api/crm/equipo · POST /api/crm/equipo · POST /api/crm/equipo/:id
 //   GET  /api/crm/resumen?mes=YYYY-MM     números del mes para Proyección Sadhana (presupuesto vs real)
+//   GET  /proyeccion                      la calculadora Proyección Sadhana (src/proyeccion.html)
+//   GET  /api/crm/docs/:col · POST/DELETE /api/crm/docs/:col/:id   sus datos (escenarios, pendientes, presupuesto)
+// Importación única (encabezado x-import-token = secreto IMPORT_TOKEN): POST /api/crm/docs-import
 import equipoHTML from './equipo.html';
+import proyeccionHTML from './proyeccion.html';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -44,7 +48,8 @@ function sumaMeses(ymd, n) {
 }
 
 export function esCRM(pathname) {
-  return pathname === '/equipo' || pathname === '/equipo/' || pathname.startsWith('/api/crm/') || pathname === '/api/confirmar';
+  return pathname === '/equipo' || pathname === '/equipo/' || pathname === '/proyeccion' || pathname === '/proyeccion/' ||
+    pathname.startsWith('/api/crm/') || pathname === '/api/confirmar';
 }
 
 export async function crm(request, env) {
@@ -56,8 +61,17 @@ export async function crm(request, env) {
   try {
     if (p === '/api/confirmar') return M === 'POST' ? await confirmar(request, env) : await verConfirmacion(url, env);
 
+    if (p === '/api/crm/docs-import' && M === 'POST') return await importarDocs(request, env);
+
     const yo = await quien(request, env);
     if (yo instanceof Response) return yo;
+
+    if (p === '/proyeccion') {
+      if (yo.rol !== 'admin') return new Response('Solo administración', { status: 403 });
+      return new Response(proyeccionHTML, {
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'x-frame-options': 'DENY' },
+      });
+    }
 
     if (p === '/equipo' && M === 'GET')
       return new Response(equipoHTML, {
@@ -88,6 +102,14 @@ export async function crm(request, env) {
       if (!b && M === 'POST') return await nuevaMembresia(request, env, yo);
       if (b && M === 'POST') return await cambiarMembresia(b, request, env);
     }
+    if (a === 'docs') {
+      if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administración' }, 403);
+      if (!COLS.includes(b)) return json({ ok: false, error: 'Colección inválida' }, 400);
+      await tablaDocs(env);
+      if (!c && M === 'GET') return await listarDocs(b, env);
+      if (c && M === 'POST') return await guardarDoc(b, c, request, env, yo);
+      if (c && M === 'DELETE') return await borrarDoc(b, c, env);
+    }
     if (a === 'equipo' || a === 'resumen') {
       if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administradores' }, 403);
       if (a === 'resumen' && M === 'GET') return await resumen(url, env);
@@ -105,9 +127,9 @@ export async function crm(request, env) {
 
 const falla = (status, message) => Object.assign(new Error(message), { status });
 
-async function leerJSON(request) {
+async function leerJSON(request, max = MAX_BODY) {
   const raw = await request.text();
-  if (raw.length > MAX_BODY) throw falla(413, 'Demasiado grande');
+  if (raw.length > max) throw falla(413, 'Demasiado grande');
   try { return JSON.parse(raw || '{}'); } catch (e) { throw falla(400, 'JSON inválido'); }
 }
 
@@ -523,4 +545,59 @@ async function resumen(url, env) {
     membresias_activas: membresias.results.length,
     ocupacion,
   });
+}
+
+// ---------- Datos de Proyección Sadhana (la calculadora) ----------
+// Cada documento es el mismo objeto que guardaba el artefacto, como JSON.
+const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks'];
+const DOC_ID = /^[A-Za-z0-9_.-]{1,60}$/;
+let tablaLista = false;
+async function tablaDocs(env) {
+  if (tablaLista) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS proyeccion_docs (col TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, actualizado TEXT NOT NULL, por TEXT, PRIMARY KEY (col, id))`
+  ).run();
+  tablaLista = true;
+}
+
+async function listarDocs(col, env) {
+  const { results } = await env.DB.prepare('SELECT id, data, actualizado FROM proyeccion_docs WHERE col = ?').bind(col).all();
+  return json(results.map(r => ({ id: r.id, data: JSON.parse(r.data), actualizado: r.actualizado })));
+}
+
+async function guardarDoc(col, id, request, env, yo) {
+  if (!DOC_ID.test(id)) return json({ ok: false, error: 'Id inválido' }, 400);
+  const b = await leerJSON(request, 200 * 1024);
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return json({ ok: false, error: 'Documento inválido' }, 400);
+  delete b.id;
+  await env.DB.prepare(
+    `INSERT INTO proyeccion_docs (col, id, data, actualizado, por) VALUES (?,?,?,?,?)
+     ON CONFLICT(col, id) DO UPDATE SET data = excluded.data, actualizado = excluded.actualizado, por = excluded.por`
+  ).bind(col, id, JSON.stringify(b), ahora(), yo.usuario).run();
+  return json({ ok: true });
+}
+
+async function borrarDoc(col, id, env) {
+  await env.DB.prepare('DELETE FROM proyeccion_docs WHERE col = ? AND id = ?').bind(col, id).run();
+  return json({ ok: true });
+}
+
+// Carga inicial desde el artefacto. Solo con el secreto IMPORT_TOKEN (se borra al terminar)
+// y solo llena documentos que no existan, para no pisar cambios hechos en el sitio.
+async function importarDocs(request, env) {
+  const t = request.headers.get('x-import-token') || '';
+  if (!env.IMPORT_TOKEN || !t || !iguales(t, env.IMPORT_TOKEN)) return json({ ok: false, error: 'No autorizado' }, 401);
+  const b = await leerJSON(request, 1024 * 1024);
+  await tablaDocs(env);
+  const ahoraISO = ahora();
+  const stmts = [];
+  for (const col of COLS)
+    for (const d of Array.isArray(b[col]) ? b[col] : []) {
+      if (!d || !DOC_ID.test(String(d.id || ''))) continue;
+      const { id, ...data } = d;
+      stmts.push(env.DB.prepare('INSERT OR IGNORE INTO proyeccion_docs (col, id, data, actualizado, por) VALUES (?,?,?,?,?)')
+        .bind(col, String(id), JSON.stringify(data), ahoraISO, 'importación'));
+    }
+  const r = stmts.length ? await env.DB.batch(stmts) : [];
+  return json({ ok: true, recibidos: stmts.length, nuevos: r.reduce((s, x) => s + (x.meta.changes || 0), 0) });
 }
