@@ -35,3 +35,16 @@ se borran: los reemplazan los dominios personalizados del Worker.
 ## Probar en local
 
 `npm install && npm run dev` → http://localhost:8787 · `npm run check` = dry-run del deploy.
+
+## Reservas, CRM y panel del equipo (base D1 `sadhana_crm`)
+
+| URL | Para quién | Archivo |
+|---|---|---|
+| /equipo | Diego, Isa, Diane y quien tenga acceso: agenda del día, pagos por verificar, alta manual, fichas de alumno, membresías y accesos | `src/equipo.html` + `src/crm.js` |
+| /confirmar/?f=FOLIO&t=TOKEN | El cliente confirma o avisa que no va (el enlace sale del botón "Pedir confirmación") | `public/confirmar/index.html` |
+| /admin | Panel anterior de reservas (solo clave maestra) | `src/admin.html` + `src/api.js` |
+| /api/crm/resumen?mes=YYYY-MM | Números del mes para Proyección Sadhana (solo administración) | `src/crm.js` |
+
+- Esquema: `migrations/0001_reservas.sql` y `0002_crm.sql`. Cada visita es una fila de `reservas`; las fichas (`alumnos`) se ligan por teléfono.
+- Entrar: usuario `admin` (o tu nombre) + la clave maestra `ADMIN_CLAVE` (secreto del Worker). Desde la pestaña Equipo se crean usuarios con clave propia para cada maestro.
+- Local: `printf 'ADMIN_CLAVE=prueba\n' > .dev.vars && npx wrangler d1 migrations apply sadhana_crm --local && npm run dev`.

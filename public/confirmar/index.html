@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Confirma tu asistencia · Sadhana</title>
+<link rel="icon" href="/assets/img/sello.png">
+<style>
+@font-face{font-family:"Glacial Indifference";src:url(/assets/fonts/glacial-indifference-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Glacial Indifference";src:url(/assets/fonts/glacial-indifference-700.woff2) format("woff2");font-weight:700;font-display:swap}
+:root{--bg:#f7f1ea;--card:#fffdf9;--ink:#2a1424;--ink-2:#6b5560;--line:#e6d9cc;--acc:#a45a2a;--vino:#8a3a55;--ok:#3d7a4a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1418;--card:#261c22;--ink:#f5ece6;--ink-2:#c9b7ad;--line:#3d2f36;--acc:#d08c5c;--vino:#d98aa6;--ok:#8fc79b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:17px/1.5 "Glacial Indifference",system-ui,sans-serif;padding:24px 16px;
+  background-image:radial-gradient(120% 60% at 50% 0%,color-mix(in srgb,var(--acc) 22%,transparent),transparent 70%)}
+.c{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:26px;padding:28px 22px;text-align:center;box-shadow:0 10px 40px rgba(42,20,36,.10)}
+.sello{width:64px;height:64px;margin:0 auto 6px;display:block;background:var(--acc);-webkit-mask:url(/assets/img/sello.png) center/contain no-repeat;mask:url(/assets/img/sello.png) center/contain no-repeat}
+h1{font-size:1.5rem;line-height:1.2;margin:.3em 0}
+.t{font-size:1.15rem;font-weight:700;margin:14px 0 2px}
+.m{color:var(--ink-2)}
+.b{display:grid;gap:10px;margin-top:22px}
+button,.lnk{font:inherit;font-weight:700;border-radius:999px;padding:14px 18px;min-height:52px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink);text-decoration:none;display:block}
+button.p{background:linear-gradient(135deg,#c9893f,var(--acc) 55%,var(--vino));border:0;color:#fff}
+button:disabled{opacity:.6}
+.ok{font-size:2.4rem;line-height:1}
+.peq{font-size:.9rem;color:var(--ink-2);margin-top:18px}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<main class="c" id="c">
+  <div class="sello" role="img" aria-label="Sadhana"></div>
+  <p class="m">Cargando tu reserva…</p>
+</main>
+<script>
+const $c = document.getElementById("c");
+const q = new URLSearchParams(location.search);
+const f = q.get("f"), t = q.get("t");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const cuando = iso => iso ? new Date(iso).toLocaleString("es-MX",{weekday:"long",day:"numeric",month:"long",hour:"numeric",minute:"2-digit",timeZone:"America/Monterrey"}) : "";
+const SELLO = `<div class="sello" role="img" aria-label="Sadhana"></div>`;
+const PIE = `<p class="peq">P.º del Acueducto 430, Local 18, Satélite Acueducto · <a href="https://maps.app.goo.gl/vaXKCNu2pZtEAvrr9" target="_blank" rel="noopener">Cómo llegar</a></p>`;
+let R;
+
+function pintar(){
+  const r = R;
+  const info = `<p class="t">${esc(r.titulo)}</p><p class="m">${esc(cuando(r.ini))}</p>`;
+  if (r.estado === "cancelado") { $c.innerHTML = `${SELLO}<h1>Esta reserva está cancelada</h1>${info}<p class="peq"><a href="/">Ver la agenda de Sadhana</a></p>`; return; }
+  if (r.asistencia === "confirmada") { $c.innerHTML = `${SELLO}<p class="ok">✓</p><h1>¡Gracias, ${esc(r.nombre)}! Te esperamos</h1>${info}<p class="m">Llega 10 minutos antes para acomodarte con calma.</p><div class="b"><button data-r="no">Al final no podré ir</button></div>${PIE}`; return; }
+  if (r.asistencia === "no_ira") { $c.innerHTML = `${SELLO}<h1>Gracias por avisarnos, ${esc(r.nombre)}</h1>${info}<p class="m">Así liberamos tu lugar para alguien más. Te esperamos en otra práctica.</p><div class="b"><button class="p" data-r="si">Siempre sí voy</button><a class="lnk" href="/">Ver otros horarios</a></div>`; return; }
+  $c.innerHTML = `${SELLO}<h1>Hola ${esc(r.nombre)}, ¿nos confirmas que vienes?</h1>${info}<div class="b"><button class="p" data-r="si">Sí, ahí estaré</button><button data-r="no">No podré ir</button></div>${PIE}`;
+}
+
+async function cargar(){
+  try {
+    const r = await fetch(`/api/confirmar?f=${encodeURIComponent(f||"")}&t=${encodeURIComponent(t||"")}`, {cache:"no-store"});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    R = j; pintar();
+  } catch(e) {
+    $c.innerHTML = `${SELLO}<h1>No encontramos esta reserva</h1><p class="m">Revisa que el enlace esté completo o escríbenos por WhatsApp.</p><div class="b"><a class="lnk" href="https://wa.me/528132458208" target="_blank" rel="noopener">Escribir a Sadhana</a></div>`;
+  }
+}
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-r]"); if (!b) return;
+  document.querySelectorAll("[data-r]").forEach(x => x.disabled = true);
+  try {
+    const r = await fetch("/api/confirmar", {method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({f, t, r: b.dataset.r})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    R.asistencia = j.asistencia; pintar();
+  } catch(err) {
+    document.querySelectorAll("[data-r]").forEach(x => x.disabled = false);
+    alert("No se pudo guardar. Intenta de nuevo.");
+  }
+});
+cargar();
+</script>
+</body>
+</html>

@@ -4,8 +4,10 @@
 //  - www.sadhanaholistics.com → 301 al dominio sin www.
 //  - /audios/* → respuesta 206 con Range (Safari lo necesita para reproducir).
 //  - /api/* y /admin → reservas en D1 (ver src/api.js).
+//  - /equipo, /api/crm/* y /api/confirmar → CRM y panel del equipo (ver src/crm.js).
 import { esMedia, servirConRango } from './range.js';
 import { esApi, api } from './api.js';
+import { esCRM, crm } from './crm.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -14,6 +16,7 @@ export default {
       url.hostname = 'sadhanaholistics.com';
       return Response.redirect(url.toString(), 301);
     }
+    if (esCRM(url.pathname)) return crm(request, env);
     if (esApi(url.pathname)) return api(request, env);
     if (esMedia(url.pathname)) return servirConRango(request, env, ctx);
     return env.ASSETS.fetch(request);
