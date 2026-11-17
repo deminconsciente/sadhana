@@ -75,7 +75,7 @@ h3{margin:4px 0 0;font-size:1rem}
 </head>
 <body>
 <header>
-  <div class="top"><h1>Sadhana · Equipo</h1><span class="who" id="who"></span></div>
+  <div class="top"><h1>Sadhana · Equipo</h1><span class="who"><span id="who"></span><a id="lnkProy" href="/proyeccion" hidden style="margin-left:10px;font-weight:700">Proyección →</a></span></div>
 </header>
 <main>
   <!-- AGENDA -->
@@ -403,7 +403,7 @@ $("#nuevoAl").onclick = async () => {
 (async () => {
   try { YO = await api("yo"); } catch(e){}
   $("#who").textContent = YO.nombre ? `Hola, ${YO.nombre}` : "";
-  $("#tabEq").hidden = YO.rol !== "admin";
+  $("#tabEq").hidden = YO.rol !== "admin"; $("#lnkProy").hidden = YO.rol !== "admin";
   prepararNueva(); cargarR(); cargarA();
 })();
 </script>
