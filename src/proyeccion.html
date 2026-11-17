@@ -200,6 +200,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .status .dotk{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex-shrink:0}
 .status.live .dotk{background:var(--good)}
 .status.warn .dotk{background:var(--warn)}
+.savebtn{margin-left:auto;flex-shrink:0;font:inherit;font-weight:700;font-size:.82rem;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:6px 12px;cursor:pointer;min-height:32px}
+.savebtn.dirty{background:var(--wine);border-color:var(--wine);color:var(--on-wine)}
+.ro .savebtn{display:none}
 .empty{border:1px dashed var(--line-2);border-radius:16px;padding:18px;text-align:center;color:var(--ink-2);display:flex;flex-direction:column;gap:10px;align-items:center}
 .ro input,.ro select,.ro textarea{pointer-events:none;opacity:.85}
 .ro [data-add],.ro [data-del],.ro .x,.ro .needw,.ro #dup,.ro #del{display:none!important}
@@ -544,7 +547,7 @@ details.why .hint{margin:8px 0}
   <header>
     <h1>Proyección Sadhana</h1>
     <p class="sub">Escenarios, presupuesto, pendientes, riesgos y cronograma del proyecto. Cifras en pesos MXN.</p>
-    <div class="status" id="status"><span class="dotk"></span><span id="statusTxt">Conectando…</span></div>
+    <div class="status" id="status"><span class="dotk"></span><span id="statusTxt">Conectando…</span><button class="savebtn needw" id="saveNow" type="button">Guardado ✓</button></div>
   </header>
   <nav class="nav" aria-label="Módulos">
     <a href="#escenarios" data-mod="escenarios">Escenarios</a>
@@ -805,13 +808,24 @@ function flush(path){
     if(e&&e.code==="invalid_argument"){canWrite=false;applyRO();setStatus("warn","No tienes permiso para guardar cambios aquí.")}
     else if(e&&e.code==="quota_exceeded")toast("La base está llena: borra algo para guardar.");
     else toast("No se guardó un cambio. Revisa tu conexión.");
-  }).finally(()=>{delete inflight[path]});
+  }).finally(()=>{delete inflight[path];saveUI()});
+  saveUI();
 }
+function saveUI(){const b=$("#saveNow");if(!b)return;const dirty=Object.keys(pending).length+Object.keys(inflight).length;
+  b.classList.toggle("dirty",!!dirty);b.textContent=dirty?"Guardar cambios":"Guardado ✓";b.title=dirty?"Hay cambios esperando para guardarse":"Todo está guardado"}
+async function saveNow(){const b=$("#saveNow");
+  if(!db){Object.keys(cache).forEach(localSave);saveUI();toast("Guardado en este navegador");return}
+  for(let i=0;i<20&&(Object.keys(pending).length||Object.keys(inflight).length);i++){
+    Object.keys(pending).forEach(path=>{if(!inflight[path]){clearTimeout(pending[path].timer);flush(path)}});
+    await Promise.allSettled(Object.values(inflight));if(Object.keys(pending).length)await new Promise(r=>setTimeout(r,150))}
+  saveUI();const left=Object.keys(pending).length+Object.keys(inflight).length;
+  toast(left?"Aún se están guardando cambios, intenta en un momento.":"Todo guardado · "+new Date().toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit"}))}
 function put(col,obj,delay){ // reemplaza el documento entero
   const i=cache[col].findIndex(x=>x.id===obj.id);if(i<0)cache[col].push(obj);else cache[col][i]=obj;
   if(!db){localSave(col);return}
   const path=col+"/"+obj.id;const p=pending[path];if(p)clearTimeout(p.timer);
   pending[path]={data:obj,mode:"set",timer:setTimeout(()=>flush(path),delay==null?700:delay)};
+  saveUI();
 }
 function remove(col,id){
   cache[col]=cache[col].filter(x=>x.id!==id);
@@ -1615,6 +1629,9 @@ function renderAll(){renderTabs();if(!busy())renderEditors();renderOut();const h
 let tt;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
 
 /* ===================== arranque ===================== */
+$("#saveNow").onclick=saveNow;
+addEventListener("pagehide",()=>{if(db)Object.keys(pending).forEach(path=>{if(!inflight[path]){clearTimeout(pending[path].timer);flush(path)}})});
+addEventListener("beforeunload",e=>{if(db&&Object.keys(pending).length+Object.keys(inflight).length){Object.keys(pending).forEach(path=>{if(!inflight[path]){clearTimeout(pending[path].timer);flush(path)}});e.preventDefault();e.returnValue=""}});
 route();renderAll();
 (async()=>{
   try{if(window.claude&&claude.use){db=await claude.use("db");const user=await claude.use("user");if(user){const c=await user.can("data.write");if(c===false)canWrite=false}}}catch(e){db=null}
