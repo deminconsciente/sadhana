@@ -5,6 +5,9 @@
   "name": "sadhana-holistics",
   "main": "src/index.js",
   "compatibility_date": "2026-09-01",
+  // Genera src/media-sizes.generated.js antes de empaquetar, sea cual sea el comando
+  // de deploy (Workers Builds usa "npx wrangler deploy", sin pasar por npm run).
+  "build": { "command": "node tools/media-sizes.mjs" },
   "assets": {
     "directory": "public",
     "binding": "ASSETS",

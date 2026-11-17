@@ -508,14 +508,27 @@ async function resumen(url, env) {
   const a1 = new Date(Date.parse(d1 + 'T00:00:00Z') - MTY + 864e5).toISOString();
   const cuando = 'COALESCE(ini, creado)';
   const DB = env.DB;
-  const [porEstado, porMetodo, porHorario, nuevos, membresias] = await Promise.all([
+  const [porEstado, porMetodo, porHorario, nuevos, membresias, porMaestro] = await Promise.all([
     DB.prepare(`SELECT estado, COUNT(*) AS n, SUM(monto) AS monto FROM reservas WHERE ${cuando} >= ? AND ${cuando} < ? GROUP BY estado`).bind(a0, a1).all(),
     DB.prepare(`SELECT COALESCE(metodo,'') AS metodo, COUNT(*) AS n, SUM(monto) AS monto FROM reservas
                 WHERE ${cuando} >= ? AND ${cuando} < ? AND estado IN ('confirmado','asistio') GROUP BY metodo`).bind(a0, a1).all(),
     DB.prepare(`SELECT titulo, ini, estado FROM reservas WHERE ini >= ? AND ini < ? AND estado != 'cancelado'`).bind(a0, a1).all(),
     DB.prepare(`SELECT COUNT(*) AS n FROM alumnos WHERE creado >= ? AND creado < ?`).bind(a0, a1).first(),
     DB.prepare(`SELECT plan, monto, inicio, fin, clases FROM membresias WHERE estado != 'cancelada' AND inicio <= ? AND fin >= ?`).bind(sumaDias(d1, -0), d0).all(),
+    DB.prepare(`SELECT TRIM(c.maestro) AS maestro, r.ini, r.estado FROM reservas r JOIN reserva_crm c ON c.folio = r.folio
+                WHERE r.ini >= ? AND r.ini < ? AND r.estado != 'cancelado' AND c.maestro IS NOT NULL AND TRIM(c.maestro) != ''`).bind(a0, a1).all(),
   ]);
+
+  // Clases reales de cada maestro en el mes: sesiones distintas, reservas y asistencias (para "Real" en Proyección).
+  const mae = {};
+  for (const r of porMaestro.results) {
+    const k = r.maestro.toLowerCase();
+    const m = (mae[k] ||= { maestro: r.maestro, sesiones: new Set(), reservas: 0, asistencias: 0 });
+    m.sesiones.add(r.ini);
+    m.reservas++;
+    if (r.estado === 'asistio') m.asistencias++;
+  }
+  const maestros = Object.values(mae).map(m => ({ maestro: m.maestro, sesiones: m.sesiones.size, reservas: m.reservas, asistencias: m.asistencias }));
 
   // Ocupación por día de la semana y hora (hora de Monterrey) para el mapa de calor "Hoy".
   const horarios = {};
@@ -544,6 +557,7 @@ async function resumen(url, env) {
     alumnos_nuevos: nuevos.n,
     membresias_activas: membresias.results.length,
     ocupacion,
+    maestros,
   });
 }
 
