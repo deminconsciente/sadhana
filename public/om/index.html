@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta property="og:type" content="website">
 <meta property="og:title" content="El Poder del OM · Sadhana">
-<meta property="og:description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Sadhana (Satélite Acueducto, Monterrey), y en línea. Aportación consciente $100 MXN.">
+<meta property="og:description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Sadhana (Satélite Acueducto, Monterrey). En línea, próximamente. Aportación consciente desde $100 MXN.">
 <meta property="og:url" content="https://sadhanaholistics.com/om/">
 <meta property="og:image" content="https://sadhanaholistics.com/assets/img/velas.jpg">
 <link rel="canonical" href="https://sadhanaholistics.com/om/">
@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#8f4a25">
 <title>El Poder del OM</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Sadhana (Satélite Acueducto, Monterrey), y en línea. Aportación consciente $100 MXN.">
+<meta name="description" content="Meditación con soundbath y breathwork. Domingo 22 de noviembre, 10:00 AM. Presencial en Sadhana (Satélite Acueducto, Monterrey). En línea, próximamente. Aportación consciente desde $100 MXN.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&display=swap">
@@ -190,6 +190,12 @@ legend,label.lbl{font-family:var(--f-display);font-size:.78rem;letter-spacing:.1
 .mode span{display:grid;gap:2px;padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(246,235,227,.04);text-align:center;height:100%}
 .mode b{font-family:var(--f-display);letter-spacing:.1em;font-weight:600;font-size:.98rem}
 .mode small{color:var(--linen-dim);font-size:.82rem;font-style:italic;line-height:1.35}
+/* Modalidad en línea: próximamente */
+.mode.pronto input{cursor:not-allowed}
+.mode.pronto span{opacity:.62;border-style:dashed}
+.pronto-tag{justify-self:center;margin-top:4px;padding:2px 10px;border-radius:999px;border:1px solid rgba(236,196,160,.55);color:var(--peach);font-family:var(--f-display);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;font-style:normal}
+.facts li.pronto{border-style:dashed;color:var(--linen-dim)}
+.facts li.pronto small{font-size:.74rem;letter-spacing:.06em;color:var(--peach)}
 .mode input:checked + span{border-color:var(--peach);background:rgba(236,196,160,.16)}
 .mode input:focus-visible + span{outline:2px solid var(--peach);outline-offset:2px}
 .field{display:grid;gap:0}
@@ -528,7 +534,7 @@ body.arriba .progreso{opacity:0}
     <ul class="facts" aria-label="Datos del evento">
       <li class="primer">Primer círculo</li>
       <li><a href="#detalles" class="chip-link">Presencial · Satélite Acueducto</a></li>
-      <li>En línea</li>
+      <li class="pronto">En línea <small>· próximamente</small></li>
       <li>2 horas</li>
     </ul>
     <p class="price">Aportación consciente <strong>desde $100 MXN</strong></p>
@@ -650,11 +656,11 @@ body.arriba .progreso{opacity:0}
     <dl class="details">
       <div><dt>Fecha</dt><dd>Domingo 22 de noviembre</dd></div>
       <div><dt>Hora</dt><dd>10:00 AM a 12:00 PM</dd></div>
-      <div class="wide"><dt>Aportación consciente</dt><dd>$100 MXN por persona, en cualquiera de las dos modalidades.</dd></div>
+      <div class="wide"><dt>Aportación consciente</dt><dd>Desde $100 MXN por persona.</dd></div>
     </dl>
     <div class="tabs" role="tablist" aria-label="Modalidad">
       <button class="tab" role="tab" type="button" id="tab-pres" aria-selected="true" aria-controls="panel-pres">Presencial</button>
-      <button class="tab" role="tab" type="button" id="tab-online" aria-selected="false" aria-controls="panel-online">En línea</button>
+      <button class="tab" role="tab" type="button" id="tab-online" aria-selected="false" aria-controls="panel-online">En línea · pronto</button>
       <span class="tab-luz" aria-hidden="true"></span>
     </div>
     <div class="panel" id="panel-pres" role="tabpanel" aria-labelledby="tab-pres">
@@ -679,9 +685,11 @@ body.arriba .progreso{opacity:0}
     <div class="panel" id="panel-online" role="tabpanel" aria-labelledby="tab-online" hidden>
       <div class="online-card">
         <div class="ondas-online" aria-hidden="true"><span></span><span></span><span></span></div>
-        <p><b>Desde tu casa.</b> Te mandamos el enlace por WhatsApp al confirmar tu lugar.</p>
+        <p><b>Próximamente en línea.</b> Estamos preparando la transmisión para que el sonido de los cuencos llegue completo hasta tu casa. Por ahora, este círculo es solo presencial.</p>
       </div>
-      <div class="bring"><div><h3>Prepara tu espacio</h3><ul><li>Audífonos (cambian todo en el soundbath)</li><li>Un lugar donde puedas recostarte</li><li>Celular en silencio</li><li>Conéctate 5 minutos antes</li></ul></div></div>
+      <div class="cta-row">
+        <a class="btn btn-ghost btn-sm" id="waAvisame" href="#" target="_blank" rel="noopener">Avísame cuando abra en línea</a>
+      </div>
     </div>
     <div class="cta-row">
       <a class="btn btn-ghost btn-sm" id="calLink" href="#" target="_blank" rel="noopener">Agregar a mi calendario</a>
@@ -721,7 +729,7 @@ body.arriba .progreso{opacity:0}
         <legend>¿Cómo vas a vivirlo?</legend>
         <div class="modes">
           <label class="mode"><input type="radio" name="modo" id="m-pres" value="Presencial" checked><span><b>Presencial</b><small>Satélite Acueducto, MTY</small></span></label>
-          <label class="mode"><input type="radio" name="modo" id="m-online" value="En línea"><span><b>En línea</b><small>Desde donde estés</small></span></label>
+          <label class="mode pronto"><input type="radio" name="modo" id="m-online" value="En línea" disabled aria-describedby="prontoTxt"><span><b>En línea</b><small id="prontoTxt">Desde donde estés</small><small class="pronto-tag">Próximamente</small></span></label>
         </div>
       </fieldset>
       <fieldset class="aporte">
@@ -751,7 +759,7 @@ body.arriba .progreso{opacity:0}
       <details><summary>¿Necesito experiencia en meditación?</summary><p>No. Todo es guiado paso a paso. Si nunca has meditado, esta es una buena primera vez.</p></details>
       <details><summary>¿Qué es una aportación consciente?</summary><p>Es una cuota que tú eliges, desde $100 MXN. Sostiene el espacio y a quienes facilitan. El mínimo es bajo para que el precio no sea la razón para no venir; si quieres y puedes aportar más, al reservar mueves el medidor.</p></details>
       <details><summary>¿La respiración es intensa?</summary><p>Es una respiración suave y lenta, y siempre puedes ir a tu ritmo. Si estás embarazada o tienes epilepsia, alguna condición cardiaca, presión alta sin control o un diagnóstico psiquiátrico reciente, avísanos al reservar para adaptar la práctica.</p></details>
-      <details><summary>¿Funciona igual en línea?</summary><p>La respiración y la meditación sí. El sonido de los cuencos se siente más en persona, pero con audífonos la experiencia es muy completa.</p></details>
+      <details><summary>¿Puedo tomarlo en línea?</summary><p>Muy pronto. Estamos preparando la transmisión para que la respiración y el sonido lleguen bien hasta tu casa. Este primer círculo es solo presencial; si quieres que te avisemos cuando abra en línea, <a class="avisame" href="#" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.</p></details>
       <details><summary>¿Esto sustituye una terapia o un tratamiento médico?</summary><p>No. Es una práctica complementaria de bienestar. No diagnostica ni trata enfermedades y no reemplaza la atención médica o psicológica.</p></details>
       <details><summary>¿Tienes otra duda?</summary><p><a id="waQuick" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te respondemos.</p></details>
       <details><summary>¿Y si ya no puedo asistir?</summary><p>Escríbenos por WhatsApp antes del evento y vemos contigo la mejor opción.</p></details>
@@ -828,7 +836,8 @@ const waURL = text => (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "h
 })();
 
 /* Enlaces */
-document.querySelectorAll(".invita").forEach(a => a.href = "https://wa.me/?text=" + encodeURIComponent("Te invito a El Poder del OM 🙏 Meditación con soundbath y breathwork, domingo 22 de noviembre a las 10:00 AM, presencial en Satélite Acueducto o en línea. Aportación consciente desde $100. Pruébalo en un minuto aquí: https://sadhanaholistics.com/om/"));
+document.querySelectorAll(".invita").forEach(a => a.href = "https://wa.me/?text=" + encodeURIComponent("Te invito a El Poder del OM 🙏 Meditación con soundbath y breathwork, domingo 22 de noviembre a las 10:00 AM, presencial en Satélite Acueducto. Aportación consciente desde $100. Pruébalo en un minuto aquí: https://sadhanaholistics.com/om/"));
+document.querySelectorAll("#waAvisame,.avisame").forEach(a => a.href = waURL("Hola Sadhana 🙏 Avísenme cuando El Poder del OM abra en línea, por favor."));
 $("#waQuick").href = waURL("Hola Sadhana 🙏 Tengo una pregunta sobre El Poder del OM (domingo 22 de noviembre).");
 (function cal(){
   const f = s => new Date(s).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
@@ -1069,8 +1078,9 @@ function modo(online, desdeForm){
   $("#tab-pres").setAttribute("aria-selected", !online);
   $("#tab-online").setAttribute("aria-selected", online);
   $("#panel-pres").hidden = online; $("#panel-online").hidden = !online;
-  if (!desdeForm) $(online ? "#m-online" : "#m-pres").checked = true;
-  $("#bModo").textContent = online ? "En línea" : "Presencial";
+  /* En línea está en "próximamente": la reserva siempre es presencial */
+  $("#m-pres").checked = true;
+  $("#bModo").textContent = "Presencial";
   irReserva();
 }
 $("#tab-pres").addEventListener("click", () => modo(false));
