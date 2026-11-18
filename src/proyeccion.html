@@ -583,13 +583,16 @@ button.cal-t.sel small,button.cal-t:hover small{color:var(--on-wine)}
 .ubar-u small{display:block;font-size:.66rem;color:var(--ink-3)}
 .ubar-u b{font-size:1.05rem}.ubar-u b.neg{color:var(--bad)}.ubar-u b.pos{color:var(--good)}
 .ubar .savebtn{position:static;box-shadow:none;margin:0}
+
+#viewSw{margin:6px 0}.vhoy{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;margin:6px 2px;width:100%}.vhoy .stp{display:inline-flex;gap:8px;align-items:center}.vhoy .stp button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:inherit;font-size:16px}
+.stc.rg{border:0;padding:0;gap:10px;display:flex;flex:1;min-width:140px}.stc.rg input[type=range]{flex:1;min-width:90px}.stc.rg b{min-width:30px;text-align:right}
 </style>
 
 <div class="wrap">
   <header>
     <h1>Proyección Sadhana</h1>
     <p class="sub">Escenarios, presupuesto, pendientes, riesgos y cronograma del proyecto. Cifras en pesos MXN.</p>
-    <div class="status" id="status"><span class="dotk"></span><span id="statusTxt">Conectando…</span><button class="savebtn needw" id="saveNow" type="button">Guardado ✓</button></div>
+    <div class="status" id="status"><span class="dotk"></span><span id="statusTxt">Conectando…</span></div>
   </header>
   <div class="ubar"><button class="ubar-u" id="ubarU" type="button" aria-label="Ir al resumen"><small>Utilidad al mes</small><b class="num" id="ubarV">$0</b></button><button class="savebtn needw" id="saveNow" type="button">Guardado ✓</button></div>
   <nav class="nav" aria-label="Módulos">
@@ -618,6 +621,7 @@ button.cal-t.sel small,button.cal-t:hover small{color:var(--on-wine)}
       <div><div class="big num" id="bigS">$0</div><div class="mini">le queda a Sadhana al mes</div></div>
       <div><div class="big num" id="bigP">0</div><div class="mini">alumnos activos al mes</div></div>
     </div>
+    <div class="agmode" id="viewSw"></div>
     <p class="need" id="needLine"></p>
     <span class="chip" id="atrChip"></span>
   </section>
@@ -666,7 +670,7 @@ button.cal-t.sel small,button.cal-t:hover small{color:var(--on-wine)}
   <details class="sec" id="sec-pk">
     <summary><h2>4 · Paquetes de Sadhana para alumnos</h2><span class="sum num" id="sumPaq"></span></summary>
     <div class="sec-body">
-      <p class="hint">Máximo 3 opciones para que decidir sea fácil. La membresía ilimitada tiene plazos de 3, 6, 9 y 12 meses: entre más largo, más barato al mes. De aquí sale cuánto deja cada alumno en cada clase.</p>
+      <p class="hint">Máximo 3 opciones para que decidir sea fácil. La membresía ilimitada es solo mensual. De aquí sale cuánto deja cada alumno en cada clase.</p>
       <p class="chip warn" id="pkNote" hidden>En este escenario los maestros cobran con sus propios paquetes. Estos solo cuentan para calcular cuántos alumnos distintos hay.</p>
       <div class="kpis" id="pkSum"></div>
       <div class="pks" id="pkRows"></div>
@@ -912,7 +916,7 @@ const SOURCES=()=>[
 const PACKS=()=>[
   {name:"Clase suelta",price:300,classes:1,months:1,mix:15},
   {name:"Paquete 8 clases al mes",price:1300,classes:8,months:1,mix:30},
-  {name:"Membresía ilimitada",price:0,classes:0,months:1,mix:55,terms:[{m:3,price:1800,mix:40},{m:6,price:1650,mix:30},{m:9,price:1500,mix:15},{m:12,price:1400,mix:15}]}];
+  {name:"Membresía ilimitada",price:1600,classes:0,months:1,mix:55}];
 const THER=()=>[{name:"Isa"},{name:"Diego"}];
 // precio al mes de un paquete (la membresía promedia sus plazos según cuántos eligen cada uno)
 const pkMonth=p=>{if(Array.isArray(p.terms)&&p.terms.length){const m=sum(p.terms.map(t=>n(t.mix)));return m?sum(p.terms.map(t=>n(t.mix)*n(t.price)))/m:0}return n(p.price)/Math.max(1,n(p.months))};
@@ -966,7 +970,7 @@ function defaults(){
   const e=baseScen();e.id="e5";e.order=5;e.name="Comisión: el maestro pone precio";e.payModel="comm";e.slots=assign(e,STD());on(e,["Terapeutas residentes"]);
   return[a,b,c,d,e];
 }
-function norm(s){if(!s)return s;if(s.att!=null)s.att=Math.round(n(s.att));(s.teachers||[]).forEach(t=>{if(t.att!=null)t.att=Math.round(n(t.att));if(t.attReal!=null)t.attReal=Math.round(n(t.attReal))});[s.slots,s.slotsReal].forEach(L=>(L||[]).forEach(x=>{if(x.att!=null)x.att=Math.round(n(x.att))}));const B=baseScen();Object.keys(B).forEach(k=>{if(s[k]==null)s[k]=clone(B[k])});if(s.payModel==="split")s.payModel="levels";
+function norm(s){if(!s)return s;(s.packages||[]).forEach(p=>{if(Array.isArray(p.terms)){delete p.terms;p.months=1;if(!n(p.price))p.price=1600}});if(s.att!=null)s.att=Math.round(n(s.att));(s.teachers||[]).forEach(t=>{if(t.att!=null)t.att=Math.round(n(t.att));if(t.attReal!=null)t.attReal=Math.round(n(t.attReal))});[s.slots,s.slotsReal].forEach(L=>(L||[]).forEach(x=>{if(x.att!=null)x.att=Math.round(n(x.att))}));const B=baseScen();Object.keys(B).forEach(k=>{if(s[k]==null)s[k]=clone(B[k])});if(s.payModel==="split")s.payModel="levels";
   if(!Array.isArray(s.slots))s.slots=slotsFrom(s);
   if(n(s.v)<4){OPTEXP().forEach(e=>{if(!s.expenses.some(x=>x.name===e.name))s.expenses.push(e)});s.v=4}
   if(n(s.v)<5){s.packages=PACKS();if(!s.slots.some(x=>x.k==="t"||x.k==="l"))addExtra(s.slots);s.v=5}
@@ -1056,7 +1060,7 @@ function slider(k,label,min,max,step,kind,hint){const v=getP(cur(),k);
   return`<div class="sl"><div class="slh"><span>${label}</span><b class="num" data-v="${k}" data-kind="${kind}">${F[kind](n(v))}</b></div>
   <input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${esc(v)}" aria-label="${esc(label)}">${hint?`<small class="slx">${hint}</small>`:""}</div>`}
 function stepBtns(k,min,max,step,sm){const v=getP(cur(),k);step=step||1;
-  return`<div class="stc${sm?" sm":""}"><button data-step="${k}" data-d="${-step}" data-min="${min}" data-max="${max}" aria-label="Menos">−</button><b class="num" data-v="${k}" data-kind="num">${fmt1(n(v))}</b><button data-step="${k}" data-d="${step}" data-min="${min}" data-max="${max}" aria-label="Más">+</button></div>`}
+  return`<div class="stc rg${sm?" sm":""}"><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${esc(v)}" aria-label="${esc(k)}"><b class="num" data-v="${k}" data-kind="num">${fmt1(n(v))}</b></div>`}
 const stepper=(k,label,min,max,step)=>`<div class="stp"><span>${label}</span>${stepBtns(k,min,max,step)}</div>`;
 function people(att,cap){let h="";const A=Math.round(att);for(let i=0;i<cap;i++)h+=`<i class="${i<A?"on":""}"></i>`;return`<div class="ppl" aria-hidden="true">${h}</div>`}
 const perDayLabel=w=>w%5===0?(w/5===1?"1 clase al día":w/5+" clases al día"):(w===1?"1 clase a la semana":w+" clases a la semana");
@@ -1159,9 +1163,9 @@ function renderTeachers(){const s=cur();if(!s)return;
     <p class="tc-rule" data-tcrule="${i}"></p>
     <div class="tc-w" data-tcw="${i}"></div>
     <div class="tc-att">
-      <div class="stp"><span>Alumnos por clase · <b>Meta</b></span><div class="stc sm"><button data-tatt="${i}" data-d="-1" aria-label="Menos">−</button><b class="num" data-tattv="${i}"></b><button data-tatt="${i}" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="stp"><span>Alumnos por clase · <b>Meta</b></span><div class="stc rg sm"><input type="range" data-rt="tatt" data-i="${i}" min="0" max="12" step="1" value="0" aria-label="Alumnos por clase, meta"><b class="num" data-tattv="${i}"></b></div></div>
       <small class="slx" data-tattn="${i}"></small>
-      <div class="stp"><span>Alumnos por clase · <b>Real</b></span><div class="stc sm"><button data-tattq="${i}" data-d="-1" aria-label="Menos">−</button><b class="num" data-tattqv="${i}"></b><button data-tattq="${i}" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="stp"><span>Alumnos por clase · <b>Real</b></span><div class="stc rg sm"><input type="range" data-rt="tattq" data-i="${i}" min="0" max="12" step="1" value="0" aria-label="Alumnos por clase, real"><b class="num" data-tattqv="${i}"></b></div></div>
       <small class="slx" data-tattqn="${i}"></small>
     </div>
     ${own?"":packsEditor(t,i)}
@@ -1299,8 +1303,13 @@ function renderMonth(s,r){const box=$("#dgMonth");const R=monthRows(s,r);
     const t=box.querySelector(".wf-r.tot");if(t)t.innerHTML=tot;return}
   box.innerHTML=R.map(x=>`<details class="wf-d${Math.abs(x.a)<0.5?" zero":""}" data-wf="${x.k}"${wfOpen.has(x.k)?" open":""}><summary class="wf-r${x.info?" info":""}"><span class="wf-s">${x.sg}</span><span class="wf-l">${x.l}<small>${x.sub}</small></span><b class="wf-a num">${fmt(x.a)}</b>${bar(x.a,col(x))}</summary><div class="wf-x">${x.b}</div></details>`).join("")+
     `<div class="wf-r tot">${tot}</div>`}
+let view="meta";
+function viewSel(s0){if(view!=="hoy")return s0;const re=(s0.slotsReal||[]);return Object.assign({},s0,{slots:re,att:s0.attHoy!=null?n(s0.attHoy):n(s0.att),teachers:(s0.teachers||[]).map(t=>t.attReal!=null?Object.assign({},t,{att:n(t.attReal)}):t)})}
+function renderView(s0){const el=$("#viewSw");if(!el)return;const has=(s0.slotsReal||[]).some(z=>z.k==="c");const a=s0.attHoy!=null?n(s0.attHoy):n(s0.att);
+  el.innerHTML=`<button data-view="meta" aria-pressed="${view==="meta"}"><b>Meta</b><small>lo que buscamos</small></button><button data-view="hoy" aria-pressed="${view==="hoy"}"><b>Hoy</b><small>lo que pasa ahora</small></button>`+(view==="hoy"?`<div class="vhoy">${has?"":`<span>Aún no capturas la agenda de hoy: solo se ven los gastos fijos. Captúrala en la agenda, pestaña Hoy.</span>`}<span class="stp"><span>Alumnos por clase hoy</span><span class="stc rg"><input type="range" data-rt="hv" min="0" max="${n(s0.cap)||12}" step="1" value="${a}" aria-label="Alumnos por clase hoy"><b class="num">${a}</b></span></span></div>`:"")}
 function renderOut(){
-  const s=cur();if(!s){renderCompare();return}
+  const s0=cur();if(!s0){renderCompare();return}
+  const s=viewSel(s0);renderView(s0);
   const r=compute(s);
   document.querySelectorAll("#m-escenarios [data-v]").forEach(el=>{const v=getP(s,el.dataset.v);el.textContent=F[el.dataset.kind||"num"](n(v))});
   const goal=n(s.goalTeacher);const be=breakevenAtt(s),mt=r.own?minTicket(s):null;
@@ -1357,9 +1366,9 @@ function renderOut(){
   const rq=hasReal||anyAR?compute(hasReal?Object.assign({},s,{slots:s.slotsReal}):s,1,{real:true}):null;if(rq)rq.onMeta=!hasReal;
   renderRule(s,r);renderMR(s,r,rq);
   (s.teachers||[]).forEach((t,i)=>{const x=r.tch[i];if(!x)return;const q=rq&&rq.tch[i];
-    const v=document.querySelector(`[data-tattv="${i}"]`);if(v)v.textContent=fmt1(t.att!=null?n(t.att):n(s.att));
+    const v=document.querySelector(`[data-tattv="${i}"]`);if(v)v.textContent=fmt1(t.att!=null?n(t.att):n(s.att));const rg1=document.querySelector(`[data-rt="tatt"][data-i="${i}"]`);if(rg1){rg1.max=n(s.cap)||12;rg1.value=t.att!=null?n(t.att):n(s.att)}
     const nn=document.querySelector(`[data-tattn="${i}"]`);if(nn)nn.innerHTML=t.att!=null?`Propio. <button class="lnk" data-tattr="${i}">Usar el general (${fmt1(n(s.att))})</button>`:"Igual que el general del escenario.";
-    const qv=document.querySelector(`[data-tattqv="${i}"]`);if(qv)qv.textContent=t.attReal!=null?fmt1(n(t.attReal)):"—";
+    const qv=document.querySelector(`[data-tattqv="${i}"]`);if(qv)qv.textContent=t.attReal!=null?fmt1(n(t.attReal)):"—";const rg2=document.querySelector(`[data-rt="tattq"][data-i="${i}"]`);if(rg2){rg2.max=n(s.cap)||12;rg2.value=t.attReal!=null?n(t.attReal):t.att!=null?n(t.att):n(s.att)}
     const qn=document.querySelector(`[data-tattqn="${i}"]`);if(qn)qn.innerHTML=t.attReal!=null?`${t.realSrc?esc(t.realSrc)+". ":"Capturado a mano. "}<button class="lnk" data-tattqr="${i}">Quitar</button>`:"Captúralo con − y +, o tráelo del CRM. Si no, se usa la meta.";
     const ru=document.querySelector(`[data-tcrule="${i}"]`);if(ru)ru.innerHTML=ruleText(s,x.pm,t);
     const w=document.querySelector(`[data-tcw="${i}"]`);if(w)w.innerHTML=x.w?`<span><b class="num">${x.w}</b> clases a la semana en la meta${q&&!rq.onMeta?` · <b class="num">${q.w}</b> en la agenda de hoy`:""}</span><div class="fi-sch">${schedTxt(x.hours)}</div>`:`<span class="slx">Aún no tiene clases. Elígelo en la agenda y toca las horas.</span>`;
@@ -1422,7 +1431,7 @@ function renderOpen(s,r){const el=$("#openBox");if(!el)return;
   const bv=r.tk.usesPerStudent?r.tk.bonusPerStudent/r.tk.usesPerStudent*n(s.bonusCost):0;
   const pcOf=a=>splitClass(s,a,rv,w0,false,{},s.payModel).pc,contrib=a=>a*rv*(1-fee)-a*bv-pcOf(a);
   const a=Math.max(1,n(s.openAtt)||Math.round(n(s.att))||5);let need=null;for(let x=1;x<=60;x++){if(contrib(x)>=0){need=x;break}}
-  const mNew=contrib(a)*W;let h=`<div class="stp"><span>Alumnos nuevos que traería una clase más</span><div class="stc sm"><button data-oa="-1" aria-label="Menos">−</button><b class="num">${a}</b><button data-oa="1" aria-label="Más">+</button></div></div>`;
+  const mNew=contrib(a)*W;let h=`<div class="stp"><span>Alumnos nuevos que traería una clase más</span><div class="stc rg sm"><input type="range" data-rt="oa" min="1" max="${n(s.cap)||12}" step="1" value="${a}" aria-label="Alumnos nuevos"><b class="num">${a}</b></div></div>`;
   h+=`<p>Una clase nueva con <b>${a}</b> ${a===1?"alumno nuevo":"alumnos nuevos"} deja <b class="${mNew<0?"neg":""}">${fmt(mNew)}</b> al mes, ya descontados el maestro, los bonos y la comisión.</p>`;
   h+=need==null?`<p class="chip warn">Con este pago y estos paquetes, una clase nueva no deja ganancia aunque se llene.</p>`:`<p class="chip good">Solo vale la pena abrirla si trae al menos ${need} ${need===1?"alumno nuevo":"alumnos nuevos"}.</p>`;
   const N=r.perWeek;if(N>0){const Vw=r.visits/W,cur=N*pcOf(Vw/N)*W;const ks=[];for(let k=Math.max(1,N-3);k<=N+3;k++)ks.push(k);
@@ -1503,7 +1512,12 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#ov").hidden=true
 const saveCur=d=>{const s=cur();if(s)put(COL,s,d)};
 let outT;const softOut=()=>{cancelAnimationFrame(outT);outT=requestAnimationFrame(renderOut)};
 const curRaw=()=>{const c=cur();return c?cache[COL].find(x=>x.id===c.id):null};
-$("#m-escenarios").addEventListener("input",e=>{
+function rtApply(e,commit){const rt=e.target.dataset.rt;if(!rt)return false;const v=Math.round(n(e.target.value));const lb=e.target.parentElement.querySelector("b");if(lb)lb.textContent=v;
+  const s=curRaw();if(!s||!canWrite)return true;
+  if(rt==="tatt"||rt==="tattq"){const tc=s.teachers[+e.target.dataset.i];if(!tc)return true;if(rt==="tatt")tc.att=v;else{tc.attReal=v;delete tc.realSrc}put(COL,s);renderOut();return true}
+  if(!commit)return true;
+  if(rt==="hv")s.attHoy=v;else if(rt==="oa")s.openAtt=v;put(COL,s);renderOut();return true}
+$("#m-escenarios").addEventListener("input",e=>{if(rtApply(e,false))return;
   const k=e.target.dataset.k;if(!k||!curRaw()||!canWrite)return;const s=curRaw();norm(s);
   const v=e.target.type==="checkbox"?e.target.checked:(e.target.type==="number"||e.target.type==="range")?n(e.target.value):e.target.value;
   setPath(s,k,v);put(COL,s);
@@ -1513,7 +1527,9 @@ $("#m-escenarios").addEventListener("input",e=>{
   if(k.endsWith(".name"))return;
   softOut();
 });
-$("#m-escenarios").addEventListener("change",e=>{if(e.target.id==="agHeat"){agHeat=e.target.checked;selCell=null;renderAgenda();return}
+$("#m-escenarios").addEventListener("change",e=>{if(rtApply(e,true))return;
+  {const k=e.target.dataset&&e.target.dataset.k,s0=curRaw();if(k&&s0&&canWrite&&["cap","hFrom","hTo","maxDay","classMin","gapMin"].includes(k)){if(["hFrom","hTo","classMin","gapMin"].includes(k)){if(s0.rows&&(k==="hFrom"||k==="hTo"))delete s0.rows;if(!s0.rows){snap(s0,s0.slots);snap(s0,s0.slotsReal)}}put(COL,s0,0);renderEditors();return}}
+if(e.target.id==="agHeat"){agHeat=e.target.checked;selCell=null;renderAgenda();return}
   if(agHeat&&e.target.dataset&&["att","eventPct","eventExt","therapyPct"].includes(e.target.dataset.k)){renderAgenda()}
   if(e.target.closest&&e.target.closest("#dgMonth"))softOut();
   const r=e.target.dataset.row;if(r==null||!canWrite)return;const s=curRaw();if(!s)return;norm(s);
@@ -1526,7 +1542,7 @@ $("#dgMonth").addEventListener("click",e=>{const sm=e.target.closest("summary");
 $("#dgMonth").addEventListener("focusout",()=>setTimeout(()=>{const a=document.activeElement;if(!a||!$("#dgMonth").contains(a))softOut()},0));
 $("#m-escenarios").addEventListener("click",e=>{
   if(e.target.closest("#agExport")){exportAgenda();return}
-  const t=e.target.closest("[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal");if(!t)return;
+  const t=e.target.closest("[data-view],[data-hv],[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal");if(!t)return;
   if(t.id==="ruleCopy"){try{navigator.clipboard.writeText(ruleTxt).then(()=>toast("Regla copiada para mandarla"),()=>toast("No se pudo copiar"))}catch(x){toast("No se pudo copiar")}return}
   if(t.id==="crmReal"){crmReal();return}
   if(t.dataset.hoy){agMode="hoy";selCell=null;renderAgenda();const d=$("#sec-ag");if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
@@ -1556,6 +1572,8 @@ $("#m-escenarios").addEventListener("click",e=>{
     put(COL,s,0);renderEditors();toast(c?`Aparté ${c} bloques de 12 a 5 para 1:1 o renta, como tentativos`:"De 12 a 5 ya no hay bloques libres");return}
   if(t.dataset.tpl){const k=t.dataset.tpl;const nw=k==="std"?snap(s,assign(s,STD())):k==="even"?assign(s,SL(s)):k==="copymeta"?clone(s.slots):[];if(agMode==="hoy")s.slotsReal=nw;else s.slots=nw;
     put(COL,s,0);renderEditors();toast(k==="clear"?"Agenda vacía. Elige qué poner y toca las horas.":k==="copymeta"?"Copié la meta: quita lo que todavía no pasa.":"Agenda lista");return}
+  if(t.dataset.view){view=t.dataset.view;renderOut();return}
+  if(t.dataset.hv){const v=Math.max(0,Math.min(n(s.cap)||40,(s.attHoy!=null?n(s.attHoy):n(s.att))+n(t.dataset.hv)));s.attHoy=Math.round(v);put(COL,s);renderOut();return}
   if(t.dataset.oa){const v=Math.max(1,Math.min(n(s.cap)||40,(n(s.openAtt)||Math.round(n(s.att))||5)+n(t.dataset.oa)));s.openAtt=v;put(COL,s);renderOut();return}
   if(t.dataset.att){s.att=n(t.dataset.att);put(COL,s,0);renderEditors();return}
   if(t.dataset.tatt!=null){const tc=s.teachers[+t.dataset.tatt];const base=tc.att!=null?n(tc.att):n(s.att);tc.att=Math.max(0,Math.min(n(s.cap)||40,base+n(t.dataset.d)));put(COL,s);renderOut();return}
