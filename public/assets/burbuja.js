@@ -1,6 +1,6 @@
 /* Burbuja flotante de Sadhana: sello + insignia de WhatsApp, abajo a la derecha.
    Al tocarla abre un mini menú (WhatsApp y Cómo llegar). Se incluye con
-   <script src="/assets/burbuja.js" defer></script> en cualquier página.
+   una etiqueta script con src="/assets/burbuja.js" (defer) en cualquier página.
    Reglas: aparece al bajar o a los pocos segundos, se coloca encima de cualquier barra fija
    inferior (.dock) y se esconde mientras hay un flujo o práctica abiertos. */
 (() => {
