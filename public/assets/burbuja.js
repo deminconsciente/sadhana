@@ -23,7 +23,7 @@
   display:grid;place-items:center;-webkit-tap-highlight-color:transparent;transition:transform .2s ease}
 .sb-fab:hover{transform:scale(1.05)}
 .sb-fab:focus-visible{outline:2px solid #fff;outline-offset:4px}
-.sb-fab img{width:50px;height:50px;object-fit:contain;transition:transform .4s ease}
+.sb-fab img{width:44px;height:44px;object-fit:contain;transition:transform .4s ease}
 .sb-fab::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(236,196,160,.55);animation:sb-resp 10s cubic-bezier(.45,0,.35,1) infinite}
 @keyframes sb-resp{0%,100%{transform:scale(1);opacity:.25}40%{transform:scale(1.14);opacity:.8}}
 .sb-wa{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:50%;background:#25d366;display:grid;place-items:center;
@@ -66,7 +66,7 @@ body.lock .sb,body.practicando .sb{opacity:0;pointer-events:none}
         <a href="${MAPA}" target="_blank" rel="noopener">${icoMapa}Cómo llegar</a>
       </div>
       <button class="sb-fab" type="button" aria-expanded="false" aria-controls="sbMenu" aria-label="Contacto Sadhana">
-        <img src="/assets/img/sello.png" alt="" width="50" height="50">
+        <img src="/assets/img/sello-ojo.png" alt="" width="44" height="44">
         <span class="sb-wa">${icoWA}</span>
         <span class="sb-x" aria-hidden="true">×</span>
       </button>`;
