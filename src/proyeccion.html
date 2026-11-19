@@ -758,6 +758,7 @@ input[type=range]{accent-color:var(--inc2)!important}
         <button class="btn ghost needw" id="reset">Volver a los escenarios iniciales</button>
       </div>
       <textarea id="code" aria-label="Código de escenarios" placeholder="Pega aquí un código de escenarios"></textarea>
+      <div id="bkList"></div>
     </div>
   </details>
   <p class="hint">Escenarios iniciales armados con la hoja «Numeros Yoga/Sadhana», la oferta de Sadhana y los precios de renta de Espacio Libre. La asistencia y el embudo son supuestos para validar.</p>
@@ -1002,7 +1003,7 @@ function norm(s){if(!s)return s;s.payModel="levels";(s.teachers||[]).forEach(t=>
   snap(s,s.slots);snap(s,s.slotsReal);
   (s.teachers||[]).forEach(t=>{if(!Array.isArray(t.packs))t.packs=TPACKS()});return s}
 let curId=null;try{curId=localStorage.getItem(CURKEY)}catch(e){}
-const list=()=>cache[COL].slice().sort((a,b)=>n(a.order)-n(b.order)).map(norm);
+const list=()=>cache[COL].filter(x=>!x.bk).sort((a,b)=>n(a.order)-n(b.order)).map(norm);
 const cur=()=>list().find(s=>s.id===curId)||list()[0];
 function ticket(s){let money=0,uses=0,mix=0;
   let bon=0;(s.packages||[]).forEach(p=>{const m=n(p.mix);const u=n(p.classes)||n(s.unlimitedUses);money+=m*pkMonth(p);uses+=m*u;mix+=m;bon+=m*n(p.bonus)});
@@ -1264,9 +1265,11 @@ function renderEditors(){
 }
 let bkDone=false;
 function autoBackup(){if(bkDone||!db||!canWrite||!loaded[COL])return;bkDone=true;
-  (cache[COL]||[]).filter(x=>/18\/11/.test(x.name||"")&&!x.bk&&((x.slots||[]).length||(x.slotsReal||[]).length)).forEach(x=>{const id="bk"+x.id;if(cache[COL].some(y=>y.id===id))return;
+  (cache[COL]||[]).filter(x=>!x.bk&&((x.slots||[]).length||(x.slotsReal||[]).length||(x.packages||[]).length)).forEach(x=>{const id="bk"+x.id;if(cache[COL].some(y=>y.id===id))return;
     const c=clone(x);c.id=id;c.bk=true;c.name="Respaldo · "+x.name;c.order=n(x.order)+100;put(COL,c,0)})}
-function renderTabs(){autoBackup();const L=list();
+function renderBk(){const el=$("#bkList");if(!el)return;const B=(cache[COL]||[]).filter(x=>x.bk);
+  el.innerHTML=B.length?`<h3 class="h3">Respaldos automáticos</h3><p class="hint">Copia de cada escenario tal como estaba antes de la actualización del 18 de noviembre. Restaurar crea un escenario nuevo con esa copia.</p>`+B.map(x=>`<div class="scen-tools"><span class="nm">${esc(x.name)}</span><button class="btn needw" data-bkr="${esc(x.id)}">Restaurar como escenario</button></div>`).join(""):""}
+function renderTabs(){autoBackup();renderBk();const L=list();
   $("#tabs").innerHTML=L.map((s,i)=>`<button class="tab" role="tab" aria-selected="${s.id===(cur()||{}).id}" data-tab="${s.id}"><span class="dot" style="background:${SC[i%SC.length]}"></span>${esc(s.name)}</button>`).join("");
   $("#dup").disabled=L.length>=MAX;$("#del").disabled=L.length<=1}
 
@@ -1578,7 +1581,7 @@ $("#dgMonth").addEventListener("click",e=>{const sm=e.target.closest("summary");
 $("#dgMonth").addEventListener("focusout",()=>setTimeout(()=>{const a=document.activeElement;if(!a||!$("#dgMonth").contains(a))softOut()},0));
 $("#m-escenarios").addEventListener("click",e=>{
   if(e.target.closest("#agExport")){exportAgenda();return}
-  const t=e.target.closest("[data-dur],[data-view],[data-hv],[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal");if(!t)return;
+  const t=e.target.closest("[data-bkr],[data-dur],[data-view],[data-hv],[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal");if(!t)return;
   if(t.id==="ruleCopy"){try{navigator.clipboard.writeText(ruleTxt).then(()=>toast("Regla copiada para mandarla"),()=>toast("No se pudo copiar"))}catch(x){toast("No se pudo copiar")}return}
   if(t.id==="crmReal"){crmReal();return}
   if(t.dataset.hoy){agMode="hoy";selCell=null;renderAgenda();const d=$("#sec-ag");if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
@@ -1600,6 +1603,8 @@ $("#m-escenarios").addEventListener("click",e=>{
           if(c>=md){toast(`${s.teachers[ti].name} ya tiene ${md} clases el ${DIASL[d].toLowerCase()}, que es el máximo por día.`);return}}
         put1({t:ti,k:"c",att:cu&&cu.k==="c"?cu.att:undefined});if(sl[sl.length-1].att===undefined)delete sl[sl.length-1].att}}
     put(COL,s);renderAgenda();renderTeachers();renderOut();return}
+  if(t.dataset.bkr){const src=cache[COL].find(x=>x.id===t.dataset.bkr);if(!src)return;if(list().length>=MAX){toast("Ya tienes "+MAX+" escenarios: borra uno primero");return}
+    const c=clone(src);delete c.bk;c.id="e"+uid();c.name=String(src.name||"").replace(/^Respaldo · /,"Restaurado · ");c.order=(list().length?Math.max(...list().map(x=>n(x.order))):0)+1;put(COL,c,0);curId=c.id;renderTabs();renderEditors();renderPlanSel();toast("Escenario restaurado");return}
   if(t.dataset.dur){const sl=SL(s);const x=selCell&&sl.find(z=>z.d===selCell[0]&&mOf(z)===selCell[1]&&(z.k==="c"||z.k==="e"));if(!x)return;const m=+t.dataset.dur;if(m===(x.k==="e"?120:n(s.classMin)||60))delete x.dur;else x.dur=m;put(COL,s);renderAgenda();renderOut();return}
   if(t.dataset.catt){if(t.dataset.catt==="close"){selCell=null;renderAgenda();return}const sl=SL(s);const x=selCell&&sl.find(z=>z.d===selCell[0]&&mOf(z)===selCell[1]&&(z.k==="c"||z.k==="e"));if(!x)return;
     if(t.dataset.catt==="reset")delete x.att;else{const ev=x.k==="e";const tch=(s.teachers||[])[x.t];const base=x.att!=null?n(x.att):ev?compute(s).perEventBase:(tch&&tch.att!=null?n(tch.att):n(s.att));x.att=Math.max(0,Math.min(ev?200:(n(s.cap)||40),Math.round(base)+n(t.dataset.catt)))}
