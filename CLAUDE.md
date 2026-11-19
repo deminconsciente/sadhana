@@ -54,7 +54,7 @@ Toda clase es presencial y tiene versión asíncrona. Por cada clase:
    con Posturalia, los maestros se certifiquen en **EC0217** (impartir cursos) y **EC0076** (evaluar con fines
    de certificación) y puedan dar formaciones. Según el taller aplica el EC correspondiente (p. ej. EC1375).
 
-Operación diaria: una sala de Zoom recurrente por clase; celular dedicado o DJI Osmo en tripode fijo y dos
+Operación diaria: una sala de Zoom recurrente por clase; celular dedicado o DJI Osmo en trípode fijo y dos
 micrófonos DJI que se alternan (uno en uso, otro cargando). El curso grabado es de Sadhana y el maestro cobra
 comisión permanente mientras se venda. Evento mensual fechado según quincenas y clase gratis semanal en
 Parque Río La Silla. Plan maestro: https://claude.ai/artifact/ATAC9m6veK9DMQU653VgX6
