@@ -51,7 +51,7 @@ label{display:grid;gap:4px;font-size:.9rem;color:var(--ink-2)}
 .num b{display:block;font-size:1.1rem}
 .empty{color:var(--ink-2);text-align:center;padding:40px 0}
 a{color:var(--acc-2)}
-nav.tab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));display:flex;gap:4px;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 6px 24px rgba(42,20,36,.14);z-index:5;max-width:calc(100% - 24px)}
+nav.tab{overflow-x:auto;scrollbar-width:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));display:flex;gap:4px;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 6px 24px rgba(42,20,36,.14);z-index:5;max-width:calc(100% - 24px)}
 nav.tab button{font:inherit;border:0;background:transparent;color:var(--ink-2);border-radius:999px;padding:9px 14px;cursor:pointer;min-height:42px;font-weight:700;white-space:nowrap}
 nav.tab button[aria-current=page]{background:var(--acc);color:#fff}
 dialog{border:0;padding:0;border-radius:20px;background:var(--bg);color:var(--ink);width:min(640px,calc(100% - 20px));max-height:calc(100% - 40px)}
@@ -70,6 +70,12 @@ h3{margin:4px 0 0;font-size:1rem}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;min-height:40px}
 .seg button[aria-pressed=true]{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--card));font-weight:700}
+.dir-c{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.dir-c .meta{grid-column:1/-1}
+.est-activa{color:var(--ok)}.est-pronto{color:var(--warn)}.est-oculta{color:var(--ink-2)}
+.hr{display:grid;grid-template-columns:1.3fr 1fr .8fr .8fr .9fr auto;gap:6px;align-items:end}
+.hr label{font-size:.78rem}
+@media (max-width:520px){.hr{grid-template-columns:1fr 1fr 1fr}.hr .x{grid-column:3}}
 @media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 11px}}
 </style>
 </head>
@@ -169,12 +175,30 @@ h3{margin:4px 0 0;font-size:1rem}
       <button class="btn p w" type="submit">Crear acceso</button>
     </form>
   </section>
+
+  <!-- DIRECTORIO (admin): lo que se ve en el directorio de clases de sadhanaholistics.com -->
+  <section id="v-dir" hidden>
+    <p class="hint" style="margin:8px 0 12px">Lo que cambies aquí se ve en la página en unos segundos. <b>Activa</b> sale con horario y botón de reservar; <b>Próximamente</b> junta interesados con «Avísame»; <b>Oculta</b> no se ve.</p>
+    <div id="dirVacio" class="r" hidden><p class="hint">El directorio todavía usa lo que viene escrito en la página. Cárgalo aquí una vez para poder editarlo.</p><button class="btn p" id="dirSeed">Cargar el directorio actual</button></div>
+    <div class="list" id="listaDir"></div>
+    <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
+    <form class="form" id="fFund" autocomplete="off" style="margin-top:16px">
+      <h2 style="margin:0;font-size:1.1rem">Precio fundador</h2>
+      <div class="grid2">
+        <label>Cupo de fundadores<input name="cupo" type="number" min="0" inputmode="numeric"></label>
+        <label>Descuento (%)<input name="descuento" type="number" min="0" max="90" inputmode="numeric"></label>
+      </div>
+      <label>Lugares ya tomados <small>(vacío = no se muestra el contador)</small><input name="tomados" type="number" min="0" inputmode="numeric"></label>
+      <button class="btn p w" type="submit">Guardar precio fundador</button>
+    </form>
+  </section>
 </main>
 
 <nav class="tab" aria-label="Secciones">
   <button data-v="agenda" aria-current="page">Agenda</button>
   <button data-v="alumnos">Alumnos</button>
   <button data-v="nueva">+ Registrar</button>
+  <button data-v="dir" hidden id="tabDir">Directorio</button>
   <button data-v="equipo" hidden id="tabEq">Equipo</button>
 </nav>
 
@@ -369,12 +393,104 @@ $("#fEq").onsubmit = async e => {
   try { await api("equipo", d); toast("Acceso creado para "+d.nombre); e.target.reset(); cargarE(); } catch(err){ toast(err.message); }
 };
 
+
+// ---------- Directorio de clases (admin) ----------
+const FAM = {yoga:"Yoga", mov:"Movimiento", resp:"Respiración", mente:"Mente", sonido:"Sonido"};
+const INTENS = ["Suave","Media","Intensa"];
+const EST = {activa:"Activa", pronto:"Próximamente", oculta:"Oculta"};
+const DIAS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const pad = n => String(n).padStart(2,"0");
+const hTxt = h => `${DIAS[h.dia]} ${pad(h.h)}:${pad(h.m||0)}`;
+let D = [], FUND = null;
+async function docs(path, body, metodo){
+  const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
+}
+async function cargarDir(){
+  let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
+  FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
+  D = l.filter(x=>x.id!=="_fundadores").map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
+  $("#dirVacio").hidden = D.length>0;
+  $("#listaDir").innerHTML = D.map(c=>`<div class="r dir-c" data-cid="${esc(c.id)}">
+      <div><h2>${esc(c.titulo)}</h2><span class="meta">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${FAM[c.fam]||""}${c.estado==="activa"&&(c.horarios||[]).length?" · "+c.horarios.map(hTxt).join(", "):""}</span></div>
+      <span class="chip est-${c.estado}">${EST[c.estado]||c.estado}</span>
+      <div class="row" style="grid-column:1/-1">
+        <div class="seg">${Object.entries(EST).map(([k,v])=>`<button type="button" data-est="${k}" aria-pressed="${c.estado===k}">${v}</button>`).join("")}</div>
+        <button class="btn s" data-edit>Editar</button>
+      </div></div>`).join("");
+  const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
+  f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
+}
+$("#dirSeed").onclick = async () => {
+  const b = $("#dirSeed"); b.disabled = true;
+  try {
+    const base = await (await fetch("/assets/catalogo-base.json",{cache:"no-store"})).json();
+    for (const c of base.clases){ const {id, ...d} = c; await docs(id, d); }
+    await docs("_fundadores", base.fundadores);
+    toast("Directorio cargado"); cargarDir();
+  } catch(e){ toast(e.message); } finally { b.disabled = false; }
+};
+async function guardarClase(c){ const {id, ...d} = c; await docs(id, d); }
+function editarClase(c){
+  const nueva = !c; c = c || {id:"", titulo:"", guia:"", fam:"yoga", estado:"pronto", intensidad:"Suave", regula:"", desc:"", orden:(D.length+1), horarios:[]};
+  let H = (c.horarios||[]).map(h=>({...h}));
+  $("#dT").textContent = nueva ? "Nueva clase" : c.titulo;
+  const pintarH = () => $("#hrs").innerHTML = H.map((h,i)=>`<div class="hr" data-h="${i}">
+      <label>Día<select data-k="dia">${DIAS.map((d,k)=>`<option value="${k}" ${+h.dia===k?"selected":""}>${d}</option>`).join("")}</select></label>
+      <label>Hora<input data-k="hora" type="time" step="900" value="${pad(h.h??19)}:${pad(h.m||0)}"></label>
+      <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${h.dur||60}"></label>
+      <label>Cupo<input data-k="cupo" type="number" min="1" value="${h.cupo||12}"></label>
+      <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${h.precio??300}"></label>
+      <button type="button" class="btn s x" data-quitar="${i}" aria-label="Quitar horario">✕</button></div>`).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
+  $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" style="border:0;padding:0;background:none">
+    <label>Nombre de la clase<input name="titulo" required value="${esc(c.titulo)}" placeholder="Yin yoga"></label>
+    <div class="grid2"><label>Maestro o maestra<input name="guia" value="${esc(c.guia)}" placeholder="Por anunciar"></label>
+      <label>Estado<select name="estado">${Object.entries(EST).map(([k,v])=>`<option value="${k}" ${c.estado===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
+    <div class="grid2"><label>Tipo<select name="fam">${Object.entries(FAM).map(([k,v])=>`<option value="${k}" ${c.fam===k?"selected":""}>${v}</option>`).join("")}</select></label>
+      <label>Intensidad<select name="intensidad">${INTENS.map(v=>`<option ${c.intensidad===v?"selected":""}>${v}</option>`).join("")}</select></label></div>
+    <label>Qué regula (una frase)<textarea name="regula" rows="2" maxlength="160">${esc(c.regula)}</textarea></label>
+    <label>Descripción<textarea name="desc" rows="2" maxlength="240">${esc(c.desc)}</textarea></label>
+    <label>Orden en el directorio<input name="orden" type="number" min="1" value="${esc(c.orden)}"></label>
+    <h3>Horarios semanales</h3><div id="hrs" style="display:grid;gap:8px"></div>
+    <button type="button" class="btn s" id="addH">+ Agregar horario</button>
+    <button class="btn p w" type="submit">Guardar</button>
+    ${nueva?"":`<button type="button" class="btn w" id="delCl" style="color:var(--bad)">Borrar esta clase</button>`}
+  </form>`;
+  pintarH();
+  const leerH = () => $$("#hrs [data-h]").forEach(row => { const h = H[+row.dataset.h], v = k => row.querySelector(`[data-k=${k}]`).value;
+    const [hh,mm] = (v("hora")||"19:00").split(":"); Object.assign(h,{dia:+v("dia"),h:+hh,m:+mm,dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
+  $("#hrs").onclick = e => { const q = e.target.closest("[data-quitar]"); if (!q) return; leerH(); H.splice(+q.dataset.quitar,1); pintarH(); };
+  $("#addH").onclick = () => { leerH(); const u = H[H.length-1]; H.push(u?{...u,id:undefined}:{dia:1,h:19,m:0,dur:60,cupo:12,precio:300}); pintarH(); };
+  $("#fCl").onsubmit = async e => {
+    e.preventDefault(); leerH(); const d = Object.fromEntries(new FormData(e.target));
+    let id = c.id || d.titulo.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
+    if (nueva && D.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-3);
+    if (d.estado==="activa" && !H.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
+    try { await guardarClase({...c, ...d, orden:+d.orden||99, id, horarios:H.map((h,i)=>({...h, id:h.id || `${id}-${i+1}`}))}); toast("Guardado. Ya se ve en la página."); $("#dlg").close(); cargarDir(); } catch(err){ toast(err.message); }
+  };
+  const del = $("#delCl"); if (del) del.onclick = async () => { if (!confirm(`¿Borrar ${c.titulo} del directorio? Si solo quieres esconderla, usa Oculta.`)) return;
+    try { await docs(c.id, undefined, "DELETE"); toast("Borrada"); $("#dlg").close(); cargarDir(); } catch(err){ toast(err.message); } };
+  $("#dlg").showModal();
+}
+$("#dirNueva").onclick = () => editarClase(null);
+$("#listaDir").addEventListener("click", async e => {
+  const card = e.target.closest("[data-cid]"); if (!card) return; const c = D.find(x=>x.id===card.dataset.cid);
+  if (e.target.closest("[data-edit]")) { editarClase(c); return; }
+  const es = e.target.closest("[data-est]"); if (!es || es.dataset.est===c.estado) return;
+  if (es.dataset.est==="activa" && !(c.horarios||[]).length) { toast("Primero ponle un horario (Editar)"); editarClase(c); return; }
+  try { await guardarClase({...c, estado:es.dataset.est}); toast(`${c.titulo}: ${EST[es.dataset.est]}`); cargarDir(); } catch(err){ toast(err.message); }
+});
+$("#fFund").onsubmit = async e => {
+  e.preventDefault(); const f = e.target; const t = f.tomados.value.trim();
+  try { await docs("_fundadores", {cupo:+f.cupo.value||0, descuento:+f.descuento.value||0, tomados:t===""?null:+t}); toast("Precio fundador guardado"); } catch(err){ toast(err.message); }
+};
+
 // ---------- Navegación ----------
 function vista(v){
   $$("nav.tab button").forEach(b=>b.toggleAttribute("aria-current", b.dataset.v===v) || b.removeAttribute("aria-current"));
   $$("nav.tab button").forEach(b=>{ if (b.dataset.v===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  ["agenda","alumnos","nueva","equipo"].forEach(x => $("#v-"+x).hidden = x!==v);
-  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE();
+  ["agenda","alumnos","nueva","dir","equipo"].forEach(x => $("#v-"+x).hidden = x!==v);
+  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE(); if (v==="dir") cargarDir();
   scrollTo(0,0);
 }
 document.addEventListener("click", async e => {
@@ -403,7 +519,7 @@ $("#nuevoAl").onclick = async () => {
 (async () => {
   try { YO = await api("yo"); } catch(e){}
   $("#who").textContent = YO.nombre ? `Hola, ${YO.nombre}` : "";
-  $("#tabEq").hidden = YO.rol !== "admin"; $("#lnkProy").hidden = YO.rol !== "admin";
+  $("#tabEq").hidden = YO.rol !== "admin"; $("#tabDir").hidden = YO.rol !== "admin"; $("#lnkProy").hidden = YO.rol !== "admin";
   prepararNueva(); cargarR(); cargarA();
 })();
 </script>

@@ -24,7 +24,7 @@
   --blob1:rgba(117,112,198,.26); --blob2:rgba(179,171,221,.45); --blob3:rgba(219,182,207,.32); --blob4:rgba(95,139,153,.12);
   --glass:rgba(253,252,255,.74);
   --shadow:0 22px 60px -28px rgba(36,29,58,.5);
-  --c-yoga:#7570c6; --c-resp:#5f8b99; --c-sonido:#8f3572; --c-evento:#3f3184;
+  --c-yoga:#7570c6; --c-resp:#5f8b99; --c-sonido:#8f3572; --c-evento:#3f3184; --c-mov:#a45a2a; --c-mente:#6b4f86;
   --f-display:"Catchy Mager","Cormorant Garamond",Georgia,serif;
   --f-trendy:"Sergio Trendy","Fraunces",Georgia,serif;
   --f-body:"Lora",Georgia,"Times New Roman",serif;
@@ -37,14 +37,14 @@
   --line:rgba(243,240,251,.14); --line-strong:rgba(243,240,251,.3); --ok:#a9cf98; --warn:#f0bf86;
   --blob1:rgba(117,93,246,.30); --blob2:rgba(179,171,221,.14); --blob3:rgba(191,108,248,.16); --blob4:rgba(43,55,42,.6);
   --glass:rgba(34,29,58,.74); --shadow:0 22px 60px -24px rgba(0,0,0,.75);
-  --c-yoga:#b3abdd; --c-resp:#9fc3cc; --c-sonido:#dbb6cf; --c-evento:#e2b8ff; color-scheme:dark}}
+  --c-yoga:#b3abdd; --c-resp:#9fc3cc; --c-sonido:#dbb6cf; --c-evento:#e2b8ff; --c-mov:#e0a074; --c-mente:#cbb4e6; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#17142a; --surface:#221d3a; --surface-2:#2d2650; --ink:#f3f0fb; --ink-2:#cfc8e6;
   --primary:#b3abdd; --on-primary:#1b1630; --accent:#d991ff; --mauve:#c692bb; --rose:#dbb6cf;
   --line:rgba(243,240,251,.14); --line-strong:rgba(243,240,251,.3); --ok:#a9cf98; --warn:#f0bf86;
   --blob1:rgba(117,93,246,.30); --blob2:rgba(179,171,221,.14); --blob3:rgba(191,108,248,.16); --blob4:rgba(43,55,42,.6);
   --glass:rgba(34,29,58,.74); --shadow:0 22px 60px -24px rgba(0,0,0,.75);
-  --c-yoga:#b3abdd; --c-resp:#9fc3cc; --c-sonido:#dbb6cf; --c-evento:#e2b8ff; color-scheme:dark}
+  --c-yoga:#b3abdd; --c-resp:#9fc3cc; --c-sonido:#dbb6cf; --c-evento:#e2b8ff; --c-mov:#e0a074; --c-mente:#cbb4e6; color-scheme:dark}
 
 *{box-sizing:border-box}
 .mk{display:inline-block;background:currentColor;-webkit-mask:var(--mk) center/contain no-repeat;mask:var(--mk) center/contain no-repeat;flex-shrink:0}
@@ -83,7 +83,7 @@ p{margin:0}
 .band.tight{padding-block:36px}
 .band.dark{--bg:#2c1f33;--surface:#3a2c4a;--surface-2:#45355c;--ink:#f4eef6;--ink-2:#dccfe2;--primary:#dbb6cf;--on-primary:#2c1f33;--accent:#dbb6cf;
   --mauve:#c692bb;--line:rgba(244,238,246,.14);--line-strong:rgba(244,238,246,.3);--ok:#b9d3a8;--glass:rgba(58,44,74,.7);
-  --c-yoga:#c692bb;--c-resp:#dbb6cf;--c-sonido:#dbb6cf;--c-evento:#ead8f2;
+  --c-yoga:#c692bb;--c-resp:#dbb6cf;--c-sonido:#dbb6cf;--c-evento:#ead8f2;--c-mov:#ead8f2;--c-mente:#ead8f2;
   color:var(--ink);color-scheme:dark;
   background:radial-gradient(50% 60% at 0% 0%,rgba(147,104,157,.55),transparent 70%),radial-gradient(45% 55% at 100% 100%,rgba(117,93,246,.28),transparent 70%),radial-gradient(40% 40% at 80% 10%,rgba(143,53,114,.35),transparent 70%),#2c1f33}
 .band.paper{background:color-mix(in srgb,var(--surface) 70%,transparent)}
@@ -1240,7 +1240,7 @@ const EVENTOS = [
    desc:"Meditación con soundbath y breathwork. Presencial; en línea, próximamente.", modos:["Presencial"], destacado:true, url:"https://sadhanaholistics.com/om/", aporte:{max:1000, paso:50, atajos:[100,200,300,500]}},
   {id:"circulo-2026-11-29", fecha:[2026,11,29], h:17, m:0, dur:120, titulo:"Círculo de mujeres", guia:"Isa", cat:"evento", cupo:16, precio:250},
 ];
-const CATS = {yoga:"Yoga", resp:"Respiración", sonido:"Sonido", evento:"Eventos"};
+const CATS = {yoga:"Yoga", mov:"Movimiento", resp:"Respiración", mente:"Mente", sonido:"Sonido", evento:"Eventos"};
 
 /* Directorio de clases. estado: "activa" (tiene horario en CLASES) | "pronto" (Próximamente: junta interesados).
    clases: ids de CLASES que dan sus horarios. regula: qué trabaja, en una frase. */
@@ -1584,7 +1584,7 @@ function ocupados(x){
 }
 const lunes = d => { const s = startOfDay(d); return addDays(s, -((s.getDay()+6)%7)); };
 let fCat = "todas";
-const CAT_G = {yoga:"lotus", resp:"wave", sonido:"sound", evento:"star"};
+const CAT_G = {yoga:"lotus", mov:"spine", resp:"wave", mente:"eye", sonido:"sound", evento:"star"};
 function relDia(d){
   const k = Math.round((startOfDay(d)-startOfDay(NOW))/864e5);
   return k===0?"Hoy":k===1?"Mañana":k<7?`En ${k} días`:"";
@@ -1630,9 +1630,9 @@ function paintDir(){
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
   el.innerHTML = orden.map(c => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
     const hs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean).map(z => `${DIAS_L[z.dia]} ${fHora(new Date(2000,0,1,z.h,z.m))}`).join(" · ");
-    return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam==="mov"||c.fam==="mente"?"evento":c.fam})" aria-label="${esc(c.titulo)}">
+    return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam})" aria-label="${esc(c.titulo)}">
       <div class="dc-art" style="${aura(c.id)}">${glyph(FAM_G[c.fam])}<span class="ev-cat">${FAMILIAS[c.fam]}</span><span class="dc-tag">${pronto?"Próximamente":esc(hs||"Horario por anunciar")}</span></div>
-      <div class="dc-bd"><div class="dc-ti">${esc(c.titulo)}</div><div class="dc-g">Con ${esc(c.guia)} · ${c.intensidad}</div>
+      <div class="dc-bd"><div class="dc-ti">${esc(c.titulo)}</div><div class="dc-g">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${esc(c.intensidad)}</div>
         <p class="dc-r">${esc(c.regula)}</p>
         <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
           : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">Reservar</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
@@ -2425,6 +2425,26 @@ document.addEventListener("click", e => {
 })();
 function paintAll(){ paintAgenda(); paintDir(); paintNeeds(); paintTer(); paintPacks(); paintTalleres(); paintRutas(); paintTL(); paintRoom(); paintRentas(); paintMine(); }
 paintAll();
+
+/* Directorio editable: lo que el equipo guarda en /equipo → Directorio reemplaza CATALOGO y los horarios
+   semanales (CLASES). Si la API no responde o viene vacía, se queda lo escrito arriba. */
+(async () => {
+  try {
+    const r = await fetch("/api/catalogo"); if (!r.ok) return;
+    const j = await r.json(); if (!j || !Array.isArray(j.clases) || !j.clases.length) return;
+    const famCat = f => CATS[f] ? f : "yoga";
+    const cat = j.clases.map(c => ({...c, clases:(c.estado==="activa" ? (c.horarios||[]) : []).map((h,i) => h.id || `${c.id}-${i+1}`)}));
+    const cls = [];
+    for (const c of j.clases) if (c.estado==="activa") (c.horarios||[]).forEach((h,i) => {
+      if (h.dia==null || h.h==null) return;
+      cls.push({id:h.id || `${c.id}-${i+1}`, dia:+h.dia, h:+h.h, m:+h.m||0, dur:+h.dur||60, titulo:c.titulo, guia:c.guia, cat:famCat(c.fam), cupo:+h.cupo||12, precio:+h.precio||300});
+    });
+    CATALOGO.splice(0, CATALOGO.length, ...cat);
+    CLASES.splice(0, CLASES.length, ...cls);
+    if (j.fundadores) Object.assign(FUNDADORES, Object.fromEntries(Object.entries(j.fundadores).filter(([,v]) => v!==undefined)));
+    paintAll();
+  } catch(e){}
+})();
 
 /* En el sitio público el panel de Opciones se oculta (se abre con ?opciones) */
 (function(){ try { if (!/[?&]opciones/.test(location.search)) { const f = document.getElementById("optFab"), p = document.getElementById("optPanel"); if (f) f.style.display = "none"; if (p) p.hidden = true; } } catch(e){} })();
