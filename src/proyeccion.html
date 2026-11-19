@@ -608,6 +608,35 @@ input[type=range]{accent-color:var(--inc2)!important}
 .capmsg{display:flex;flex-direction:column;gap:6px;margin-top:8px}.capmsg .slx{color:rgba(255,247,239,.92)}
 h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}h3.more small{text-transform:none;letter-spacing:0}
 .guide h3{margin:14px 0 4px}.guide p,.guide li{font-size:.92rem;color:var(--ink-2);line-height:1.5}.guide code{background:rgba(164,90,42,.12);padding:1px 6px;border-radius:8px}
+
+/* Propuesta para maestros (visual) */
+.rc-in{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0 4px}
+.rc-sl{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 8px;font-size:.92rem;color:var(--ink-2)}
+.rc-sl b{font-size:1.6rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.rc-sl input{grid-column:1/-1}
+.rc-hero{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:12px 0 6px;padding:16px;border-radius:18px;background:linear-gradient(135deg,var(--inc1),var(--inc2) 60%,var(--inc3));color:#fff}
+.rc-k{display:grid;gap:2px}.rc-k small{opacity:.85;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.rc-k b{font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.rc-k.big{margin-left:auto;text-align:right}.rc-k.big b{font-size:2.4rem}
+.rc-k em{font-style:normal;font-size:.8rem;opacity:.9}
+.rc-op{font-size:1.05rem;opacity:.9}
+.rc-rule{margin:4px 2px 12px;color:var(--ink-2);font-size:.92rem}
+.rc-h{margin:14px 0 8px;font-size:.95rem}
+.rc-chart{position:relative;display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;align-items:end;height:190px;padding:0 0 0}
+.rc-bar{all:unset;cursor:pointer;display:grid;grid-template-rows:18px 1fr 22px;align-items:end;justify-items:center;height:100%;min-width:0}
+.rc-bar i{display:block;width:100%;max-width:34px;border-radius:8px 8px 3px 3px;background:color-mix(in srgb,var(--inc2) 35%,var(--surface-2));align-self:end}
+.rc-bar.on i{background:linear-gradient(180deg,var(--inc1),var(--inc3))}
+.rc-v{font-size:.68rem;color:var(--ink-3);white-space:nowrap;align-self:end}
+.rc-bar.on .rc-v{color:var(--ink);font-weight:700}
+.rc-x{font-size:.8rem;color:var(--ink-2);align-self:center}.rc-bar.on .rc-x{color:var(--ink);font-weight:700}
+.rc-bar:focus-visible i{outline:2px solid var(--wine);outline-offset:2px}
+.rc-cap{position:absolute;left:0;right:0;border-top:2px dashed var(--wine);pointer-events:none}
+.rc-cap span{position:absolute;left:0;top:3px;font-size:.7rem;color:var(--wine);font-weight:700;background:var(--surface);padding:0 4px;border-radius:6px}
+.rc-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rc-card{all:unset;cursor:pointer;display:grid;gap:2px;padding:12px;border-radius:14px;border:1px solid var(--line,#e6d9cc);background:var(--surface);min-width:0}
+.rc-card b{font-size:1.15rem;font-variant-numeric:tabular-nums}.rc-card span{font-size:.82rem;color:var(--ink-2)}.rc-card small{font-size:.75rem;color:var(--ink-3)}
+.rc-card.on{border-color:var(--inc2);box-shadow:0 0 0 2px color-mix(in srgb,var(--inc2) 30%,transparent)}
+@media (max-width:560px){.rc-in{grid-template-columns:1fr}.rc-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.rc-k.big{margin-left:0;text-align:left;flex-basis:100%}.rc-k b{font-size:1.5rem}.rc-k.big b{font-size:2.1rem}.rc-v{font-size:.58rem}}
 </style>
 
 <div class="wrap">
@@ -1451,12 +1480,42 @@ function renderProps(s0){const el=$("#propBox");if(!el)return;const P=s0.proposa
   el.innerHTML=`<div class="lbl2">Propuestas de agenda</div><p class="hint">Guarda esta agenda junto con su promedio de alumnos y compárala con otras, sin duplicar el escenario.</p><button class="btn needw" data-prop-save="1"${P.length>=6?" disabled":""}>Guardar esta agenda como propuesta</button>`+
     (P.length?`<div class="tbl-wrap"><table class="cmp"><thead><tr><th>Propuesta</th><th>Clases/sem</th><th>Alumnos/clase</th><th>Inscritos</th><th>Utilidad</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:"")}
 let recTxt="";
-function renderRecruit(s,r){const el=$("#recruit");if(!el)return;const T=tiersOf(s),W=n(s.weeks),pr=r.price;
-  const pay=(w,a)=>{const x=splitClass(s,a,pr,w,false,{},"levels",null);const m=x.pc*w*W;return s.capOn?Math.min(m,n(s.capAmt)):m};
-  const A=[4,6,8,10],Wk=[5,10,15];
-  const tr=Wk.map(w=>`<tr><td>${w} clases a la semana</td>${A.map(a=>`<td class="num">${fmt(pay(w,a))}</td>`).join("")}</tr>`).join("");
-  recTxt=`Propuesta para maestros de Sadhana\nSadhana pone el espacio, la agenda, el cobro de los paquetes y la difusión.\nPor cada clase que das: ${fmt(n(T.flat))} fijos si tiene menos de ${n(T.t2)} alumnos; el ${n(T.p2)}% de lo que paga el grupo de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el ${n(T.p3)}% desde ${n(T.t3)} alumnos. Nunca menos de ${fmt(n(T.flat))} por clase.\nCada alumno aporta en promedio ${fmt(pr)} por clase.\nEjemplo de lo que ganas al mes (${fmt1(W)} semanas):\n`+Wk.map(w=>`${w} clases a la semana: `+A.map(a=>`${a} alumnos ${fmt(pay(w,a))}`).join(", ")).join("\n");
-  el.innerHTML=`<details class="why" open><summary>Propuesta para maestros (para reclutar)</summary><p class="hint">Lo que ganaría un maestro al mes según sus clases a la semana y los alumnos por clase. Sale de la tabla de pago de arriba y del precio promedio por asistencia de tus paquetes.</p><div class="tbl-wrap"><table class="cmp"><thead><tr><th>Clases</th>${A.map(a=>`<th>${a} alumnos</th>`).join("")}</tr></thead><tbody>${tr}</tbody></table></div><button class="btn sm ghost" data-copyrec="1" type="button">Copiar propuesta</button></details>`}
+let recA=6,recW=5,recS=null,recR=null;
+function renderRecruit(s,r){const el=$("#recruit");if(!el)return;recS=s;recR=r;const T=tiersOf(s),W=n(s.weeks),pr=r.price,cap=s.capOn?n(s.capAmt):0;
+  const per=a=>splitClass(s,a,pr,recW,false,{},"levels",null).pc;
+  const mes=(w,a)=>{const m=splitClass(s,a,pr,w,false,{},"levels",null).pc*w*W;return cap?Math.min(m,cap):m};
+  const a=recA,w=recW,pc=per(a),cls=Math.round(w*W),m=mes(w,a),topado=cap&&pc*w*W>cap,grupo=a*pr;
+  const regla=a<n(T.t2)?`Con menos de ${n(T.t2)} alumnos se paga el piso fijo de ${fmt(n(T.flat))}.`:`${a<n(T.t3)?n(T.p2):n(T.p3)}% de ${fmt(grupo)} que paga el grupo (${a} × ${fmt(pr)})${pc>(a<n(T.t3)?n(T.p2):n(T.p3))/100*grupo+.5?`; como da menos de ${fmt(n(T.flat))}, se paga el piso`:""}.`;
+  const AL=[];for(let x=2;x<=12;x++)AL.push(x);
+  const mx=(Math.max(cap||0,...AL.map(x=>mes(w,x)))||1)*1.15;
+  const bars=AL.map(x=>{const v=mes(w,x);return `<button type="button" class="rc-bar${x===a?" on":""}" data-reca="${x}" aria-label="${x} alumnos: ${fmt(v)} al mes"><span class="rc-v">${v>=1000?"$"+(Math.round(v/100)/10)+"k":fmt(v)}</span><i style="height:${Math.max(4,v/mx*100)}%"></i><span class="rc-x">${x}</span></button>`}).join("");
+  const capLine=cap?`<div class="rc-cap" style="bottom:calc(22px + ${cap/mx} * (100% - 40px))"><span>Tope ${fmt(cap)}</span></div>`:"";
+  const WK=[3,5,10,15];
+  const cards=WK.map(x=>`<button type="button" class="rc-card${x===w?" on":""}" data-recw="${x}"><b>${fmt(mes(x,a))}</b><span>${x} clases a la semana</span><small>${Math.round(x*W)} al mes</small></button>`).join("");
+  recTxt=`Propuesta para maestros de Sadhana\nSadhana pone el espacio, la agenda, el cobro de los paquetes y la difusión.\nPor cada clase que das: ${fmt(n(T.flat))} fijos si tiene menos de ${n(T.t2)} alumnos; el ${n(T.p2)}% de lo que paga el grupo de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el ${n(T.p3)}% desde ${n(T.t3)} alumnos. Nunca menos de ${fmt(n(T.flat))} por clase.\nCada alumno aporta en promedio ${fmt(pr)} por clase.\nEjemplo: con ${a} alumnos por clase ganas ${fmt(pc)} por clase. Con ${w} clases a la semana (${cls} al mes) son ${fmt(m)} al mes${topado?` (tope ${fmt(cap)})`:""}.\n`+WK.map(x=>`${x} clases a la semana: ${fmt(mes(x,a))} al mes`).join("\n");
+  el.innerHTML=`<details class="why rc" open><summary>Propuesta para maestros (para reclutar)</summary>
+  <div class="rc-in">
+    <label class="rc-sl"><span>Alumnos por clase</span><b>${a}</b><input type="range" min="1" max="15" step="1" value="${a}" id="recA" aria-label="Alumnos por clase"></label>
+    <label class="rc-sl"><span>Clases a la semana</span><b>${w}</b><input type="range" min="1" max="20" step="1" value="${w}" id="recW" aria-label="Clases a la semana"></label>
+  </div>
+  <div class="rc-hero">
+    <div class="rc-k"><small>Ganas por clase</small><b>${fmt(pc)}</b></div>
+    <div class="rc-op">× ${w} ${w===1?"clase":"clases"} × ${fmt1(W)} semanas</div>
+    <div class="rc-k big"><small>Ganas al mes</small><b>${fmt(m)}</b>${topado?`<em>con el tope de ${fmt(cap)}</em>`:""}</div>
+  </div>
+  <p class="rc-rule">${regla}</p>
+  <h4 class="rc-h">Al mes, con ${w} ${w===1?"clase":"clases"} a la semana, según los alumnos por clase</h4>
+  <div class="rc-chart">${capLine}${bars}</div>
+  <h4 class="rc-h">Con ${a} alumnos por clase, según cuántas clases das</h4>
+  <div class="rc-cards">${cards}</div>
+  <p class="hint">Sale de la tabla de pago de arriba y del precio promedio por asistencia de tus paquetes (${fmt(pr)}). Toca una barra o una tarjeta para elegir.</p>
+  <button class="btn sm ghost" data-copyrec="1" type="button">Copiar propuesta</button></details>`;
+  const ra=$("#recA"),rw=$("#recW");
+  ra.oninput=e=>{e.stopPropagation();recA=+ra.value;renderRecruit(recS,recR);const x=$("#recA");x.focus()};
+  rw.oninput=e=>{e.stopPropagation();recW=+rw.value;renderRecruit(recS,recR);const x=$("#recW");x.focus()};
+  el.querySelectorAll("[data-reca]").forEach(b=>b.onclick=e=>{e.stopPropagation();recA=+b.dataset.reca;renderRecruit(recS,recR)});
+  el.querySelectorAll("[data-recw]").forEach(b=>b.onclick=e=>{e.stopPropagation();recW=+b.dataset.recw;renderRecruit(recS,recR)});
+}
 function renderOut(){
   const s0=cur();if(!s0){renderCompare();return}
   const s=viewSel(s0);renderView(s0);
