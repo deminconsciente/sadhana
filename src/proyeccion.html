@@ -1086,7 +1086,7 @@ function splitClass(s,att,price,w,un,o,pm,t){o=o||{};pm=pm||s.payModel;const rc=
   if(pm==="fixed"){pc=fixOf(s,t);sad=rc-pc}
   else if(pm==="rent"){sad=o.rent!=null?o.rent:n(s.rentClass);pc=rc-sad}
   else if(pm==="comm"){sad=Math.max(n(s.commMin),rc*n(s.commPct)/100);pc=rc-sad}
-  else{const T=tiersOf(s),A=Math.round(att);pc=A<=0?0:A<n(T.t2)?n(T.flat):rc*(A<n(T.t3)?n(T.p2):n(T.p3))/100;sad=rc-pc}
+  else{const T=tiersOf(s),A=Math.round(att);pc=A<=0?0:A<n(T.t2)?n(T.flat):Math.max(n(T.flat),rc*(A<n(T.t3)?n(T.p2):n(T.p3))/100);sad=rc-pc}
   return{rc,pc,sad,pct:rc?pc/rc*100:0}}
 function compute(s,f,o){
   f=f==null?1:f;o=o||{};
@@ -1096,7 +1096,7 @@ function compute(s,f,o){
   const perWeek=cls.length,classes=perWeek*W;
   const attOf=t=>o.att!=null?o.att:Math.min(n(t&&o.real&&t.attReal!=null?t.attReal:t&&t.att!=null?t.att:s.att)*f,cap);
   const attAvg=(t,L)=>{if(o.att!=null||!L.length||(o.real&&t&&t.attReal!=null))return attOf(t);return sum(L.map(z=>z.att!=null?Math.min(n(z.att)*f,cap):attOf(t)))/L.length};
-  const row=(t,i,w)=>{const a=attAvg(t,cls.filter(z=>t?z.t===i:!(z.t>=0&&z.t<T.length)));const pmi=pmOf(s,t),ow=isOwn(pmi);const pr=ow||!t?price:(tPrice(s,t)||price);const x=splitClass(s,a,pr,w,!t,o,pmi,t);
+  const row=(t,i,w)=>{const a=attAvg(t,cls.filter(z=>t?z.t===i:!(z.t>=0&&z.t<T.length)));const pmi=pmOf(s,t),ow=isOwn(pmi);const pr=ow||!t?price:(tPrice(s,t)||price);const x=splitClass(s,a,pr,w,!t,o,pmi,t);if(t&&t.ownerClass){x.pc=0;x.sad=x.rc;x.pct=0}
     const rw=x.pc*w*W,mo=ow&&s.capOn?Math.min(rw,n(s.capAmt)):rw,sm=ow?x.rc*w*W-mo:x.sad*w*W;
     return Object.assign(x,{pm:pmi,own:ow,name:t?t.name:"Sin maestro",i,w,att:a,price:pr,month:mo,sadMonth:sm,raw:rw,capped:ow&&!!s.capOn&&rw>n(s.capAmt)+0.5,revMonth:x.rc*w*W,level:{name:"",pct:Math.round(x.pct*10)/10},un:!t,
       hours:cls.filter(z=>t?z.t===i:!(z.t>=0&&z.t<T.length)).sort((p,q)=>p.d-q.d||mOf(p)-mOf(q))})};
@@ -1249,6 +1249,7 @@ function renderTeachers(){const s=cur();if(!s)return;
   $("#tchCards").innerHTML=(s.teachers||[]).map((t,i)=>{const pm=pmOf(s,t),own=isOwn(pm);return`<div class="tc" style="--tc:${TC(i)}">
     <div class="tc-h"><i class="dotc" aria-hidden="true"></i><input type="text" data-k="teachers.${i}.name" value="${esc(t.name)}" aria-label="Nombre del maestro"><button class="btn sm" data-ficha="${i}">Ver ficha</button><button class="x needw" data-del="teachers.${i}" aria-label="Quitar maestro">×</button></div>
     ${pm==="fixed"?`<label class="wf-in tc-fix"><span>Pago por clase</span><span class="wf-iv"><input type="number" inputmode="decimal" step="10" min="0" data-k="teachers.${i}.fixed" value="${esc(fixOf(s,t))}"><i>$</i></span></label>`:""}
+    <label class="tog"><input type="checkbox" data-k="teachers.${i}.ownerClass" ${t.ownerClass?"checked":""}> Clases propias (de Isa o Diego): Sadhana no paga al maestro</label>
     <p class="tc-rule" data-tcrule="${i}"></p>
     <div class="tc-w" data-tcw="${i}"></div>
     <div class="tc-att">
@@ -1425,7 +1426,7 @@ function renderRecruit(s,r){const el=$("#recruit");if(!el)return;const T=tiersOf
   const pay=(w,a)=>{const x=splitClass(s,a,pr,w,false,{},"levels",null);const m=x.pc*w*W;return s.capOn?Math.min(m,n(s.capAmt)):m};
   const A=[4,6,8,10],Wk=[5,10,15];
   const tr=Wk.map(w=>`<tr><td>${w} clases a la semana</td>${A.map(a=>`<td class="num">${fmt(pay(w,a))}</td>`).join("")}</tr>`).join("");
-  recTxt=`Propuesta para maestros de Sadhana\nSadhana pone el espacio, la agenda, el cobro de los paquetes y la difusión.\nPor cada clase que das: ${fmt(n(T.flat))} fijos si tiene menos de ${n(T.t2)} alumnos; el ${n(T.p2)}% de lo que paga el grupo de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el ${n(T.p3)}% desde ${n(T.t3)} alumnos.\nCada alumno aporta en promedio ${fmt(pr)} por clase.\nEjemplo de lo que ganas al mes (${fmt1(W)} semanas):\n`+Wk.map(w=>`${w} clases a la semana: `+A.map(a=>`${a} alumnos ${fmt(pay(w,a))}`).join(", ")).join("\n");
+  recTxt=`Propuesta para maestros de Sadhana\nSadhana pone el espacio, la agenda, el cobro de los paquetes y la difusión.\nPor cada clase que das: ${fmt(n(T.flat))} fijos si tiene menos de ${n(T.t2)} alumnos; el ${n(T.p2)}% de lo que paga el grupo de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el ${n(T.p3)}% desde ${n(T.t3)} alumnos. Nunca menos de ${fmt(n(T.flat))} por clase.\nCada alumno aporta en promedio ${fmt(pr)} por clase.\nEjemplo de lo que ganas al mes (${fmt1(W)} semanas):\n`+Wk.map(w=>`${w} clases a la semana: `+A.map(a=>`${a} alumnos ${fmt(pay(w,a))}`).join(", ")).join("\n");
   el.innerHTML=`<details class="why" open><summary>Propuesta para maestros (para reclutar)</summary><p class="hint">Lo que ganaría un maestro al mes según sus clases a la semana y los alumnos por clase. Sale de la tabla de pago de arriba y del precio promedio por asistencia de tus paquetes.</p><div class="tbl-wrap"><table class="cmp"><thead><tr><th>Clases</th>${A.map(a=>`<th>${a} alumnos</th>`).join("")}</tr></thead><tbody>${tr}</tbody></table></div><button class="btn sm ghost" data-copyrec="1" type="button">Copiar propuesta</button></details>`}
 function renderOut(){
   const s0=cur();if(!s0){renderCompare();return}
@@ -1526,7 +1527,7 @@ function renderOut(){
 }
 // la regla en una frase, para explicarla igual a todos
 function ruleText(s,pm,t,yo){const L=s.ladder||{};const tu=!!yo;
-  if(pm==="levels"){const T=tiersOf(s);return`${tu?"Te toca":"El maestro recibe"}: <b>${fmt(n(T.flat))}</b> fijos por clase si tiene menos de ${n(T.t2)} alumnos; el <b>${n(T.p2)}%</b> del total de la clase de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el <b>${n(T.p3)}%</b> desde ${n(T.t3)} alumnos.`}
+  if(pm==="levels"){const T=tiersOf(s);return`${tu?"Te toca":"El maestro recibe"}: <b>${fmt(n(T.flat))}</b> fijos por clase si tiene menos de ${n(T.t2)} alumnos; el <b>${n(T.p2)}%</b> del total de la clase de ${n(T.t2)} a ${n(T.t3)-1} alumnos; y el <b>${n(T.p3)}%</b> desde ${n(T.t3)} alumnos. Nunca menos de <b>${fmt(n(T.flat))}</b> por clase.`}
   if(pm==="fixed")return`${tu?"Ganas":"El maestro gana"} <b>${fmt(fixOf(s,t))}</b> por clase, lleguen los alumnos que lleguen. Sadhana cobra los paquetes y se queda con el resto.`;
   if(pm==="comm")return`${tu?"Pones tu precio y cobras tú. Le das":"El maestro pone su precio y cobra. Le da"} a Sadhana el <b>${Math.round(n(s.commPct))}%</b> de lo que entra en cada clase, con un mínimo de <b>${fmt(n(s.commMin))}</b>.`;
   return`${tu?"Pones tu precio y cobras tú. Le pagas":"El maestro pone su precio y cobra. Le paga"} a Sadhana <b>${fmt(n(s.rentClass))}</b> por clase, lleguen los alumnos que lleguen.`}
