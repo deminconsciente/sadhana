@@ -296,6 +296,28 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev.star .ev-ti{font-size:1.9rem}
 @media (min-width:760px){.ev.star{grid-column:span 2;grid-template-columns:1.1fr 1fr;grid-template-rows:auto}.ev.star .ev-art{height:auto;min-height:240px}}
 .empty{padding:28px;border:1px dashed var(--line-strong);border-radius:16px;text-align:center;color:var(--ink-2)}
+/* Directorio de clases: carrusel horizontal dentro de la agenda */
+.dir-head{display:grid;gap:4px;margin:4px 0 10px}
+.dir-head h3{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
+.dir-head p{margin:0;color:var(--ink-2);font-size:.92rem;max-width:60ch}
+.dir{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px 2px 12px}
+.dir::-webkit-scrollbar{display:none}
+.dc{flex:0 0 min(78%,250px);scroll-snap-align:start;display:grid;grid-template-rows:auto 1fr;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
+.dc-art{position:relative;height:96px;color:#fff;overflow:hidden}
+.dc-art svg{position:absolute;right:-8px;top:-8px;width:96px;height:96px;opacity:.55}
+.dc-art .ev-cat{left:12px;top:12px}
+.dc.pronto .dc-art{filter:grayscale(.55) brightness(.95)}
+.dc-tag{position:absolute;left:12px;bottom:10px;z-index:1;font-family:var(--f-ui);font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.92);color:#2c1f33}
+.dc-bd{display:grid;gap:8px;align-content:start;padding:12px 14px 14px}
+.dc-ti{font-family:var(--f-display);font-size:1.2rem;line-height:1.15}
+.dc-g{font-family:var(--f-ui);font-size:.8rem;color:var(--ink-2)}
+.dc-r{font-size:.88rem;line-height:1.4;margin:0}
+.dc-ft{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:4px}
+.dc-ft small{font-family:var(--f-ui);font-size:.74rem;color:var(--ink-2)}
+.fund{margin:0 0 14px;padding:10px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-family:var(--f-ui);font-size:.82rem;color:var(--ink-2);width:fit-content;max-width:100%}
+.fund b{color:var(--ink)}
+.orig{display:block;font-size:.5em;font-family:var(--f-ui);opacity:.8;text-decoration:line-through;line-height:1.2}
+.amt .orig{display:inline;font-size:.6em}
 
 /* Terapias */
 .tabs{display:flex;gap:12px;flex-wrap:wrap}
@@ -1022,6 +1044,9 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
   <div data-v="c" class="band">
     <section class="wrap sec" id="agenda" aria-labelledby="h-ag">
       <div class="s-head"><p class="eyebrow">Agenda</p><h2 id="h-ag">Clases y eventos</h2></div>
+      <div class="dir-head"><h3>Directorio de clases</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto.</p></div>
+      <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
+      <p class="fund" id="dirFund"></p>
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
       <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
       <div id="agView"></div>
@@ -1216,6 +1241,38 @@ const EVENTOS = [
   {id:"circulo-2026-11-29", fecha:[2026,11,29], h:17, m:0, dur:120, titulo:"Círculo de mujeres", guia:"Isa", cat:"evento", cupo:16, precio:250},
 ];
 const CATS = {yoga:"Yoga", resp:"Respiración", sonido:"Sonido", evento:"Eventos"};
+
+/* Directorio de clases. estado: "activa" (tiene horario en CLASES) | "pronto" (Próximamente: junta interesados).
+   clases: ids de CLASES que dan sus horarios. regula: qué trabaja, en una frase. */
+const FAMILIAS = {yoga:"Yoga", mov:"Movimiento", resp:"Respiración", mente:"Mente", sonido:"Sonido"};
+const FAM_G = {yoga:"lotus", mov:"spine", resp:"wave", mente:"eye", sonido:"sound"};
+const CATALOGO = [
+  {id:"hatha", titulo:"Hatha yoga", guia:"Isa", fam:"yoga", estado:"activa", clases:["hatha"], intensidad:"Media",
+   regula:"Posturas sostenidas y respiración pausada para salir del modo alerta.", desc:"La base del yoga: alineación, fuerza suave y atención en la respiración."},
+  {id:"somatico", titulo:"Yoga somático", guia:"Isa", fam:"yoga", estado:"activa", clases:["somatic"], intensidad:"Suave",
+   regula:"Movimiento lento y consciente para soltar la tensión que el cuerpo guarda.", desc:"Movimientos pequeños, sentidos desde dentro, para recuperar cómo se siente tu cuerpo."},
+  {id:"vinyasa", titulo:"Vinyasa yoga", guia:"Isa", fam:"yoga", estado:"activa", clases:["vinyasa"], intensidad:"Intensa",
+   regula:"Movimiento fluido al ritmo de la respiración para descargar energía acumulada.", desc:"Secuencias dinámicas que enlazan postura y respiración."},
+  {id:"breath", titulo:"Breathwork", guia:"Diego", fam:"resp", estado:"activa", clases:["breath"], intensidad:"Media",
+   regula:"Patrones de respiración que cambian el tono de tu sistema nervioso en minutos.", desc:"Respiración guiada, de la activación a la calma, con integración al final."},
+  {id:"sound", titulo:"Sound healing grupal", guia:"Isa", fam:"sonido", estado:"activa", clases:["sound"], intensidad:"Suave",
+   regula:"Vibración y sonido para bajar la activación sin tener que hacer nada.", desc:"Cuencos, gong e instrumentos mientras descansas acostado."},
+  {id:"yin", titulo:"Yin yoga", guia:"Isa", fam:"yoga", estado:"pronto", intensidad:"Suave",
+   regula:"Posturas largas y quietas que trabajan la fascia y enseñan a soltar.", desc:"Tres a cinco minutos por postura, con apoyos, en el suelo."},
+  {id:"conciencia", titulo:"Consciencia corpórea", guia:"Diego", fam:"mov", estado:"pronto", intensidad:"Media",
+   regula:"Percepción del propio cuerpo para notar la tensión antes de que se vuelva dolor.", desc:"Método propio de Sadhana: movimiento, percepción y lenguaje corporal."},
+  {id:"chikung", titulo:"Chi kung", guia:"Por anunciar", fam:"mov", estado:"pronto", intensidad:"Suave",
+   regula:"Movimiento lento, repetido y respirado para un sistema nervioso más estable.", desc:"Práctica tradicional china de movimiento, postura y respiración."},
+  {id:"pranayama", titulo:"Pranayama", guia:"Diego", fam:"resp", estado:"pronto", intensidad:"Suave",
+   regula:"Respiración lenta y controlada para entrenar la calma.", desc:"Técnicas clásicas de respiración del yoga, paso a paso."},
+  {id:"meditacion", titulo:"Meditación", guia:"Por anunciar", fam:"mente", estado:"pronto", intensidad:"Suave",
+   regula:"Atención entrenada para salir del piloto automático.", desc:"Distintas formas de meditar: guiada, en silencio, con respiración o con sonido."},
+  {id:"embodiment", titulo:"Embodiment yoga", guia:"Por anunciar", fam:"yoga", estado:"pronto", intensidad:"Media",
+   regula:"Yoga desde la sensación y no desde la forma de la postura.", desc:"Moverte como se siente, no como se ve."},
+];
+const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta","try"]};
+// Precio regular = el que tendrá el paquete al llenarse el cupo. El precio actual ES el de fundador (20% menos que el regular).
+const precioRegular = p => FUNDADORES.sin.includes(p.id) ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
 
 const TERAPEUTAS = {
   isa: {nombre:"Isa", completo:"Isabela Arciniega", ig:"dakini.isa",
@@ -1567,6 +1624,20 @@ function clsCard(x, anchorId){
       <div class="ev-ft"><span class="price">${x.aporte?`<small style="font-size:.7em;font-weight:500">Desde </small>`:""}${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
     </div></article>`;
 }
+function paintDir(){
+  const el = $("#dirClases"); if (!el) return;
+  const prox = id => { const c = CATALOGO.find(x=>x.id===id); const L = (INST||[]).filter(x => (c.clases||[]).includes(x.base)); return L[0]; };
+  const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
+  el.innerHTML = orden.map(c => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
+    const hs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean).map(z => `${DIAS_L[z.dia]} ${fHora(new Date(2000,0,1,z.h,z.m))}`).join(" · ");
+    return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam==="mov"||c.fam==="mente"?"evento":c.fam})" aria-label="${esc(c.titulo)}">
+      <div class="dc-art" style="${aura(c.id)}">${glyph(FAM_G[c.fam])}<span class="ev-cat">${FAMILIAS[c.fam]}</span><span class="dc-tag">${pronto?"Próximamente":esc(hs||"Horario por anunciar")}</span></div>
+      <div class="dc-bd"><div class="dc-ti">${esc(c.titulo)}</div><div class="dc-g">Con ${esc(c.guia)} · ${c.intensidad}</div>
+        <p class="dc-r">${esc(c.regula)}</p>
+        <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
+          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">Reservar</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
+  const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
+}
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
 $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
   fDia = b.dataset.go; const sl = $("#agStrip").scrollLeft; paintAgenda(); $("#agStrip").scrollLeft = sl; });
@@ -1639,9 +1710,10 @@ function packArte(p, pick, b, n){
   return `<article class="pack arte ${pick?"pick":""}">
     <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id])}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]}</span>
       <span class="ev-date"><small>${p.id==="suelta"?"una":"30 días"}</small><b>${p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
-      <span class="ev-hr">${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
+      <span class="ev-hr">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s>`:""}${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
     <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
       <div class="pills">${inc.join("")}</div>
+      ${precioRegular(p)?`<div class="pills">${pill(`Precio fundador −${FUNDADORES.descuento}%`,"","star")}</div>`:""}
       <div class="pills">${p.clases*300>p.precio?pill(`Ahorras ${money(p.clases*300-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
       <div class="ev-ft"><span class="meta">${p.id==="suelta"?"Pagas solo lo que tomas":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
   </article>`;
@@ -1659,7 +1731,7 @@ function paintPacks(){
   $("#packs").innerHTML = ORD.map(p => `<article class="pack ${p.id===b.p.id?"pick":""}">
     ${p.id===b.p.id?`<span class="badge">Tu mejor opción</span>`:p.badge?`<span class="badge">${p.badge}</span>`:""}
     <h3>${esc(p.t)}</h3>
-    <div class="amt">${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
+    <div class="amt">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s> `:""}${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
     ${p.id===b.p.id&&n*300>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*300-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
     <ul>${p.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>
     <button class="btn ${p.id===b.p.id?"btn-p":"btn-g"}" data-pack="${p.id}">Comprar</button></article>`).join("");
@@ -2351,7 +2423,7 @@ document.addEventListener("click", e => {
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !pan.hidden){ pan.hidden = true; fab.setAttribute("aria-expanded", false); } });
   aplicar();
 })();
-function paintAll(){ paintAgenda(); paintNeeds(); paintTer(); paintPacks(); paintTalleres(); paintRutas(); paintTL(); paintRoom(); paintRentas(); paintMine(); }
+function paintAll(){ paintAgenda(); paintDir(); paintNeeds(); paintTer(); paintPacks(); paintTalleres(); paintRutas(); paintTL(); paintRoom(); paintRentas(); paintMine(); }
 paintAll();
 
 /* En el sitio público el panel de Opciones se oculta (se abre con ?opciones) */

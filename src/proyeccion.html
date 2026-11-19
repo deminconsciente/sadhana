@@ -759,8 +759,17 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
     </div>
   </details>
 
+  <details class="sec" id="sec-dig">
+    <summary><h2>9 · En línea y cursos grabados</h2><span class="sum num" id="sumDig"></span></summary>
+    <div class="sec-body">
+      <p class="hint">Cada clase presencial abre su sala de Zoom, y cada método se graba una vez en profesional para venderse como curso. El maestro gana de la bolsa en línea y una comisión permanente por su curso.</p>
+      <div id="digBox"></div>
+      <div id="digOut"></div>
+    </div>
+  </details>
+
   <details class="sec" id="sec-arr">
-    <summary><h2>9 · Arranque e inversión</h2><span class="sum num" id="sumArr"></span></summary>
+    <summary><h2>10 · Arranque e inversión</h2><span class="sum num" id="sumArr"></span></summary>
     <div class="sec-body" id="arrBox"></div>
   </details>
 
@@ -1016,7 +1025,8 @@ function baseScen(){return{v:6,therapists:THER(),classMin:60,gapMin:15,rentHour:
   rentClass:400,commPct:30,commMin:150,fixedPay:350,capOn:false,capAmt:20000,bonusCost:400,floorOn:true,floor:150,goalTeacher:400,
   therapyPct:10,therapyPrice:950,therapyKeep:100,thMin:60,founderOn:false,founderPct:20,founderShare:30,targetPrice:150,proposals:[],rentInt:100,rentExt:250,openDays:6,occ:50,tiers:{flat:150,t2:4,p2:30,t3:8,p3:40},
   eventPct:20,eventExt:4,eventPrice:350,eventKeep:60,eventCost:300,
-  sources:SOURCES(),expenses:EXP(),feePct:2,invest:40000,startPct:40,ramp:4}}
+  sources:SOURCES(),expenses:EXP(),feePct:2,invest:40000,startPct:40,ramp:4,founderCap:50,
+  digOn:false,onMembers:10,onPrice:1500,addonPct:0,addonPrice:0,poolPct:30,zoomCost:300,courses:1,courseSales:5,coursePrice:900,courseTch:8,platPct:10,courseCost:15000,byEnr:false,enrolled:40,doublePct:0,occTarget:80}}
 // agenda estándar: 2 clases en la mañana y 2 en la noche de lunes a viernes, y evento el sábado
 const EXTRA=()=>[{d:1,m:645,t:0,k:"t"},{d:3,m:645,t:0,k:"t"},{d:0,m:1020,t:1,k:"t"},{d:2,m:1020,t:1,k:"t"}].concat([0,1,2,3,4].map(d=>({d,m:570,t:-1,k:"l"})));
 const addExtra=sl=>{EXTRA().forEach(x=>{if(!sl.some(z=>z.d===x.d&&mOf(z)===x.m))sl.push(x)});return sl};
@@ -1067,10 +1077,10 @@ let curId=null;try{curId=localStorage.getItem(CURKEY)}catch(e){}
 const list=()=>cache[COL].filter(x=>!x.bk).sort((a,b)=>n(a.order)-n(b.order)).map(norm);
 const cur=()=>list().find(s=>s.id===curId)||list()[0];
 function ticket(s){let money=0,uses=0,mix=0;
-  let bon=0;(s.packages||[]).forEach(p=>{const m=n(p.mix);const u=n(p.classes)||n(s.unlimitedUses);money+=m*pkMonth(p);uses+=m*u;mix+=m;bon+=m*n(p.bonus)});
+  let bon=0;(s.packages||[]).forEach(p=>{const m=n(p.mix);const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);money+=m*pkMonth(p);uses+=m*u;mix+=m;bon+=m*n(p.bonus)});
   if(s.founderOn)money*=1-n(s.founderPct)/100*n(s.founderShare)/100;
   return{perVisit:uses?money/uses:0,usesPerStudent:mix?uses/mix:0,perStudent:mix?money/mix:0,mix,bonusPerStudent:mix?bon/mix:0}}
-const pkPerClass=(s,p)=>{const u=n(p.classes)||n(s.unlimitedUses);return u?pkMonth(p)/u:0};
+const pkPerClass=(s,p)=>{const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);return u?pkMonth(p)/u:0};
 // precio por alumno de los paquetes del maestro (promedio simple)
 function tPrice(s,t){const u=((t&&t.packs)||[]).map(p=>{const k=n(p.classes)||n(s.unlimitedUses);return k?n(p.price)/k:0}).filter(v=>v>0);return u.length?sum(u)/u.length:0}
 // escalera continua: arranca en "start" % hasta "from" clases a la semana, sube parejo y se topa en "top" % al llegar a "to" clases
@@ -1094,6 +1104,8 @@ function compute(s,f,o){
   const price=o.ticket!=null?o.ticket:tk.perVisit;
   const slots=(s.slots||[]).filter(x=>!x.tent),cls=slots.filter(x=>x.k==="c"),T=s.teachers||[];
   const perWeek=cls.length,classes=perWeek*W;
+  // proyectar por inscritos: la asistencia por clase sale de cuántos inscritos hay y cuántas clases toma cada uno
+  if(s.byEnr&&o.att==null&&classes)o=Object.assign({},o,{att:Math.min(cap,n(s.enrolled)*f*tk.usesPerStudent/classes)});
   const attOf=t=>o.att!=null?o.att:Math.min(n(t&&o.real&&t.attReal!=null?t.attReal:t&&t.att!=null?t.att:s.att)*f,cap);
   const attAvg=(t,L)=>{if(o.att!=null||!L.length||(o.real&&t&&t.attReal!=null))return attOf(t);return sum(L.map(z=>z.att!=null?Math.min(n(z.att)*f,cap):attOf(t)))/L.length};
   const row=(t,i,w)=>{const a=attAvg(t,cls.filter(z=>t?z.t===i:!(z.t>=0&&z.t<T.length)));const pmi=pmOf(s,t),ow=isOwn(pmi);const pr=ow||!t?price:(tPrice(s,t)||price);const x=splitClass(s,a,pr,w,!t,o,pmi,t);if(t&&t.ownerClass){x.pc=0;x.sad=x.rc;x.pct=0}
@@ -1122,12 +1134,17 @@ function compute(s,f,o){
   const src=(s.sources||[]).filter(x=>x.on).map(x=>{const g=n(x.price)*n(x.qty)*f;return{name:x.name,gross:g,keep:g*n(x.keep)/100}});
   const srcKeep=sum(src.map(x=>x.keep)),srcGross=sum(src.map(x=>x.gross));
   const exps=(s.expenses||[]).filter(e=>e.on);const fixed=sum(exps.map(e=>n(e.amount)));
-  const fees=(classRev+therapyRev+eventRev+srcGross+rentHoursRev)*n(s.feePct)/100;
-  const income=classRev+therapyKeep+eventKeep+srcKeep+rentHoursRev;
+  // en línea y cursos grabados
+  const dg=s.digOn?(()=>{const onM=n(s.onMembers)*f,onRev=onM*n(s.onPrice),addN=students*n(s.addonPct)/100,addRev=addN*n(s.addonPrice),onGross=onRev+addRev,pool=onGross*n(s.poolPct)/100,zoom=n(s.zoomCost);
+    const nc=n(s.courses),sales=nc*n(s.courseSales)*f,cGross=sales*n(s.coursePrice),cPlat=cGross*n(s.platPct)/100,cTch=(cGross-cPlat)*n(s.courseTch)/100,cNet=cGross-cPlat-cTch,prod=nc*n(s.courseCost);
+    const perCourse=nc?cNet/nc:0,payback=perCourse>0?n(s.courseCost)/perCourse:null;
+    return{onM,onRev,addN,addRev,onGross,pool,zoom,nc,sales,cGross,cPlat,cTch,cNet,prod,perCourse,payback,keep:onGross-pool-zoom+cNet}})():null;
+  const fees=(classRev+therapyRev+eventRev+srcGross+rentHoursRev+(dg?dg.onGross:0))*n(s.feePct)/100;
+  const income=classRev+therapyKeep+eventKeep+srcKeep+rentHoursRev+(dg?dg.onGross+dg.cGross-dg.cPlat:0);
   const bonusSessions=students*tk.bonusPerStudent,bonusCost=bonusSessions*n(s.bonusCost);
-  const costs=teach+fixed+fees+eventCost+bonusCost;const profit=income-costs;
+  const costs=teach+fixed+fees+eventCost+bonusCost+(dg?dg.pool+dg.zoom+dg.cTch:0);const profit=income-costs;
   return{pm,own,rent:pm==="rent",comm:pm==="comm",revOwn,revExt,sadExt,classesOwn,classesExt,anyOwn,anyExt,mixed:ownA.length>0&&extA.length>0,rentC:o.rent!=null?o.rent:n(s.rentClass),price,tk,perWeek,classes,att,revClass,tAvg,sadClass,tch,visits,classRev,revAll,teachAll,sadAll,teach,students,therapies,therapyRev,tSlots,therapyCap,therapyDemand,lSlots:slots.filter(x=>x.k==="l").length,rSlots,rentHoursRev,therapyKeep,
-    bonusSessions,bonusCost,usedHours,rentPer,eventsMonth,perEvent,perEventBase,W,eventRev,eventKeep,eventCost,src,srcKeep,exps,fixed,fees,income,costs,profit,
+    bonusSessions,bonusCost,usedHours,rentPer,eventsMonth,perEvent,perEventBase,W,eventRev,eventKeep,eventCost,src,srcKeep,dg,exps,fixed,fees,income,costs,profit,
     perStudentExtra:students?(therapyKeep+eventKeep)/students:0};
 }
 function solve(P,lo,hi){if(P(hi)<0)return null;if(P(lo)>=0)return lo;for(let i=0;i<40;i++){const m=(lo+hi)/2;P(m)>=0?hi=m:lo=m}return hi}
@@ -1135,10 +1152,10 @@ const breakevenAtt=s=>solve(a=>compute(s,1,{att:a}).profit,0,200);
 const minTicket=s=>solve(t=>compute(s,1,{ticket:t}).profit,0,5000);
 const minRent=s=>solve(x=>compute(s,1,{rent:x}).profit,0,5000);
 const rampF=(s,m)=>{const st=Math.min(1,n(s.startPct)/100),R=Math.max(1,n(s.ramp));return R<=1?1:st+(1-st)*Math.min(1,(m-1)/(R-1))};
-function months(s,H){H=H||12;let cum=-n(s.invest);const out=[];for(let m=1;m<=H;m++){const r=compute(s,rampF(s,m));cum+=r.profit;out.push({m,profit:r.profit,cum,r})}return out}
+function months(s,H){H=H||12;let cum=-n(s.invest)-(s.digOn?n(s.courses)*n(s.courseCost):0);const out=[];for(let m=1;m<=H;m++){const r=compute(s,rampF(s,m));cum+=r.profit;out.push({m,profit:r.profit,cum,r})}return out}
 const classLabel=r=>r.own?"Clases":r.comm?"Comisión de las clases":"Renta de maestros";
 function planLines(s,m){const r=compute(s,rampF(s,m));const L=[["ing",classLabel(r),r.classRev],["ing","Renta de sesiones 1:1",r.therapyKeep],["ing","Eventos (parte de Sadhana)",r.eventKeep]];
-  if(r.rentHoursRev)L.push(["ing","Renta de horas libres",r.rentHoursRev]);r.src.forEach(x=>L.push(["ing",x.name,x.keep]));L.push(["gas","Maestros",r.teach]);if(r.bonusCost)L.push(["gas","Bonos de terapia 1:1",r.bonusCost]);r.exps.forEach(e=>L.push(["gas",e.name,n(e.amount)]));
+  if(r.rentHoursRev)L.push(["ing","Renta de horas libres",r.rentHoursRev]);r.src.forEach(x=>L.push(["ing",x.name,x.keep]));if(r.dg){L.push(["ing","Membresías en línea",r.dg.onGross]);L.push(["ing","Cursos grabados (sin plataforma)",r.dg.cGross-r.dg.cPlat])}L.push(["gas","Maestros",r.teach]);if(r.dg){L.push(["gas","Bolsa en línea para maestros",r.dg.pool]);L.push(["gas","Comisión de cursos a maestros",r.dg.cTch]);L.push(["gas","Zoom",r.dg.zoom])}if(r.bonusCost)L.push(["gas","Bonos de terapia 1:1",r.bonusCost]);r.exps.forEach(e=>L.push(["gas",e.name,n(e.amount)]));
   L.push(["gas","Comisiones de cobro",r.fees]);if(r.eventCost)L.push(["gas","Costos de eventos",r.eventCost]);return{lines:L.filter(l=>l[2]>0||l[0]==="gas"),r}}
 
 /* ===================== escenarios: piezas ===================== */
@@ -1281,7 +1298,10 @@ function renderEditors(){
     <div class="brs"><button class="btn sm needw" data-tpl="std">Agenda estándar</button><button class="btn sm needw" data-tpl="even">Repartir parejo</button><button class="btn sm ghost needw" data-tpl="clear">Vaciar</button><button class="btn sm" id="agExport" ${dlNS?"":"hidden"}>Guardar como imagen</button></div>`;
   renderAgenda();
   // alumnos
-  $("#slAlumnos").innerHTML=slider("att","Alumnos por clase (promedio general)",0,n(s.cap)||20,1,"num")+`<div id="pplBox"></div>`+`<h3 class="h3">¿Abro otra clase o lleno las que hay?</h3><div id="openBox"></div>`+
+  $("#slAlumnos").innerHTML=`<label class="tog"><input type="checkbox" data-k="byEnr" ${s.byEnr?"checked":""}> Proyectar por inscritos (en lugar de alumnos por clase)</label>`+
+    (s.byEnr?slider("enrolled","Inscritos al mes",0,400,1,"int","Personas con paquete o membresía activa. La asistencia por clase sale de aquí."):slider("att","Alumnos por clase (promedio general)",0,n(s.cap)||20,1,"num"))+`<div id="pplBox"></div>`+
+    `<h3 class="h3">¿Cuántos inscritos caben?</h3>`+slider("occTarget","Ocupación máxima realista",30,100,5,"pct","Ninguna sala se llena siempre: horarios que no le acomodan a todos, faltas.")+
+    slider("doublePct","Días en que un ilimitado toma 2 clases",0,100,5,"pct","De cada 100 días que viene un miembro ilimitado, en cuántos toma dos clases (mañana y noche, o dos seguidas).")+`<div id="capInsc"></div>`+`<h3 class="h3">¿Abro otra clase o lleno las que hay?</h3><div id="openBox"></div>`+
     `<h3 class="h3">¿Y si llegan de 4 a 8?</h3><div class="tbl-wrap"><table class="cmp sens" id="sens"></table></div><small class="slx" id="sensNote"></small><small class="slx">Toca una fila para probar con esa asistencia.</small>`+stepper("cap","Cupo por clase",4,40,1);
   // paquetes alumnos
   $("#pkRows").innerHTML=(s.packages||[]).map((p,i)=>{const mem=Array.isArray(p.terms);
@@ -1294,7 +1314,7 @@ function renderEditors(){
     `<div class="pk-mix"><span>De cada 100 alumnos lo eligen</span><input type="range" min="0" max="100" step="1" data-k="packages.${i}.mix" value="${esc(p.mix)}" aria-label="Alumnos que eligen ${esc(p.name)}"><b class="num" data-v="packages.${i}.mix" data-kind="int">${Math.round(n(p.mix))}</b></div>
     <div class="pk-out" data-pkout="${i}"></div></div>`}).join("");
   $("#pkAdd").hidden=(s.packages||[]).length>=6;
-  $("#pkUnl").innerHTML=slider("bonusCost","Lo que le cuesta a Sadhana cada terapia de bono",0,1000,25,"money")+stepper("unlimitedUses","Un miembro ilimitado viene, en promedio, a",1,30,1)+`<small class="slx">clases al mes. Con eso se sabe cuánto deja la membresía en cada clase.</small>`+slider("targetPrice","Precio por clase que buscas",50,300,5,"money","Cada paquete te dice cuánto debería costar para llegar a este precio por clase.")+`<label class="tog"><input type="checkbox" data-k="founderOn" ${s.founderOn?"checked":""}> Ofrecer precio de fundador (con descuento, mientras agregamos más clases)</label>`+(s.founderOn?slider("founderPct","Descuento de fundador",5,50,5,"pct")+slider("founderShare","De cada 100 alumnos nuevos, cuántos entran como fundadores",0,100,5,"pct","Los fundadores pagan menos y bajan el precio promedio por asistencia."):"");
+  $("#pkUnl").innerHTML=slider("bonusCost","Lo que le cuesta a Sadhana cada terapia de bono",0,1000,25,"money")+stepper("unlimitedUses","Un miembro ilimitado viene, en promedio, a",1,30,1)+`<small class="slx">días al mes. Con eso y los días en que toma 2 clases (sección 2) se sabe cuánto deja la membresía en cada clase.</small>`+slider("targetPrice","Precio por clase que buscas",50,300,5,"money","Cada paquete te dice cuánto debería costar para llegar a este precio por clase.")+`<label class="tog"><input type="checkbox" data-k="founderOn" ${s.founderOn?"checked":""}> Ofrecer precio de fundador (con descuento, mientras agregamos más clases)</label>`+(s.founderOn?slider("founderPct","Descuento de fundador",5,50,5,"pct")+slider("founderShare","De cada 100 alumnos nuevos, cuántos entran como fundadores",0,100,5,"pct","Los fundadores pagan menos y bajan el precio promedio por asistencia.")+slider("founderCap","Cupo de fundadores",0,200,5,"int","Precio de por vida mientras paguen sin interrupción (7 días de gracia; pausa por enfermedad sí se respeta). Con 4% de inflación al año, en 5 años ese precio vale cerca de 18% menos: por eso el cupo."):"");
   $("#pkNote").hidden=isOwn(s.payModel);
   // maestros
   const pm="levels";const TT=tiersOf(s);
@@ -1323,6 +1343,13 @@ function renderEditors(){
     <div class="out num" data-out="src${i}"></div></div>`).join("");
   // gastos
   $("#rowsGas").innerHTML=(s.expenses||[]).map((e,i)=>`<div class="gas${e.on?"":" off"}"><input type="text" data-k="expenses.${i}.name" value="${esc(e.name)}" aria-label="Concepto"><input type="number" inputmode="decimal" min="0" step="100" data-k="expenses.${i}.amount" value="${esc(e.amount)}" aria-label="Monto al mes"><button class="ap" data-ap="${i}" aria-pressed="${!!e.on}">${e.on?"Aplica":"Opcional"}</button><button class="x" data-del="expenses.${i}" aria-label="Quitar">×</button></div>`).join("");
+  $("#digBox").innerHTML=`<label class="tog"><input type="checkbox" data-k="digOn" ${s.digOn?"checked":""}> Sumar en línea y cursos grabados a este escenario</label>`+(s.digOn?
+    `<h3 class="h3">Salas en línea</h3>`+slider("onMembers","Miembros solo en línea",0,300,1,"int","Personas que no vienen a la sala: LatAm, público de Demin.")+slider("onPrice","Membresía en línea al mes",0,3000,50,"money","Casi igual que la presencial, para que nadie deje la sala por precio.")+
+    slider("addonPct","Alumnos presenciales que pagan complemento en línea",0,100,1,"pct")+slider("addonPrice","Cargo del complemento",0,1500,50,"money","Déjalo en $0 si la ilimitada ya incluye la sala en línea (opción recomendada).")+
+    slider("poolPct","Bolsa en línea para maestros",0,70,5,"pct","Se reparte entre maestros según asistentes de cada sala.")+slider("zoomCost","Zoom Pro al mes",0,2000,50,"money")+
+    `<h3 class="h3">Cursos grabados</h3>`+slider("courses","Cursos publicados",0,10,1,"int")+slider("courseSales","Ventas de cada curso al mes",0,100,1,"int")+slider("coursePrice","Precio del curso",0,5000,50,"money")+
+    slider("courseTch","Comisión permanente al maestro",0,20,1,"pct","Sobre lo que queda después de la plataforma. Acordado: 5% a 10%.")+slider("platPct","Comisión de la plataforma o pasarela",0,30,1,"pct")+
+    slider("courseCost","Producción de cada curso (cotización)",0,100000,1000,"money","Se paga una vez: entra como inversión y se recupera con las ventas."):"");
   $("#arrBox").innerHTML=slider("invest","Inversión inicial",0,300000,5000,"money")+slider("startPct","Asistencia el primer mes (% de la meta)",0,100,5,"pct")+stepper("ramp","Meses para llegar a la meta",1,12,1)+slider("feePct","Comisión de cobro promedio",0,6,0.5,"pct");
   renderOut();
 }
@@ -1373,6 +1400,8 @@ function monthRows(s,r){const W=n(s.weeks),R=[],go=(id,t)=>`<button class="lnk" 
     b:f(`<b>${r.rSlots}</b> horas marcadas como renta en la agenda × ${fmt1(W)} semanas × <b>${fmt(n(s.rentHour))}</b>`)+ins(wfIn("rentHour","Renta por hora",10,"$",0))+`<p class="wf-f">${go("sec-ag","Marcar horas de renta en la agenda")}</p>`});
   R.push({k:"src",sg:"+",l:"Otras fuentes",sub:`${r.src.length} de ${(s.sources||[]).length} entran`,a:r.srcKeep,
     b:(s.sources||[]).map((x,i)=>`<div class="wf-li${x.on?"":" off"}"><button class="ap" data-tgsrc="${i}" aria-pressed="${!!x.on}">${x.on?"Entra":"No entra"}</button><span>${esc(x.name)}<small>${fmt(n(x.price))} × ${n(x.qty)} · ${n(x.keep)}% para Sadhana</small></span><b class="num">${fmt(x.on?n(x.price)*n(x.qty)*n(x.keep)/100:0)}</b></div>`).join("")+`<p class="wf-f">${go("sec-src","Cambiar precios y cantidades")}</p>`});
+  if(r.dg)R.push({k:"dig",sg:"+",l:"En línea y cursos grabados",sub:`${Math.round(r.dg.onM)} miembros en línea · ${Math.round(r.dg.sales)} cursos vendidos`,a:r.dg.keep,
+    b:f(`En línea: <b>${fmt(r.dg.onGross)}</b> − bolsa de maestros <b>${fmt(r.dg.pool)}</b> − Zoom <b>${fmt(r.dg.zoom)}</b>`)+f(`Cursos: ${fmt(r.dg.cGross)} − plataforma ${fmt(r.dg.cPlat)} − comisión de maestros ${fmt(r.dg.cTch)} = <b>${fmt(r.dg.cNet)}</b>`)+`<p class="wf-f">${go("sec-dig","Cambiar en línea y cursos")}</p>`});
   R.push({k:"gas",sg:"−",l:"Gastos del espacio",sub:`${r.exps.length} de ${(s.expenses||[]).length} aplican`,a:r.fixed,
     b:(s.expenses||[]).map((e,i)=>`<div class="wf-li${e.on?"":" off"}"><button class="ap" data-ap="${i}" aria-pressed="${!!e.on}">${e.on?"Aplica":"Opcional"}</button><span>${esc(e.name)}</span><span class="wf-iv"><i>$</i><input type="number" inputmode="decimal" min="0" step="100" data-k="expenses.${i}.amount" value="${esc(n(e.amount))}" aria-label="${esc(e.name)}"></span></div>`).join("")+`<p class="wf-f">${go("sec-gas","Agregar o renombrar gastos")}</p>`});
   R.push({k:"fee",sg:"−",l:"Comisiones de cobro",sub:`${fmt1(n(s.feePct))}% de lo cobrado`,a:r.fees,
@@ -1466,7 +1495,18 @@ function renderOut(){
   // agenda y alumnos
   $("#agSum").textContent=`${fmt1(r.perWeek)} clases por semana · ${fmt1(r.classes)} al mes · ${fmt1(r.eventsMonth)} eventos al mes`;
   $("#pplBox").innerHTML=people(n(s.att),Math.min(40,n(s.cap)));
-  $("#sumAlumnos").textContent=`${fmt1(r.att)} por clase · ${Math.round(r.students)} alumnos activos`;
+  {const el=$("#capInsc");if(el){const W=n(s.weeks),cap=n(s.cap)||12,occ=n(s.occTarget)/100,cls=(s.slots||[]).filter(x=>x.k==="c"&&!x.tent);
+    const ma=cls.filter(x=>mOf(x)<840).length,no=cls.length-ma,v=r.tk.usesPerStudent||1;
+    const seats=k=>k*W*cap,maxI=k=>seats(k)*occ/v;
+    const rowsP=(s.packages||[]).filter(p=>n(p.mix)>0).map(p=>{const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);return`<tr><td>${esc(p.name)}</td><td class="num">${fmt1(u)}</td><td class="num">${Math.round(n(p.mix))}%</td></tr>`}).join("");
+    const now=Math.round(r.students),pctUse=seats(cls.length)?r.visits/seats(cls.length)*100:0;
+    el.innerHTML=`<div class="kpis"><div class="kpi"><span>Lugares al mes</span><b class="num">${Math.round(seats(cls.length))}</b><small>${cls.length} clases a la semana × ${fmt1(W)} × cupo ${cap}</small></div>
+      <div class="kpi"><span>Cada inscrito usa al mes</span><b class="num">${fmt1(v)} clases</b><small>promedio de tus paquetes, según cuántos eligen cada uno</small></div>
+      <div class="kpi"><span>Caben hasta</span><b class="num">${Math.floor(maxI(cls.length))} inscritos</b><small>al ${Math.round(occ*100)}% de ocupación: ${Math.floor(maxI(ma))} de mañana y ${Math.floor(maxI(no))} de noche</small></div></div>
+      <p class="slx">Hoy proyectas <b>${now}</b> inscritos: usan <b>${Math.round(pctUse)}%</b> de los lugares (${fmt1(r.att)} por clase). ${now>maxI(cls.length)?"<b>Ya no caben con esta agenda: abre horarios o sube el cupo.</b>":`Te quedan unos <b>${Math.max(0,Math.floor(maxI(cls.length))-now)}</b> lugares para inscribir antes de abrir más horarios.`}</p>
+      <div class="tbl-wrap"><table class="cmp"><thead><tr><th>Paquete</th><th>Clases al mes</th><th>Lo eligen</th></tr></thead><tbody>${rowsP}</tbody></table></div>
+      <p class="slx">La fórmula: inscritos que caben = clases a la semana × semanas × cupo × ocupación ÷ clases que usa cada inscrito. Mañana y noche se cuentan aparte, porque casi nadie cambia de turno.</p>`}}
+  $("#sumAlumnos").textContent=(s.byEnr?`${Math.round(n(s.enrolled))} inscritos · `:"")+`${fmt1(r.att)} por clase · ${Math.round(r.students)} alumnos activos`;
   const sens=[4,5,6,7,8].map(a=>{const q=compute(s,1,{att:a});return{a,rc:q.revClass,t:q.tAvg,sc:q.sadClass,p:q.profit}});
   $("#sens").innerHTML=`<thead><tr><th>Alumnos</th><th>Entran por clase</th><th>Maestro por clase</th><th>Sadhana por clase</th><th>Utilidad de Sadhana al mes</th></tr></thead><tbody>`+
     sens.map(x=>`<tr data-att="${x.a}" class="${Math.abs(n(s.att)-x.a)<0.25?"cur":""}" tabindex="0"><td class="num">${x.a}</td><td class="num">${fmt(x.rc)}</td><td class="num">${fmt(x.t)}</td><td class="num">${fmt(x.sc)}</td><td class="num ${x.p>=0?"pos":"neg"}"><b>${fmt(x.p)}</b></td></tr>`).join("")+`</tbody>`;
@@ -1521,6 +1561,14 @@ function renderOut(){
   $("#sumEmbudo").textContent=fmt(r.therapyKeep+r.eventKeep-r.eventCost)+" al mes";
   (s.sources||[]).forEach((x,i)=>{const el=document.querySelector(`[data-out="src${i}"]`);if(el){const g=n(x.price)*n(x.qty);el.textContent=`Entra ${fmt(g)} · Sadhana se queda ${fmt(g*n(x.keep)/100)} al mes`}});
   $("#sumSrc").textContent=fmt(r.srcKeep)+" al mes";
+  {const d=r.dg,el=$("#digOut");$("#sumDig").textContent=d?fmt(d.keep)+" al mes":"no entra";
+    if(el){if(!d)el.innerHTML="";else{const T=r.tch.filter(x=>x.w>0&&!x.un),tw=Math.max(1,sum(T.map(x=>x.w)));
+      el.innerHTML=`<div class="kpis"><div class="kpi"><span>En línea al mes</span><b class="num">${fmt(d.onGross)}</b><small>${Math.round(d.onM)} miembros × ${fmt(n(s.onPrice))}${d.addRev?` + ${Math.round(d.addN)} complementos`:""}</small></div>
+      <div class="kpi"><span>Cursos al mes</span><b class="num">${fmt(d.cGross)}</b><small>${Math.round(d.sales)} ventas · a Sadhana le quedan ${fmt(d.cNet)}</small></div>
+      <div class="kpi"><span>Cada curso se paga en</span><b class="num">${d.payback==null?"—":Math.ceil(d.payback)+" meses"}</b><small>${fmt(n(s.courseCost))} de producción entre ${fmt(d.perCourse)} al mes que deja</small></div></div>
+      <h3 class="h3">Lo que gana cada maestro al mes</h3><div class="tbl-wrap"><table class="cmp"><thead><tr><th>Maestro</th><th>Presencial</th><th>Bolsa en línea</th><th>Su curso</th><th>Total</th></tr></thead><tbody>${T.map(x=>{const on=d.pool*x.w/tw,cu=d.nc?d.cTch/d.nc:0;return`<tr><td>${esc(x.name)}</td><td class="num">${fmt(x.month)}</td><td class="num">${fmt(on)}</td><td class="num">${fmt(cu)}</td><td class="num"><b>${fmt(x.month+on+cu)}</b></td></tr>`}).join("")}</tbody></table></div>
+      <p class="slx">La bolsa se reparte por clases a la semana (con el CRM se repartirá por asistentes reales). "Su curso" supone que cada maestro tiene un curso publicado; los talleres van aparte, en Otras fuentes.</p>
+      <p class="slx">Sadhana se queda <b>${fmt(d.keep)}</b> al mes: en línea ${fmt(d.onGross)} − bolsa ${fmt(d.pool)} − Zoom ${fmt(d.zoom)} + cursos ${fmt(d.cNet)}.</p>`}}}
   const optC=(s.expenses||[]).filter(e=>!e.on).length;$("#sumGas").textContent=`${fmt(r.fixed)} al mes`+(optC?` · ${optC} opcionales fuera`:"");
   const pb=months(s).find(x=>x.cum>=0);$("#sumArr").textContent=pb?`se recupera en el mes ${pb.m}`:"no se recupera en 12 meses";
   renderCompare();
@@ -1656,7 +1704,7 @@ $("#m-escenarios").addEventListener("input",e=>{if(rtApply(e,false))return;
   const k=e.target.dataset.k;if(!k||!curRaw()||!canWrite)return;const s=curRaw();norm(s);
   const v=e.target.type==="checkbox"?e.target.checked:(e.target.type==="number"||e.target.type==="range")?n(e.target.value):e.target.value;
   setPath(s,k,v);put(COL,s);
-  if(k==="floorOn"||k==="capOn"||k==="founderOn"){renderEditors();return}
+  if(k==="floorOn"||k==="capOn"||k==="founderOn"||k==="digOn"||k==="byEnr"){renderEditors();return}
   if(k==="rentHour"){softOut();const nt=$("#agNote");return}
   if(/^(teachers|therapists)\.\d+\.name$/.test(k)){if(e.target.id==="brName"){const c=document.querySelector(".br.on .bn");if(c)c.textContent=(k[1]==="h"?"1:1 · ":"")+v;renderTeachers();renderOut()}else renderAgenda();renderCompare();return}
   if(k.endsWith(".name"))return;
