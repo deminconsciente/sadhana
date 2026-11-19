@@ -31,6 +31,11 @@ de distintas disciplinas, más terapias y terapias de movimiento.
 - **Catálogo de clases (en construcción):** yoga por categorías (embodiment, yin, vinyasa, la mezcla
   "yogasthenics"), pranayama, meditación en varias formas, chi kung, consciencia corporal, y más por sumar.
   La variedad es lo que hace atractiva la membresía ilimitada.
+  Maestros de arranque: Melanie Valero (chi kung), Isa (yin yoga), Diego (yogasthenics y consciencia
+  corpórea, métodos propios), Diane (yoga). Un horario por clase al inicio; se abren más por demanda.
+- **Directorio:** clases activas + clases "Próximamente" con "Avísame cuando abra" (mide demanda).
+- **Precio fundador:** precio especial de por vida mientras el pago sea recurrente y sin interrupción
+  (cupo y reglas exactas por confirmar en el plan maestro).
 - **Terapias 1:1:** Isa (reiki, craneosacral, tameana, sound healing, tarot terapéutico); Diego
   (biodescodificación, breathwork, hipnosis no clínica, coaching ontológico, PNL, transgeneracional).
 - **Modalidades:** A) renta a terceros (residentes, renta por hora, facilitadores); B) servicios propios
@@ -48,6 +53,11 @@ Toda clase es presencial y tiene versión asíncrona. Por cada clase:
 3. Una clase grabada profesional como activo digital, que además sirve de evidencia/preparación para que,
    con Posturalia, los maestros se certifiquen en **EC0217** (impartir cursos) y **EC0076** (evaluar con fines
    de certificación) y puedan dar formaciones. Según el taller aplica el EC correspondiente (p. ej. EC1375).
+
+Operación diaria: una sala de Zoom recurrente por clase; celular dedicado o DJI Osmo en tripode fijo y dos
+micrófonos DJI que se alternan (uno en uso, otro cargando). El curso grabado es de Sadhana y el maestro cobra
+comisión permanente mientras se venda. Evento mensual fechado según quincenas y clase gratis semanal en
+Parque Río La Silla. Plan maestro: https://claude.ai/artifact/ATAC9m6veK9DMQU653VgX6
 
 ## Embudo
 
