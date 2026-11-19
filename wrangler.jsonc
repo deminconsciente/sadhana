@@ -21,6 +21,13 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "sadhana_crm", "database_id": "74a3cbfd-9430-4fe2-96bd-892d32bff1ae", "migrations_dir": "migrations" }
   ],
+  // Vistas previas por rama y PR (Workers Builds corre "npx wrangler preview"): usan una base
+  // aparte, sadhana_crm_preview, con el mismo esquema, para no tocar datos reales.
+  "previews": {
+    "d1_databases": [
+      { "binding": "DB", "database_name": "sadhana_crm_preview", "database_id": "c8aacffb-1d48-41a4-adc9-a9206952441d" }
+    ]
+  },
   // La contraseña de /admin es un secreto: npx wrangler secret put ADMIN_CLAVE
   "observability": { "enabled": true },
   // Se activan cuando el dominio ya esté en Cloudflare (ver README, paso 4).

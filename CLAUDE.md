@@ -92,7 +92,9 @@ Parque Río La Silla. Plan maestro: https://claude.ai/artifact/ATAC9m6veK9DMQU65
 
 - **Solo publicar con un "publica" explícito de Diego.** Se itera primero en artefacto o vista previa.
 - Cambiar solo la página que se pidió (`/` o `/om`; aclarar si hay duda).
-- PR en borrador por defecto. Push a `main` **no** despliega: tras el merge correr
+- PR en borrador por defecto. El merge a `main` **sí publica solo** (Workers Builds, ~1 min); por eso se
+  mergea únicamente con el "publica". Cada rama o PR recibe su vista previa (`npx wrangler preview`) con la
+  base aparte `sadhana_crm_preview`. Deploy a mano solo si falla el build:
   `CLOUDFLARE_ACCOUNT_ID=db07323b6cd94574774c89707b0b4edc npm run deploy` (token en los secretos del entorno).
 - Secretos en el Worker o en el entorno, nunca en el repo ni en el chat. No borrar registros DNS de correo.
 - Seguimiento del proyecto: todo pendiente se carga en el artefacto "Proyección Sadhana"
