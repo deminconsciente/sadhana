@@ -1026,7 +1026,7 @@ function baseScen(){return{v:6,therapists:THER(),classMin:60,gapMin:15,rentHour:
   therapyPct:10,therapyPrice:950,therapyKeep:100,thMin:60,founderOn:false,founderPct:20,founderShare:30,targetPrice:150,proposals:[],rentInt:100,rentExt:250,openDays:6,occ:50,tiers:{flat:150,t2:4,p2:30,t3:8,p3:40},
   eventPct:20,eventExt:4,eventPrice:350,eventKeep:60,eventCost:300,
   sources:SOURCES(),expenses:EXP(),feePct:2,invest:40000,startPct:40,ramp:4,founderCap:50,
-  digOn:false,onMembers:10,onPrice:1500,addonPct:0,addonPrice:0,poolPct:30,zoomCost:300,courses:1,courseSales:5,coursePrice:900,courseTch:8,platPct:10,courseCost:15000}}
+  digOn:false,onMembers:10,onPrice:1500,addonPct:0,addonPrice:0,poolPct:30,zoomCost:300,courses:1,courseSales:5,coursePrice:900,courseTch:8,platPct:10,courseCost:15000,byEnr:false,enrolled:40,doublePct:0,occTarget:80}}
 // agenda estándar: 2 clases en la mañana y 2 en la noche de lunes a viernes, y evento el sábado
 const EXTRA=()=>[{d:1,m:645,t:0,k:"t"},{d:3,m:645,t:0,k:"t"},{d:0,m:1020,t:1,k:"t"},{d:2,m:1020,t:1,k:"t"}].concat([0,1,2,3,4].map(d=>({d,m:570,t:-1,k:"l"})));
 const addExtra=sl=>{EXTRA().forEach(x=>{if(!sl.some(z=>z.d===x.d&&mOf(z)===x.m))sl.push(x)});return sl};
@@ -1077,10 +1077,10 @@ let curId=null;try{curId=localStorage.getItem(CURKEY)}catch(e){}
 const list=()=>cache[COL].filter(x=>!x.bk).sort((a,b)=>n(a.order)-n(b.order)).map(norm);
 const cur=()=>list().find(s=>s.id===curId)||list()[0];
 function ticket(s){let money=0,uses=0,mix=0;
-  let bon=0;(s.packages||[]).forEach(p=>{const m=n(p.mix);const u=n(p.classes)||n(s.unlimitedUses);money+=m*pkMonth(p);uses+=m*u;mix+=m;bon+=m*n(p.bonus)});
+  let bon=0;(s.packages||[]).forEach(p=>{const m=n(p.mix);const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);money+=m*pkMonth(p);uses+=m*u;mix+=m;bon+=m*n(p.bonus)});
   if(s.founderOn)money*=1-n(s.founderPct)/100*n(s.founderShare)/100;
   return{perVisit:uses?money/uses:0,usesPerStudent:mix?uses/mix:0,perStudent:mix?money/mix:0,mix,bonusPerStudent:mix?bon/mix:0}}
-const pkPerClass=(s,p)=>{const u=n(p.classes)||n(s.unlimitedUses);return u?pkMonth(p)/u:0};
+const pkPerClass=(s,p)=>{const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);return u?pkMonth(p)/u:0};
 // precio por alumno de los paquetes del maestro (promedio simple)
 function tPrice(s,t){const u=((t&&t.packs)||[]).map(p=>{const k=n(p.classes)||n(s.unlimitedUses);return k?n(p.price)/k:0}).filter(v=>v>0);return u.length?sum(u)/u.length:0}
 // escalera continua: arranca en "start" % hasta "from" clases a la semana, sube parejo y se topa en "top" % al llegar a "to" clases
@@ -1104,6 +1104,8 @@ function compute(s,f,o){
   const price=o.ticket!=null?o.ticket:tk.perVisit;
   const slots=(s.slots||[]).filter(x=>!x.tent),cls=slots.filter(x=>x.k==="c"),T=s.teachers||[];
   const perWeek=cls.length,classes=perWeek*W;
+  // proyectar por inscritos: la asistencia por clase sale de cuántos inscritos hay y cuántas clases toma cada uno
+  if(s.byEnr&&o.att==null&&classes)o=Object.assign({},o,{att:Math.min(cap,n(s.enrolled)*f*tk.usesPerStudent/classes)});
   const attOf=t=>o.att!=null?o.att:Math.min(n(t&&o.real&&t.attReal!=null?t.attReal:t&&t.att!=null?t.att:s.att)*f,cap);
   const attAvg=(t,L)=>{if(o.att!=null||!L.length||(o.real&&t&&t.attReal!=null))return attOf(t);return sum(L.map(z=>z.att!=null?Math.min(n(z.att)*f,cap):attOf(t)))/L.length};
   const row=(t,i,w)=>{const a=attAvg(t,cls.filter(z=>t?z.t===i:!(z.t>=0&&z.t<T.length)));const pmi=pmOf(s,t),ow=isOwn(pmi);const pr=ow||!t?price:(tPrice(s,t)||price);const x=splitClass(s,a,pr,w,!t,o,pmi,t);if(t&&t.ownerClass){x.pc=0;x.sad=x.rc;x.pct=0}
@@ -1296,7 +1298,10 @@ function renderEditors(){
     <div class="brs"><button class="btn sm needw" data-tpl="std">Agenda estándar</button><button class="btn sm needw" data-tpl="even">Repartir parejo</button><button class="btn sm ghost needw" data-tpl="clear">Vaciar</button><button class="btn sm" id="agExport" ${dlNS?"":"hidden"}>Guardar como imagen</button></div>`;
   renderAgenda();
   // alumnos
-  $("#slAlumnos").innerHTML=slider("att","Alumnos por clase (promedio general)",0,n(s.cap)||20,1,"num")+`<div id="pplBox"></div>`+`<h3 class="h3">¿Abro otra clase o lleno las que hay?</h3><div id="openBox"></div>`+
+  $("#slAlumnos").innerHTML=`<label class="tog"><input type="checkbox" data-k="byEnr" ${s.byEnr?"checked":""}> Proyectar por inscritos (en lugar de alumnos por clase)</label>`+
+    (s.byEnr?slider("enrolled","Inscritos al mes",0,400,1,"int","Personas con paquete o membresía activa. La asistencia por clase sale de aquí."):slider("att","Alumnos por clase (promedio general)",0,n(s.cap)||20,1,"num"))+`<div id="pplBox"></div>`+
+    `<h3 class="h3">¿Cuántos inscritos caben?</h3>`+slider("occTarget","Ocupación máxima realista",30,100,5,"pct","Ninguna sala se llena siempre: horarios que no le acomodan a todos, faltas.")+
+    slider("doublePct","Días en que un ilimitado toma 2 clases",0,100,5,"pct","De cada 100 días que viene un miembro ilimitado, en cuántos toma dos clases (mañana y noche, o dos seguidas).")+`<div id="capInsc"></div>`+`<h3 class="h3">¿Abro otra clase o lleno las que hay?</h3><div id="openBox"></div>`+
     `<h3 class="h3">¿Y si llegan de 4 a 8?</h3><div class="tbl-wrap"><table class="cmp sens" id="sens"></table></div><small class="slx" id="sensNote"></small><small class="slx">Toca una fila para probar con esa asistencia.</small>`+stepper("cap","Cupo por clase",4,40,1);
   // paquetes alumnos
   $("#pkRows").innerHTML=(s.packages||[]).map((p,i)=>{const mem=Array.isArray(p.terms);
@@ -1309,7 +1314,7 @@ function renderEditors(){
     `<div class="pk-mix"><span>De cada 100 alumnos lo eligen</span><input type="range" min="0" max="100" step="1" data-k="packages.${i}.mix" value="${esc(p.mix)}" aria-label="Alumnos que eligen ${esc(p.name)}"><b class="num" data-v="packages.${i}.mix" data-kind="int">${Math.round(n(p.mix))}</b></div>
     <div class="pk-out" data-pkout="${i}"></div></div>`}).join("");
   $("#pkAdd").hidden=(s.packages||[]).length>=6;
-  $("#pkUnl").innerHTML=slider("bonusCost","Lo que le cuesta a Sadhana cada terapia de bono",0,1000,25,"money")+stepper("unlimitedUses","Un miembro ilimitado viene, en promedio, a",1,30,1)+`<small class="slx">clases al mes. Con eso se sabe cuánto deja la membresía en cada clase.</small>`+slider("targetPrice","Precio por clase que buscas",50,300,5,"money","Cada paquete te dice cuánto debería costar para llegar a este precio por clase.")+`<label class="tog"><input type="checkbox" data-k="founderOn" ${s.founderOn?"checked":""}> Ofrecer precio de fundador (con descuento, mientras agregamos más clases)</label>`+(s.founderOn?slider("founderPct","Descuento de fundador",5,50,5,"pct")+slider("founderShare","De cada 100 alumnos nuevos, cuántos entran como fundadores",0,100,5,"pct","Los fundadores pagan menos y bajan el precio promedio por asistencia.")+slider("founderCap","Cupo de fundadores",0,200,5,"int","Precio de por vida mientras paguen sin interrupción (7 días de gracia; pausa por enfermedad sí se respeta). Con 4% de inflación al año, en 5 años ese precio vale cerca de 18% menos: por eso el cupo."):"");
+  $("#pkUnl").innerHTML=slider("bonusCost","Lo que le cuesta a Sadhana cada terapia de bono",0,1000,25,"money")+stepper("unlimitedUses","Un miembro ilimitado viene, en promedio, a",1,30,1)+`<small class="slx">días al mes. Con eso y los días en que toma 2 clases (sección 2) se sabe cuánto deja la membresía en cada clase.</small>`+slider("targetPrice","Precio por clase que buscas",50,300,5,"money","Cada paquete te dice cuánto debería costar para llegar a este precio por clase.")+`<label class="tog"><input type="checkbox" data-k="founderOn" ${s.founderOn?"checked":""}> Ofrecer precio de fundador (con descuento, mientras agregamos más clases)</label>`+(s.founderOn?slider("founderPct","Descuento de fundador",5,50,5,"pct")+slider("founderShare","De cada 100 alumnos nuevos, cuántos entran como fundadores",0,100,5,"pct","Los fundadores pagan menos y bajan el precio promedio por asistencia.")+slider("founderCap","Cupo de fundadores",0,200,5,"int","Precio de por vida mientras paguen sin interrupción (7 días de gracia; pausa por enfermedad sí se respeta). Con 4% de inflación al año, en 5 años ese precio vale cerca de 18% menos: por eso el cupo."):"");
   $("#pkNote").hidden=isOwn(s.payModel);
   // maestros
   const pm="levels";const TT=tiersOf(s);
@@ -1490,7 +1495,18 @@ function renderOut(){
   // agenda y alumnos
   $("#agSum").textContent=`${fmt1(r.perWeek)} clases por semana · ${fmt1(r.classes)} al mes · ${fmt1(r.eventsMonth)} eventos al mes`;
   $("#pplBox").innerHTML=people(n(s.att),Math.min(40,n(s.cap)));
-  $("#sumAlumnos").textContent=`${fmt1(r.att)} por clase · ${Math.round(r.students)} alumnos activos`;
+  {const el=$("#capInsc");if(el){const W=n(s.weeks),cap=n(s.cap)||12,occ=n(s.occTarget)/100,cls=(s.slots||[]).filter(x=>x.k==="c"&&!x.tent);
+    const ma=cls.filter(x=>mOf(x)<840).length,no=cls.length-ma,v=r.tk.usesPerStudent||1;
+    const seats=k=>k*W*cap,maxI=k=>seats(k)*occ/v;
+    const rowsP=(s.packages||[]).filter(p=>n(p.mix)>0).map(p=>{const u=n(p.classes)||n(s.unlimitedUses)*(1+n(s.doublePct)/100);return`<tr><td>${esc(p.name)}</td><td class="num">${fmt1(u)}</td><td class="num">${Math.round(n(p.mix))}%</td></tr>`}).join("");
+    const now=Math.round(r.students),pctUse=seats(cls.length)?r.visits/seats(cls.length)*100:0;
+    el.innerHTML=`<div class="kpis"><div class="kpi"><span>Lugares al mes</span><b class="num">${Math.round(seats(cls.length))}</b><small>${cls.length} clases a la semana × ${fmt1(W)} × cupo ${cap}</small></div>
+      <div class="kpi"><span>Cada inscrito usa al mes</span><b class="num">${fmt1(v)} clases</b><small>promedio de tus paquetes, según cuántos eligen cada uno</small></div>
+      <div class="kpi"><span>Caben hasta</span><b class="num">${Math.floor(maxI(cls.length))} inscritos</b><small>al ${Math.round(occ*100)}% de ocupación: ${Math.floor(maxI(ma))} de mañana y ${Math.floor(maxI(no))} de noche</small></div></div>
+      <p class="slx">Hoy proyectas <b>${now}</b> inscritos: usan <b>${Math.round(pctUse)}%</b> de los lugares (${fmt1(r.att)} por clase). ${now>maxI(cls.length)?"<b>Ya no caben con esta agenda: abre horarios o sube el cupo.</b>":`Te quedan unos <b>${Math.max(0,Math.floor(maxI(cls.length))-now)}</b> lugares para inscribir antes de abrir más horarios.`}</p>
+      <div class="tbl-wrap"><table class="cmp"><thead><tr><th>Paquete</th><th>Clases al mes</th><th>Lo eligen</th></tr></thead><tbody>${rowsP}</tbody></table></div>
+      <p class="slx">La fórmula: inscritos que caben = clases a la semana × semanas × cupo × ocupación ÷ clases que usa cada inscrito. Mañana y noche se cuentan aparte, porque casi nadie cambia de turno.</p>`}}
+  $("#sumAlumnos").textContent=(s.byEnr?`${Math.round(n(s.enrolled))} inscritos · `:"")+`${fmt1(r.att)} por clase · ${Math.round(r.students)} alumnos activos`;
   const sens=[4,5,6,7,8].map(a=>{const q=compute(s,1,{att:a});return{a,rc:q.revClass,t:q.tAvg,sc:q.sadClass,p:q.profit}});
   $("#sens").innerHTML=`<thead><tr><th>Alumnos</th><th>Entran por clase</th><th>Maestro por clase</th><th>Sadhana por clase</th><th>Utilidad de Sadhana al mes</th></tr></thead><tbody>`+
     sens.map(x=>`<tr data-att="${x.a}" class="${Math.abs(n(s.att)-x.a)<0.25?"cur":""}" tabindex="0"><td class="num">${x.a}</td><td class="num">${fmt(x.rc)}</td><td class="num">${fmt(x.t)}</td><td class="num">${fmt(x.sc)}</td><td class="num ${x.p>=0?"pos":"neg"}"><b>${fmt(x.p)}</b></td></tr>`).join("")+`</tbody>`;
@@ -1688,7 +1704,7 @@ $("#m-escenarios").addEventListener("input",e=>{if(rtApply(e,false))return;
   const k=e.target.dataset.k;if(!k||!curRaw()||!canWrite)return;const s=curRaw();norm(s);
   const v=e.target.type==="checkbox"?e.target.checked:(e.target.type==="number"||e.target.type==="range")?n(e.target.value):e.target.value;
   setPath(s,k,v);put(COL,s);
-  if(k==="floorOn"||k==="capOn"||k==="founderOn"||k==="digOn"){renderEditors();return}
+  if(k==="floorOn"||k==="capOn"||k==="founderOn"||k==="digOn"||k==="byEnr"){renderEditors();return}
   if(k==="rentHour"){softOut();const nt=$("#agNote");return}
   if(/^(teachers|therapists)\.\d+\.name$/.test(k)){if(e.target.id==="brName"){const c=document.querySelector(".br.on .bn");if(c)c.textContent=(k[1]==="h"?"1:1 · ":"")+v;renderTeachers();renderOut()}else renderAgenda();renderCompare();return}
   if(k.endsWith(".name"))return;

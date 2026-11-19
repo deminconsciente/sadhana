@@ -316,6 +316,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dc-ft small{font-family:var(--f-ui);font-size:.74rem;color:var(--ink-2)}
 .fund{margin:0 0 14px;padding:10px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-family:var(--f-ui);font-size:.82rem;color:var(--ink-2);width:fit-content;max-width:100%}
 .fund b{color:var(--ink)}
+.orig{display:block;font-size:.5em;font-family:var(--f-ui);opacity:.8;text-decoration:line-through;line-height:1.2}
+.amt .orig{display:inline;font-size:.6em}
 
 /* Terapias */
 .tabs{display:flex;gap:12px;flex-wrap:wrap}
@@ -1268,7 +1270,9 @@ const CATALOGO = [
   {id:"embodiment", titulo:"Embodiment yoga", guia:"Por anunciar", fam:"yoga", estado:"pronto", intensidad:"Media",
    regula:"Yoga desde la sensación y no desde la forma de la postura.", desc:"Moverte como se siente, no como se ve."},
 ];
-const FUNDADORES = {cupo:50, tomados:null}; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
+const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta","try"]};
+// Precio regular = el que tendrá el paquete al llenarse el cupo. El precio actual ES el de fundador (20% menos que el regular).
+const precioRegular = p => FUNDADORES.sin.includes(p.id) ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
 
 const TERAPEUTAS = {
   isa: {nombre:"Isa", completo:"Isabela Arciniega", ig:"dakini.isa",
@@ -1632,7 +1636,7 @@ function paintDir(){
         <p class="dc-r">${esc(c.regula)}</p>
         <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
           : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">Reservar</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
-  const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros conservan su precio de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
+  const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
 }
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
 $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
@@ -1706,9 +1710,10 @@ function packArte(p, pick, b, n){
   return `<article class="pack arte ${pick?"pick":""}">
     <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id])}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]}</span>
       <span class="ev-date"><small>${p.id==="suelta"?"una":"30 días"}</small><b>${p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
-      <span class="ev-hr">${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
+      <span class="ev-hr">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s>`:""}${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
     <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
       <div class="pills">${inc.join("")}</div>
+      ${precioRegular(p)?`<div class="pills">${pill(`Precio fundador −${FUNDADORES.descuento}%`,"","star")}</div>`:""}
       <div class="pills">${p.clases*300>p.precio?pill(`Ahorras ${money(p.clases*300-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
       <div class="ev-ft"><span class="meta">${p.id==="suelta"?"Pagas solo lo que tomas":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
   </article>`;
@@ -1726,7 +1731,7 @@ function paintPacks(){
   $("#packs").innerHTML = ORD.map(p => `<article class="pack ${p.id===b.p.id?"pick":""}">
     ${p.id===b.p.id?`<span class="badge">Tu mejor opción</span>`:p.badge?`<span class="badge">${p.badge}</span>`:""}
     <h3>${esc(p.t)}</h3>
-    <div class="amt">${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
+    <div class="amt">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s> `:""}${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
     ${p.id===b.p.id&&n*300>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*300-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
     <ul>${p.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>
     <button class="btn ${p.id===b.p.id?"btn-p":"btn-g"}" data-pack="${p.id}">Comprar</button></article>`).join("");
