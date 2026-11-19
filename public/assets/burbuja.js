@@ -1,11 +1,22 @@
 /* Burbuja flotante de Sadhana: sello + insignia de WhatsApp, abajo a la derecha.
-   Al tocarla abre un mini menú (WhatsApp y Cómo llegar). Se incluye con
+   Al tocarla abre un mini menú: mensaje directo, comunidad y redes (con ubicación
+   como ícono). Para agregar una red o el enlace de la comunidad, edita CONTACTO. Se incluye con
    una etiqueta script con src="/assets/burbuja.js" (defer) en cualquier página.
    Reglas: aparece al bajar o a los pocos segundos, se coloca encima de cualquier barra fija
    inferior (.dock) y se esconde mientras hay un flujo o práctica abiertos. */
 (() => {
-  const WA = '528115458500'; // WhatsApp Business de Sadhana (81 1545 8500)
-  const MAPA = 'https://maps.app.goo.gl/vaXKCNu2pZtEAvrr9';
+  const CONTACTO = {
+    whatsapp: '528115458500', // WhatsApp Business de Sadhana (81 1545 8500)
+    comunidad: '',            // Enlace de la Comunidad de WhatsApp. Vacío = aparece como «Pronto».
+    redes: [                  // Las que no tengan url no se muestran.
+      { red: 'instagram', nombre: 'Instagram', url: 'https://www.instagram.com/sadhana.holistics/' },
+      { red: 'facebook', nombre: 'Facebook', url: '' },
+      { red: 'tiktok', nombre: 'TikTok', url: '' },
+      { red: 'youtube', nombre: 'YouTube', url: '' },
+      { red: 'mapa', nombre: 'Ubicación', url: 'https://maps.app.goo.gl/vaXKCNu2pZtEAvrr9' },
+    ],
+  };
+  const WA = CONTACTO.whatsapp;
   const enOM = location.pathname.startsWith('/om');
   const msg = enOM
     ? 'Hola, vengo de la página de El Poder del OM y me gustaría recibir información.'
@@ -44,13 +55,31 @@
   color:#fff;background:rgba(255,240,226,.1);border:1px solid rgba(255,240,226,.24);transition:background .2s}
 .sb-menu a:hover{background:rgba(255,240,226,.2)}
 .sb-menu a.p{background:linear-gradient(100deg,#c9875a,#a45a2a 60%,#8f4a25);border-color:transparent}
-.sb-menu a svg{width:18px;height:18px;flex:none;fill:currentColor}
+.sb-menu a svg,.sb-menu .sb-off svg{width:18px;height:18px;flex:none;fill:currentColor}
+.sb-off{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 18px;border-radius:999px;font-weight:700;font-size:.9rem;
+  color:rgba(255,240,226,.55);border:1px dashed rgba(255,240,226,.24)}
+.sb-off small{margin-left:auto;font-weight:700;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,240,226,.12);color:rgba(255,240,226,.8)}
+.sb-red{display:flex;justify-content:space-around;gap:6px;margin-top:4px;padding-top:12px;border-top:1px solid rgba(255,240,226,.16)}
+.sb-menu .sb-red a{flex-direction:column;justify-content:center;gap:5px;min-height:0;padding:0;border:0;background:none;font-size:.72rem;font-weight:400;color:rgba(255,240,226,.85)}
+.sb-menu .sb-red a span{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(255,240,226,.1);border:1px solid rgba(255,240,226,.24);transition:background .2s,transform .2s}
+.sb-menu .sb-red a:hover{background:none}
+.sb-menu .sb-red a:hover span{background:rgba(255,240,226,.22);transform:translateY(-2px)}
+.sb-menu .sb-red svg{width:20px;height:20px}
 body.lock .sb,body.practicando .sb{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.sb-fab::before{animation:none}.sb,.sb-menu,.sb-fab img{transition:none}}
 @media print{.sb{display:none}}`;
 
   const icoWA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3Z"/></svg>';
   const icoMapa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+
+  const icoCom = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.5 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 13c-3.3 0-6 1.7-6 4v2h12v-2c0-2.3-2.7-4-6-4Zm7.5.3c-.6 0-1.2.1-1.7.2 1.3.9 2.2 2.1 2.2 3.5v2h5v-2c0-2-2.5-3.7-5.5-3.7Z"/></svg>';
+  const ICO = {
+    instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.3A4.7 4.7 0 1 0 12 16.7 4.7 4.7 0 0 0 12 7.3Zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm6-7.9a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM21.9 8c0-1.6-.4-3-1.6-4.2C19.1 2.6 17.6 2.2 16 2.1 14.4 2 9.6 2 8 2.1c-1.6.1-3 .5-4.2 1.7C2.6 4.9 2.2 6.4 2.1 8 2 9.6 2 14.4 2.1 16c.1 1.6.5 3 1.7 4.2 1.2 1.2 2.6 1.6 4.2 1.7 1.6.1 6.4.1 8 0 1.6-.1 3-.5 4.2-1.7 1.2-1.2 1.6-2.6 1.7-4.2.1-1.6.1-6.4 0-8Zm-2 9.8a3.3 3.3 0 0 1-1.8 1.8c-1.3.5-4.3.4-5.7.4s-4.4.1-5.7-.4a3.3 3.3 0 0 1-1.8-1.8c-.5-1.3-.4-4.3-.4-5.7s-.1-4.4.4-5.7a3.3 3.3 0 0 1 1.8-1.8C6 4.1 9 4.2 12 4.2s4.4-.1 5.7.4c.8.3 1.5 1 1.8 1.8.5 1.3.4 4.3.4 5.7s.1 4.4-.4 5.7Z"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5V6.8c0-.8.2-1.3 1.4-1.3H17V2.3C16.7 2.2 15.6 2 14.4 2 11.8 2 10 3.6 10 6.5v2H7.3v3.6H10V22h4v-9.9h2.9l.4-3.6H14Z"/></svg>',
+    tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 8.3a6.5 6.5 0 0 1-3.8-1.2v5.6a5.4 5.4 0 1 1-4.7-5.4v2.9a2.6 2.6 0 1 0 1.8 2.5V2h2.9a3.8 3.8 0 0 0 3.8 3.4v2.9Z"/></svg>',
+    youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.6 2.6 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.6 2.6 0 0 0 2.4 7.2 27 27 0 0 0 2 12a27 27 0 0 0 .4 4.8 2.6 2.6 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8A27 27 0 0 0 22 12a27 27 0 0 0-.4-4.8ZM10 15V9l5.2 3L10 15Z"/></svg>',
+    mapa: icoMapa,
+  };
 
   function init() {
     const st = document.createElement('style');
@@ -61,9 +90,13 @@ body.lock .sb,body.practicando .sb{opacity:0;pointer-events:none}
     sb.className = 'sb oculta';
     sb.innerHTML = `
       <div class="sb-menu" id="sbMenu" role="dialog" aria-label="Contacto Sadhana">
-        <p><b>Sādhana</b>¿En qué te acompañamos? Te respondemos por WhatsApp.</p>
-        <a class="p" href="${waUrl}" target="_blank" rel="noopener">${icoWA}Escríbenos por WhatsApp</a>
-        <a href="${MAPA}" target="_blank" rel="noopener">${icoMapa}Cómo llegar</a>
+        <p><b>Sādhana</b>¿En qué te acompañamos? Te respondemos personalmente.</p>
+        <a class="p" href="${waUrl}" target="_blank" rel="noopener">${icoWA}Mensaje directo</a>
+        ${CONTACTO.comunidad
+          ? `<a href="${CONTACTO.comunidad}" target="_blank" rel="noopener">${icoCom}Únete a la comunidad</a>`
+          : `<div class="sb-off" aria-disabled="true">${icoCom}Comunidad<small>Pronto</small></div>`}
+        <nav class="sb-red" aria-label="Redes de Sadhana">${CONTACTO.redes.filter((r) => r.url).map((r) =>
+          `<a href="${r.url}" target="_blank" rel="noopener" aria-label="${r.nombre}"><span>${ICO[r.red] || ''}</span>${r.nombre}</a>`).join('')}</nav>
       </div>
       <button class="sb-fab" type="button" aria-expanded="false" aria-controls="sbMenu" aria-label="Contacto Sadhana">
         <img src="/assets/img/sello-ojo.png" alt="" width="44" height="44">
