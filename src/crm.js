@@ -18,7 +18,7 @@
 // Solo administradores:
 //   GET  /api/crm/equipo · POST /api/crm/equipo · POST /api/crm/equipo/:id
 //   GET  /api/crm/resumen?mes=YYYY-MM     números del mes para Proyección Sadhana (presupuesto vs real)
-//   GET  /proyeccion                      la calculadora Proyección Sadhana (src/proyeccion.html)
+//   GET  /proyeccion                      → /equipo#proyeccion (la calculadora va embebida con ?embed=1)
 //   GET  /api/crm/docs/:col · POST/DELETE /api/crm/docs/:col/:id   sus datos (escenarios, pendientes, presupuesto)
 // Importación única (encabezado x-import-token = secreto IMPORT_TOKEN): POST /api/crm/docs-import
 import equipoHTML from './equipo.html';
@@ -68,8 +68,10 @@ export async function crm(request, env) {
 
     if (p === '/proyeccion') {
       if (yo.rol !== 'admin') return new Response('Solo administración', { status: 403 });
+      // Proyección vive como pestaña de /equipo; la ruta directa lleva ahí. /equipo la carga con ?embed=1.
+      if (!url.searchParams.has('embed')) return Response.redirect(url.origin + '/equipo#proyeccion', 302);
       return new Response(proyeccionHTML, {
-        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'x-frame-options': 'DENY' },
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'x-frame-options': 'SAMEORIGIN', 'content-security-policy': "frame-ancestors 'self'" },
       });
     }
 

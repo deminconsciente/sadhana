@@ -2018,6 +2018,7 @@ route();renderAll();
 })();
 </script>
 
-<a href="/equipo" style="position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;font:700 14px/1 'Glacial Indifference',system-ui,sans-serif;padding:10px 14px;border-radius:999px;background:rgba(255,253,249,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #e6d9cc;color:#8f4a25;text-decoration:none">CRM →</a>
+<a id="lnkCRM" href="/equipo" style="position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;font:700 14px/1 'Glacial Indifference',system-ui,sans-serif;padding:10px 14px;border-radius:999px;background:rgba(255,253,249,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #e6d9cc;color:#8f4a25;text-decoration:none">CRM →</a>
+<script>if (window.top !== window.self) { var l = document.getElementById("lnkCRM"); if (l) l.style.display = "none"; }</script>
 </body>
 </html>

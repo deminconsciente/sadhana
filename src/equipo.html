@@ -76,12 +76,25 @@ h3{margin:4px 0 0;font-size:1rem}
 .hr{display:grid;grid-template-columns:1.3fr 1fr .8fr .8fr .9fr auto;gap:6px;align-items:end}
 .hr label{font-size:.78rem}
 @media (max-width:520px){.hr{grid-template-columns:1fr 1fr 1fr}.hr .x{grid-column:3}}
+.areas{display:flex;gap:4px;padding:4px;margin:10px 0 2px;border-radius:999px;background:var(--soft);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.areas button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--ink-2);border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer;white-space:nowrap}
+.areas button[aria-pressed=true]{background:var(--acc);color:#fff}
+body.proy{padding-bottom:0}
+body.proy main{max-width:none;padding:0}
+body.proy header{max-width:none}
+body.proy nav.tab{display:none}
+#ifProy{display:block;width:100%;border:0;background:var(--bg)}
 @media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 11px}}
 </style>
 </head>
 <body>
 <header>
-  <div class="top"><h1>Sadhana · Equipo</h1><span class="who"><span id="who"></span><a id="lnkProy" href="/proyeccion" hidden style="margin-left:10px;font-weight:700">Proyección →</a></span></div>
+  <div class="top"><h1>Sadhana · Equipo</h1><span class="who" id="who"></span></div>
+  <div class="areas" id="areas" role="group" aria-label="Área de trabajo" hidden>
+    <button data-area="crm" aria-pressed="true">CRM</button>
+    <button data-area="dir" aria-pressed="false">Directorio</button>
+    <button data-area="proy" aria-pressed="false">Proyección</button>
+  </div>
 </header>
 <main>
   <!-- AGENDA -->
@@ -176,6 +189,9 @@ h3{margin:4px 0 0;font-size:1rem}
     </form>
   </section>
 
+  <!-- PROYECCIÓN (admin): la calculadora de siempre, embebida -->
+  <section id="v-proy" hidden><iframe id="ifProy" title="Proyección Sadhana"></iframe></section>
+
   <!-- DIRECTORIO (admin): lo que se ve en el directorio de clases de sadhanaholistics.com -->
   <section id="v-dir" hidden>
     <p class="hint" style="margin:8px 0 12px">Lo que cambies aquí se ve en la página en unos segundos. <b>Activa</b> sale con horario y botón de reservar; <b>Próximamente</b> junta interesados con «Avísame»; <b>Oculta</b> no se ve.</p>
@@ -198,7 +214,6 @@ h3{margin:4px 0 0;font-size:1rem}
   <button data-v="agenda" aria-current="page">Agenda</button>
   <button data-v="alumnos">Alumnos</button>
   <button data-v="nueva">+ Registrar</button>
-  <button data-v="dir" hidden id="tabDir">Directorio</button>
   <button data-v="equipo" hidden id="tabEq">Equipo</button>
 </nav>
 
@@ -485,17 +500,38 @@ $("#fFund").onsubmit = async e => {
   try { await docs("_fundadores", {cupo:+f.cupo.value||0, descuento:+f.descuento.value||0, tomados:t===""?null:+t}); toast("Precio fundador guardado"); } catch(err){ toast(err.message); }
 };
 
+// ---------- Áreas: CRM · Directorio · Proyección (una sola página, admin) ----------
+let AREA = "crm", vCRM = "agenda";
+function altoProy(){ const f = $("#ifProy"); if (!f || $("#v-proy").hidden) return; f.style.height = Math.max(320, innerHeight - f.getBoundingClientRect().top) + "px"; }
+addEventListener("resize", altoProy);
+function area(a, sinHash){
+  if (YO.rol !== "admin") a = "crm";
+  AREA = a; $$("#areas [data-area]").forEach(b => b.setAttribute("aria-pressed", b.dataset.area===a));
+  document.body.classList.toggle("proy", a==="proy");
+  if (a==="crm") vista(vCRM);
+  else {
+    ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==a);
+    if (a==="dir") cargarDir();
+    if (a==="proy"){ const f = $("#ifProy"); if (!f.getAttribute("src")) f.src = "/proyeccion?embed=1"; requestAnimationFrame(altoProy); }
+    scrollTo(0,0);
+  }
+  if (!sinHash) history.replaceState(null, "", a==="crm" ? location.pathname : "#"+(a==="dir"?"directorio":"proyeccion"));
+}
+$("#areas").addEventListener("click", e => { const b = e.target.closest("[data-area]"); if (b) area(b.dataset.area); });
+addEventListener("hashchange", () => area(location.hash==="#proyeccion"?"proy":location.hash==="#directorio"?"dir":"crm", true));
+
 // ---------- Navegación ----------
 function vista(v){
+  vCRM = v;
   $$("nav.tab button").forEach(b=>b.toggleAttribute("aria-current", b.dataset.v===v) || b.removeAttribute("aria-current"));
   $$("nav.tab button").forEach(b=>{ if (b.dataset.v===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  ["agenda","alumnos","nueva","dir","equipo"].forEach(x => $("#v-"+x).hidden = x!==v);
-  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE(); if (v==="dir") cargarDir();
+  ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==v);
+  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE();
   scrollTo(0,0);
 }
 document.addEventListener("click", async e => {
   const t = e.target;
-  const nav = t.closest("nav.tab [data-v]"); if (nav){ vista(nav.dataset.v); return; }
+  const nav = t.closest("nav.tab [data-v]"); if (nav){ vCRM = nav.dataset.v; area("crm"); return; }
   const f = t.closest("[data-f]"); if (f){ fR=f.dataset.f; $$("[data-f]").forEach(b=>b.setAttribute("aria-pressed",b===f)); cargarR(); return; }
   const s = t.closest("[data-s]"); if (s){ sA=s.dataset.s; $$("[data-s]").forEach(b=>b.setAttribute("aria-pressed",b===s)); cargarA(); return; }
   const fi = t.closest("[data-ficha]"); if (fi){ e.preventDefault(); ficha(fi.dataset.ficha); return; }
@@ -519,8 +555,9 @@ $("#nuevoAl").onclick = async () => {
 (async () => {
   try { YO = await api("yo"); } catch(e){}
   $("#who").textContent = YO.nombre ? `Hola, ${YO.nombre}` : "";
-  $("#tabEq").hidden = YO.rol !== "admin"; $("#tabDir").hidden = YO.rol !== "admin"; $("#lnkProy").hidden = YO.rol !== "admin";
-  prepararNueva(); cargarR(); cargarA();
+  $("#tabEq").hidden = YO.rol !== "admin"; $("#areas").hidden = YO.rol !== "admin";
+  prepararNueva(); cargarA();
+  const h = location.hash; area(h==="#proyeccion"?"proy":h==="#directorio"?"dir":"crm", true);
 })();
 </script>
 </body>
