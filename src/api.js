@@ -3,6 +3,8 @@
 // Público:
 //   POST /api/reservas          guarda un ticket recién emitido por la landing.
 //   GET  /api/reservas/estado   ?folios=A,B → {A:"pendiente",B:"confirmado"} (sin datos personales).
+//   GET  /api/catalogo          directorio de clases editable desde /equipo → {clases:[...], fundadores}.
+//                               Vacío = la landing usa el directorio que trae escrito.
 // Privado (contraseña en el secreto ADMIN_CLAVE):
 //   GET  /admin                 panel para Isa y Diego.
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
@@ -33,6 +35,7 @@ export async function api(request, env) {
   try {
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
+    if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);
 
     if (p === '/admin' || p.startsWith('/admin/')) {
       const auth = autorizado(request, env);
@@ -177,4 +180,26 @@ async function actualizar(folio, request, env) {
   const r = await env.DB.prepare(`UPDATE reservas SET ${sets.join(', ')} WHERE folio = ?`).bind(...vals, folio).run();
   if (!r.meta.changes) return json({ ok: false, error: 'No existe ese folio' }, 404);
   return json({ ok: true });
+}
+
+// Directorio de clases (lo edita administración en /equipo → Directorio; vive en proyeccion_docs, col 'catalogo').
+// Solo sale lo público: las clases ocultas no se mandan.
+async function catalogo(env) {
+  let rows = [];
+  try {
+    ({ results: rows } = await env.DB.prepare("SELECT id, data FROM proyeccion_docs WHERE col = 'catalogo'").all());
+  } catch (e) {
+    rows = []; // la tabla aún no existe: la landing usa su directorio escrito
+  }
+  let fundadores = null;
+  const clases = [];
+  for (const r of rows) {
+    let d;
+    try { d = JSON.parse(r.data); } catch (e) { continue; }
+    if (r.id === '_fundadores') { fundadores = { cupo: d.cupo, tomados: d.tomados ?? null, descuento: d.descuento }; continue; }
+    if (d.estado === 'oculta') continue;
+    clases.push({ ...d, id: r.id });
+  }
+  clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
+  return json({ clases, fundadores }, 200, { 'cache-control': 'public, max-age=20' });
 }

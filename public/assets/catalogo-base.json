@@ -1,0 +1,191 @@
+{
+ "clases": [
+  {
+   "id": "hatha",
+   "titulo": "Hatha yoga",
+   "guia": "Isa",
+   "fam": "yoga",
+   "estado": "activa",
+   "intensidad": "Media",
+   "regula": "Posturas sostenidas y respiración pausada para salir del modo alerta.",
+   "desc": "La base del yoga: alineación, fuerza suave y atención en la respiración.",
+   "orden": 1,
+   "horarios": [
+    {
+     "id": "hatha",
+     "dia": 2,
+     "h": 19,
+     "m": 0,
+     "dur": 75,
+     "cupo": 12,
+     "precio": 300
+    }
+   ]
+  },
+  {
+   "id": "somatico",
+   "titulo": "Yoga somático",
+   "guia": "Isa",
+   "fam": "yoga",
+   "estado": "activa",
+   "intensidad": "Suave",
+   "regula": "Movimiento lento y consciente para soltar la tensión que el cuerpo guarda.",
+   "desc": "Movimientos pequeños, sentidos desde dentro, para recuperar cómo se siente tu cuerpo.",
+   "orden": 2,
+   "horarios": [
+    {
+     "id": "somatic",
+     "dia": 4,
+     "h": 19,
+     "m": 0,
+     "dur": 75,
+     "cupo": 12,
+     "precio": 300
+    }
+   ]
+  },
+  {
+   "id": "vinyasa",
+   "titulo": "Vinyasa yoga",
+   "guia": "Isa",
+   "fam": "yoga",
+   "estado": "activa",
+   "intensidad": "Intensa",
+   "regula": "Movimiento fluido al ritmo de la respiración para descargar energía acumulada.",
+   "desc": "Secuencias dinámicas que enlazan postura y respiración.",
+   "orden": 3,
+   "horarios": [
+    {
+     "id": "vinyasa",
+     "dia": 6,
+     "h": 9,
+     "m": 0,
+     "dur": 75,
+     "cupo": 12,
+     "precio": 300
+    }
+   ]
+  },
+  {
+   "id": "breath",
+   "titulo": "Breathwork",
+   "guia": "Diego",
+   "fam": "resp",
+   "estado": "activa",
+   "intensidad": "Media",
+   "regula": "Patrones de respiración que cambian el tono de tu sistema nervioso en minutos.",
+   "desc": "Respiración guiada, de la activación a la calma, con integración al final.",
+   "orden": 4,
+   "horarios": [
+    {
+     "id": "breath",
+     "dia": 1,
+     "h": 20,
+     "m": 0,
+     "dur": 60,
+     "cupo": 10,
+     "precio": 300
+    }
+   ]
+  },
+  {
+   "id": "sound",
+   "titulo": "Sound healing grupal",
+   "guia": "Isa",
+   "fam": "sonido",
+   "estado": "activa",
+   "intensidad": "Suave",
+   "regula": "Vibración y sonido para bajar la activación sin tener que hacer nada.",
+   "desc": "Cuencos, gong e instrumentos mientras descansas acostado.",
+   "orden": 5,
+   "horarios": [
+    {
+     "id": "sound",
+     "dia": 5,
+     "h": 20,
+     "m": 0,
+     "dur": 75,
+     "cupo": 14,
+     "precio": 300
+    }
+   ]
+  },
+  {
+   "id": "yin",
+   "titulo": "Yin yoga",
+   "guia": "Isa",
+   "fam": "yoga",
+   "estado": "pronto",
+   "intensidad": "Suave",
+   "regula": "Posturas largas y quietas que trabajan la fascia y enseñan a soltar.",
+   "desc": "Tres a cinco minutos por postura, con apoyos, en el suelo.",
+   "orden": 6,
+   "horarios": []
+  },
+  {
+   "id": "conciencia",
+   "titulo": "Consciencia corpórea",
+   "guia": "Diego",
+   "fam": "mov",
+   "estado": "pronto",
+   "intensidad": "Media",
+   "regula": "Percepción del propio cuerpo para notar la tensión antes de que se vuelva dolor.",
+   "desc": "Método propio de Sadhana: movimiento, percepción y lenguaje corporal.",
+   "orden": 7,
+   "horarios": []
+  },
+  {
+   "id": "chikung",
+   "titulo": "Chi kung",
+   "guia": "Por anunciar",
+   "fam": "mov",
+   "estado": "pronto",
+   "intensidad": "Suave",
+   "regula": "Movimiento lento, repetido y respirado para un sistema nervioso más estable.",
+   "desc": "Práctica tradicional china de movimiento, postura y respiración.",
+   "orden": 8,
+   "horarios": []
+  },
+  {
+   "id": "pranayama",
+   "titulo": "Pranayama",
+   "guia": "Diego",
+   "fam": "resp",
+   "estado": "pronto",
+   "intensidad": "Suave",
+   "regula": "Respiración lenta y controlada para entrenar la calma.",
+   "desc": "Técnicas clásicas de respiración del yoga, paso a paso.",
+   "orden": 9,
+   "horarios": []
+  },
+  {
+   "id": "meditacion",
+   "titulo": "Meditación",
+   "guia": "Por anunciar",
+   "fam": "mente",
+   "estado": "pronto",
+   "intensidad": "Suave",
+   "regula": "Atención entrenada para salir del piloto automático.",
+   "desc": "Distintas formas de meditar: guiada, en silencio, con respiración o con sonido.",
+   "orden": 10,
+   "horarios": []
+  },
+  {
+   "id": "embodiment",
+   "titulo": "Embodiment yoga",
+   "guia": "Por anunciar",
+   "fam": "yoga",
+   "estado": "pronto",
+   "intensidad": "Media",
+   "regula": "Yoga desde la sensación y no desde la forma de la postura.",
+   "desc": "Moverte como se siente, no como se ve.",
+   "orden": 11,
+   "horarios": []
+  }
+ ],
+ "fundadores": {
+  "cupo": 50,
+  "tomados": null,
+  "descuento": 20
+ }
+}

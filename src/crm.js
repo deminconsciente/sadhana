@@ -563,7 +563,7 @@ async function resumen(url, env) {
 
 // ---------- Datos de Proyección Sadhana (la calculadora) ----------
 // Cada documento es el mismo objeto que guardaba el artefacto, como JSON.
-const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks'];
+const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks', 'catalogo'];
 const DOC_ID = /^[A-Za-z0-9_.-]{1,60}$/;
 let tablaLista = false;
 async function tablaDocs(env) {
