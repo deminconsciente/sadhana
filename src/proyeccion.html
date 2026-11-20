@@ -732,6 +732,7 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
       <div class="pks" id="pkRows"></div>
       <div id="pkUnl"></div>
       <button class="btn needw" id="pkAdd" data-add="packages" style="align-self:flex-start">+ Agregar paquete</button>
+      <button class="lnk needw" id="pkDir" type="button" style="align-self:flex-start">Traer los paquetes del Directorio (/equipo)</button>
     </div>
   </details>
 
@@ -1660,6 +1661,13 @@ function renderMR(s,r,rq){const T=s.teachers||[];const d=(a,b,inv)=>b==null?"—
     rq.onMeta?`<b>Meta</b>: agenda meta con los alumnos que proyectas. <b>Real</b>: la misma agenda con los alumnos reales de cada maestro (aún no capturas la agenda de hoy). <button class="lnk" data-hoy="1">Capturar la agenda de hoy →</button>`
     :`<b>Meta</b>: agenda meta con los alumnos que proyectas. <b>Real</b>: agenda de hoy con los alumnos reales de cada maestro.`)+
     (crm?` <button class="lnk" id="crmReal" type="button">Traer alumnos reales del CRM (${mLabel(monthNow)})</button>`:"")}
+// Paquetes que se arman en /equipo → Directorio (máx. 3). Se conserva el mix y el bono de los que ya existen con el mismo nombre.
+async function pkDir(){const s=curRaw();if(!s)return;try{const res=await fetch("/api/crm/docs/catalogo",{cache:"no-store",credentials:"same-origin"});if(!res.ok)throw 0;
+  const d=(await res.json()).find(x=>x.id==="_paquetes");const L=d&&d.data&&Array.isArray(d.data.items)?d.data.items:[];
+  if(!L.length){toast("En el Directorio todavía no hay paquetes guardados");return}
+  const nm=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(),old=s.packages||[],mixD={suelta:15,paquete:30,ilimitada:55};
+  s.packages=L.slice(0,3).map(p=>{const o=old.find(x=>nm(x.name)===nm(p.nombre));const q={name:p.nombre,price:n(p.precio),classes:p.tipo==="ilimitada"?0:p.tipo==="suelta"?1:n(p.clases),months:1,mix:o?n(o.mix):mixD[p.tipo]||0,bonus:o?n(o.bonus):0};return q});
+  put(COL,s,0);renderEditors();toast(`${s.packages.length} ${s.packages.length===1?"paquete traído":"paquetes traídos"} del Directorio`)}catch(e){toast("No se pudo leer el Directorio")}}
 async function crmReal(){const s=curRaw();if(!s)return;try{const res=await fetch("/api/crm/resumen?mes="+monthNow,{cache:"no-store",credentials:"same-origin"});const j=await res.json();if(!res.ok)throw 0;
   const nm=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();const M=j.maestros||[];let k=0;
   (s.teachers||[]).forEach(t=>{const a=nm(t.name);const m=M.find(z=>{const b=nm(z.maestro);return b===a||b.split(" ")[0]===a.split(" ")[0]});
@@ -1784,9 +1792,10 @@ $("#dgMonth").addEventListener("click",e=>{const sm=e.target.closest("summary");
 $("#dgMonth").addEventListener("focusout",()=>setTimeout(()=>{const a=document.activeElement;if(!a||!$("#dgMonth").contains(a))softOut()},0));
 $("#m-escenarios").addEventListener("click",e=>{
   if(e.target.closest("#agExport")){exportAgenda();return}
-  const t=e.target.closest("[data-prop-save],[data-prop-use],[data-prop-del],[data-copyrec],[data-bkr],[data-dur],[data-view],[data-hv],[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal");if(!t)return;
+  const t=e.target.closest("[data-prop-save],[data-prop-use],[data-prop-del],[data-copyrec],[data-bkr],[data-dur],[data-view],[data-hv],[data-tab],[data-add],[data-del],[data-step],[data-cell],[data-catt],[data-agm],[data-brush],[data-tpl],[data-pm],[data-tgsrc],[data-ap],[data-att],[data-tatt],[data-tattr],[data-ficha],[data-go],[data-rowdel],[data-rowadd],[data-rowauto],[data-rowsel],[data-rowsh],[data-oa],[data-tpm],[data-tattq],[data-tattqr],[data-hoy],#ruleCopy,#crmReal,#pkDir");if(!t)return;
   if(t.id==="ruleCopy"){try{navigator.clipboard.writeText(ruleTxt).then(()=>toast("Regla copiada para mandarla"),()=>toast("No se pudo copiar"))}catch(x){toast("No se pudo copiar")}return}
   if(t.id==="crmReal"){crmReal();return}
+  if(t.id==="pkDir"){pkDir();return}
   if(t.dataset.hoy){agMode="hoy";selCell=null;renderAgenda();const d=$("#sec-ag");if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
   if(t.dataset.tab){curId=t.dataset.tab;try{localStorage.setItem(CURKEY,curId)}catch(x){}renderTabs();renderEditors();return}
   if(t.dataset.brush!=null){brush=t.dataset.brush;renderAgenda();return}

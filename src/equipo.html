@@ -73,9 +73,19 @@ h3{margin:4px 0 0;font-size:1rem}
 .dir-c{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
 .dir-c .meta{grid-column:1/-1}
 .est-activa{color:var(--ok)}.est-pronto{color:var(--warn)}.est-oculta{color:var(--ink-2)}
-.hr{display:grid;grid-template-columns:1.3fr 1fr .8fr .8fr .9fr auto;gap:6px;align-items:end}
+.hb{border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:8px;background:var(--bg)}
+.dchips{display:flex;gap:4px}
+.dchips button{flex:1;min-width:0;font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;min-height:42px;padding:0;cursor:pointer}
+.dchips button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+.dq{display:flex;gap:12px;flex-wrap:wrap}
+.lnk{font:inherit;font-size:.85rem;background:none;border:0;padding:4px 0;color:var(--acc);text-decoration:underline;cursor:pointer}
+.hr{display:grid;grid-template-columns:1.2fr 1fr .8fr 1fr auto;gap:6px;align-items:end}
 .hr label{font-size:.78rem}
 @media (max-width:520px){.hr{grid-template-columns:1fr 1fr 1fr}.hr .x{grid-column:3}}
+.pq{border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:8px;background:var(--bg)}
+.pq .pz{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;font-size:.9rem}
+.form label.tog,.pq label.tog,.tog{display:flex;gap:8px;align-items:center}
+.tog input{width:auto;min-height:0}
 .areas{display:flex;gap:4px;padding:4px;margin:10px 0 2px;border-radius:999px;background:var(--soft);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
 .areas button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--ink-2);border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer;white-space:nowrap}
 .areas button[aria-pressed=true]{background:var(--acc);color:#fff}
@@ -198,6 +208,14 @@ body.proy nav.tab{display:none}
     <div id="dirVacio" class="r" hidden><p class="hint">El directorio todavía usa lo que viene escrito en la página. Cárgalo aquí una vez para poder editarlo.</p><button class="btn p" id="dirSeed">Cargar el directorio actual</button></div>
     <div class="list" id="listaDir"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
+    <form class="form" id="fPaq" autocomplete="off" style="margin-top:16px">
+      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
+      <p class="hint">Son los mismos de Proyección (sección 3 · Paquetes). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
+      <div id="paqs" style="display:grid;gap:10px"></div>
+      <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Cargar los de Proyección</button></div>
+      <label class="tog"><input type="checkbox" name="publicar"> <span>Mostrar en la página pública <small class="hint">(si no, la página usa los que trae escritos)</small></span></label>
+      <button class="btn p w" type="submit">Guardar paquetes</button>
+    </form>
     <form class="form" id="fFund" autocomplete="off" style="margin-top:16px">
       <h2 style="margin:0;font-size:1.1rem">Precio fundador</h2>
       <div class="grid2">
@@ -233,7 +251,7 @@ const hace = iso => { if(!iso) return "nunca"; const d = Math.round((Date.now()-
 const wa = tel => "https://wa.me/" + (tel.length===10?"52"+tel:tel);
 const ESTADO = {pendiente:"Pago pendiente",confirmado:"Confirmado",cancelado:"Cancelado",asistio:"Asistió"};
 const METODO = {membresia:"membresía",efectivo:"efectivo",transferencia:"transferencia",tarjeta:"tarjeta",cortesia:"cortesía",stripe:"tarjeta en línea",credito:"crédito de paquete"};
-// Paquetes de alumno (los mismos 3 de Proyección Sadhana).
+// Paquetes de alumno. Si el equipo ya los guardó en Directorio → Paquetes, se usan esos (ver planesDesdePaquetes).
 const PLANES = [
   {plan:"Clase suelta", clases:1, meses:1, precio:300},
   {plan:"Paquete 8 clases", clases:8, meses:1, precio:1300},
@@ -416,7 +434,38 @@ const EST = {activa:"Activa", pronto:"Próximamente", oculta:"Oculta"};
 const DIAS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 const pad = n => String(n).padStart(2,"0");
 const hTxt = h => `${DIAS[h.dia]} ${pad(h.h)}:${pad(h.m||0)}`;
-let D = [], FUND = null;
+const DC = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"], DORD = [1,2,3,4,5,6,0]; // se muestran de lunes a domingo
+// «Lun Mié 19:00 · Sáb 09:00»: los días que comparten hora van juntos
+function resumenH(H){
+  const g = new Map();
+  for (const h of H){ const k = `${pad(h.h)}:${pad(h.m||0)}`; if (!g.has(k)) g.set(k,[]); g.get(k).push(+h.dia); }
+  const pos = d => Math.min(...d.map(x=>(x+6)%7)); return [...g].sort((a,b)=>pos(a[1])-pos(b[1])||(a[0]<b[0]?-1:1)).map(([k,d])=>`${DORD.filter(x=>d.includes(x)).map(x=>DC[x]).join(" ")} ${k}`).join(" · ");
+}
+// horarios sueltos (uno por día) ⇄ bloques (varios días con la misma hora)
+function aBloques(H){
+  const m = new Map();
+  for (const h of H){ const k = [h.h,h.m||0,h.dur||60,h.cupo||12,h.precio??300].join("|");
+    if (!m.has(k)) m.set(k,{dias:[],h:+h.h,m:+h.m||0,dur:+h.dur||60,cupo:+h.cupo||12,precio:h.precio??300}); m.get(k).dias.push(+h.dia); }
+  return [...m.values()];
+}
+// Conserva el id de cada horario que ya existía (las reservas dependen de él).
+function aHorarios(B, id, previos){
+  const viejo = new Map(previos.filter(h=>h.id).map(h=>[`${h.dia}|${h.h}|${h.m||0}`, h.id])), usados = new Set(previos.map(h=>h.id).filter(Boolean)), out = [];
+  let n = 1; const nuevo = () => { while (usados.has(`${id}-${n}`)) n++; usados.add(`${id}-${n}`); return `${id}-${n}`; };
+  for (const b of B) for (const d of DORD.filter(x=>b.dias.includes(x))){
+    const k = `${d}|${b.h}|${b.m}`, hid = viejo.get(k); if (hid) viejo.delete(k);
+    out.push({id:hid || nuevo(), dia:d, h:b.h, m:b.m, dur:b.dur, cupo:b.cupo, precio:b.precio});
+  }
+  return out;
+}
+const choques = (mine, otros) => { const r = [];
+  for (const o of otros) for (const a of mine) for (const b of (o.horarios||[])){
+    if (+a.dia !== +b.dia) continue;
+    const a0 = a.h*60+(a.m||0), a1 = a0+(a.dur||60), b0 = b.h*60+(b.m||0), b1 = b0+(b.dur||60);
+    if (a0 < b1 && b0 < a1) r.push(`${o.titulo} (${hTxt(b)})`);
+  }
+  return [...new Set(r)]; };
+let D = [], FUND = null, PAQ = {publicar:false, items:[]};
 async function docs(path, body, metodo){
   const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
@@ -424,16 +473,19 @@ async function docs(path, body, metodo){
 async function cargarDir(){
   let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
   FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
-  D = l.filter(x=>x.id!=="_fundadores").map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
+  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3)};
+  planesDesdePaquetes(PAQ.items);
+  D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
   $("#dirVacio").hidden = D.length>0;
   $("#listaDir").innerHTML = D.map(c=>`<div class="r dir-c" data-cid="${esc(c.id)}">
-      <div><h2>${esc(c.titulo)}</h2><span class="meta">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${FAM[c.fam]||""}${c.estado==="activa"&&(c.horarios||[]).length?" · "+c.horarios.map(hTxt).join(", "):""}</span></div>
+      <div><h2>${esc(c.titulo)}</h2><span class="meta">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${FAM[c.fam]||""}${c.estado==="activa"&&(c.horarios||[]).length?" · "+resumenH(c.horarios):""}</span></div>
       <span class="chip est-${c.estado}">${EST[c.estado]||c.estado}</span>
       <div class="row" style="grid-column:1/-1">
         <div class="seg">${Object.entries(EST).map(([k,v])=>`<button type="button" data-est="${k}" aria-pressed="${c.estado===k}">${v}</button>`).join("")}</div>
         <button class="btn s" data-edit>Editar</button>
       </div></div>`).join("");
   const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
+  pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar;
   f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
 }
 $("#dirSeed").onclick = async () => {
@@ -448,15 +500,17 @@ $("#dirSeed").onclick = async () => {
 async function guardarClase(c){ const {id, ...d} = c; await docs(id, d); }
 function editarClase(c){
   const nueva = !c; c = c || {id:"", titulo:"", guia:"", fam:"yoga", estado:"pronto", intensidad:"Suave", regula:"", desc:"", orden:(D.length+1), horarios:[]};
-  let H = (c.horarios||[]).map(h=>({...h}));
+  let B = aBloques(c.horarios||[]);
   $("#dT").textContent = nueva ? "Nueva clase" : c.titulo;
-  const pintarH = () => $("#hrs").innerHTML = H.map((h,i)=>`<div class="hr" data-h="${i}">
-      <label>Día<select data-k="dia">${DIAS.map((d,k)=>`<option value="${k}" ${+h.dia===k?"selected":""}>${d}</option>`).join("")}</select></label>
-      <label>Hora<input data-k="hora" type="time" step="900" value="${pad(h.h??19)}:${pad(h.m||0)}"></label>
-      <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${h.dur||60}"></label>
-      <label>Cupo<input data-k="cupo" type="number" min="1" value="${h.cupo||12}"></label>
-      <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${h.precio??300}"></label>
-      <button type="button" class="btn s x" data-quitar="${i}" aria-label="Quitar horario">✕</button></div>`).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
+  const pintarH = () => $("#hrs").innerHTML = B.map((b,i)=>`<div class="hb" data-b="${i}">
+      <div class="dchips" role="group" aria-label="Días de la semana">${DORD.map(d=>`<button type="button" data-d="${d}" aria-pressed="${b.dias.includes(d)}" aria-label="${DIAS[d]}">${DC[d]}</button>`).join("")}</div>
+      <div class="dq"><button type="button" class="lnk" data-q="lv">Lun a Vie</button><button type="button" class="lnk" data-q="fin">Sáb y Dom</button><button type="button" class="lnk" data-q="todos">Todos</button><button type="button" class="lnk" data-q="nada">Quitar días</button></div>
+      <div class="hr">
+        <label>Hora<input data-k="hora" type="time" step="900" value="${pad(b.h??19)}:${pad(b.m||0)}"></label>
+        <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${b.dur||60}"></label>
+        <label>Cupo<input data-k="cupo" type="number" min="1" value="${b.cupo||12}"></label>
+        <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${b.precio??300}"></label>
+        <button type="button" class="btn s x" data-quitar="${i}" aria-label="Quitar horario">✕</button></div></div>`).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
   $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" style="border:0;padding:0;background:none">
     <label>Nombre de la clase<input name="titulo" required value="${esc(c.titulo)}" placeholder="Yin yoga"></label>
     <div class="grid2"><label>Maestro o maestra<input name="guia" value="${esc(c.guia)}" placeholder="Por anunciar"></label>
@@ -466,22 +520,32 @@ function editarClase(c){
     <label>Qué regula (una frase)<textarea name="regula" rows="2" maxlength="160">${esc(c.regula)}</textarea></label>
     <label>Descripción<textarea name="desc" rows="2" maxlength="240">${esc(c.desc)}</textarea></label>
     <label>Orden en el directorio<input name="orden" type="number" min="1" value="${esc(c.orden)}"></label>
-    <h3>Horarios semanales</h3><div id="hrs" style="display:grid;gap:8px"></div>
-    <button type="button" class="btn s" id="addH">+ Agregar horario</button>
+    <h3>Días y horarios</h3><p class="hint" style="margin:0">Toca los días en que se da la clase y pon la hora. Si hay otra hora distinta, agrega otro horario.</p>
+    <div id="hrs" style="display:grid;gap:8px"></div>
+    <button type="button" class="btn s" id="addH">+ Otro horario</button>
     <button class="btn p w" type="submit">Guardar</button>
     ${nueva?"":`<button type="button" class="btn w" id="delCl" style="color:var(--bad)">Borrar esta clase</button>`}
   </form>`;
   pintarH();
-  const leerH = () => $$("#hrs [data-h]").forEach(row => { const h = H[+row.dataset.h], v = k => row.querySelector(`[data-k=${k}]`).value;
-    const [hh,mm] = (v("hora")||"19:00").split(":"); Object.assign(h,{dia:+v("dia"),h:+hh,m:+mm,dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
-  $("#hrs").onclick = e => { const q = e.target.closest("[data-quitar]"); if (!q) return; leerH(); H.splice(+q.dataset.quitar,1); pintarH(); };
-  $("#addH").onclick = () => { leerH(); const u = H[H.length-1]; H.push(u?{...u,id:undefined}:{dia:1,h:19,m:0,dur:60,cupo:12,precio:300}); pintarH(); };
+  const leerH = () => $$("#hrs [data-b]").forEach(row => { const b = B[+row.dataset.b], v = k => row.querySelector(`[data-k=${k}]`).value;
+    const [hh,mm] = (v("hora")||"19:00").split(":"); Object.assign(b,{h:+hh,m:+mm,dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
+  $("#hrs").onclick = e => {
+    const q = e.target.closest("[data-quitar]"); if (q){ leerH(); B.splice(+q.dataset.quitar,1); pintarH(); return; }
+    const row = e.target.closest("[data-b]"); if (!row) return; const b = B[+row.dataset.b];
+    const d = e.target.closest("[data-d]"); if (d){ const k = +d.dataset.d, on = !b.dias.includes(k); b.dias = on ? [...b.dias,k] : b.dias.filter(x=>x!==k); d.setAttribute("aria-pressed", on); return; }
+    const z = e.target.closest("[data-q]"); if (z){ leerH(); b.dias = {lv:[1,2,3,4,5], fin:[6,0], todos:[0,1,2,3,4,5,6], nada:[]}[z.dataset.q]; pintarH(); }
+  };
+  $("#addH").onclick = () => { leerH(); const u = B[B.length-1]; B.push(u?{...u,dias:[]}:{dias:[],h:19,m:0,dur:60,cupo:12,precio:300}); pintarH(); };
   $("#fCl").onsubmit = async e => {
     e.preventDefault(); leerH(); const d = Object.fromEntries(new FormData(e.target));
-    let id = c.id || d.titulo.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
+    let id = c.id || d.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
     if (nueva && D.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-3);
-    if (d.estado==="activa" && !H.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
-    try { await guardarClase({...c, ...d, orden:+d.orden||99, id, horarios:H.map((h,i)=>({...h, id:h.id || `${id}-${i+1}`}))}); toast("Guardado. Ya se ve en la página."); $("#dlg").close(); cargarDir(); } catch(err){ toast(err.message); }
+    if (B.some(b=>!b.dias.length)) { toast("Elige al menos un día en cada horario, o quita el que sobre"); return; }
+    if (d.estado==="activa" && !B.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
+    const horarios = aHorarios(B, id, c.horarios||[]);
+    const ch = d.estado==="activa" ? choques(horarios, D.filter(x=>x.id!==id && x.estado==="activa")) : [];
+    if (ch.length && !confirm(`Se empalma con: ${ch.join(", ")}.\n¿Guardar de todos modos?`)) return;
+    try { await guardarClase({...c, ...d, orden:+d.orden||99, id, horarios}); toast("Guardado. Ya se ve en la página."); $("#dlg").close(); cargarDir(); } catch(err){ toast(err.message); }
   };
   const del = $("#delCl"); if (del) del.onclick = async () => { if (!confirm(`¿Borrar ${c.titulo} del directorio? Si solo quieres esconderla, usa Oculta.`)) return;
     try { await docs(c.id, undefined, "DELETE"); toast("Borrada"); $("#dlg").close(); cargarDir(); } catch(err){ toast(err.message); } };
@@ -495,6 +559,64 @@ $("#listaDir").addEventListener("click", async e => {
   if (es.dataset.est==="activa" && !(c.horarios||[]).length) { toast("Primero ponle un horario (Editar)"); editarClase(c); return; }
   try { await guardarClase({...c, estado:es.dataset.est}); toast(`${c.titulo}: ${EST[es.dataset.est]}`); cargarDir(); } catch(err){ toast(err.message); }
 });
+// ---------- Paquetes de alumno (máx. 3): los mismos de Proyección · sección 3 ----------
+const TIPOS = {suelta:"Clase suelta", paquete:"Paquete de clases", ilimitada:"Membresía ilimitada"};
+const PLAZOS = [3,6,9,12];
+const PAQ_BASE = () => [
+  {id:"suelta", nombre:"Clase suelta", tipo:"suelta", clases:1, precio:300, plazos:[], incluye:""},
+  {id:"mensual-8", nombre:"Paquete 8 clases al mes", tipo:"paquete", clases:8, precio:1300, plazos:[], incluye:""},
+  {id:"ilimitada", nombre:"Membresía ilimitada", tipo:"ilimitada", clases:0, precio:1600, plazos:[{m:3,precio:1800},{m:6,precio:1650},{m:9,precio:1500},{m:12,precio:1400}], incluye:""}];
+// Las altas manuales de membresía (pestaña Alumnos) ofrecen los mismos paquetes.
+function planesDesdePaquetes(items){
+  const L = [];
+  for (const p of items||[]){
+    if (p.tipo==="suelta") L.push({plan:p.nombre, clases:1, meses:1, precio:+p.precio});
+    else if (p.tipo==="paquete") L.push({plan:p.nombre, clases:+p.clases, meses:1, precio:+p.precio});
+    else { L.push({plan:`${p.nombre} 1 mes`, clases:null, meses:1, precio:+p.precio});
+      for (const z of p.plazos||[]) L.push({plan:`${p.nombre} ${z.m} meses`, clases:null, meses:+z.m, precio:+z.precio*z.m}); }
+  }
+  if (L.length) PLANES.splice(0, PLANES.length, ...L);
+}
+const regular = (p, desc) => p.tipo==="suelta" || !desc ? null : Math.round(p.precio/(1-desc/100)/50)*50;
+function pintarPaq(){
+  const desc = (FUND && FUND.descuento) ?? 20;
+  $("#paqs").innerHTML = PAQ.items.map((p,i)=>`<div class="pq" data-p="${i}">
+    <div class="grid2"><label>Nombre<input data-k="nombre" value="${esc(p.nombre)}" maxlength="40"></label>
+      <label>Tipo<select data-k="tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${p.tipo===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
+    <div class="grid2">${p.tipo==="paquete"?`<label>Clases al mes<input data-k="clases" type="number" min="2" inputmode="numeric" value="${esc(p.clases)}"></label>`:`<span></span>`}
+      <label>${p.tipo==="suelta"?"Precio por clase":"Precio al mes"}<input data-k="precio" type="number" min="0" step="50" inputmode="numeric" value="${esc(p.precio)}"></label></div>
+    ${p.tipo==="ilimitada"?`<div><small class="hint">Plazos opcionales: precio al mes si se compromete por más meses.</small><div class="pz">${PLAZOS.map(m=>{ const z=(p.plazos||[]).find(x=>x.m===m); return `<label class="tog"><input type="checkbox" data-pz="${m}" ${z?"checked":""}> ${m} meses</label><input data-pzp="${m}" type="number" min="0" step="50" inputmode="numeric" value="${z?esc(z.precio):esc(p.precio)}" ${z?"":"disabled"} aria-label="Precio al mes a ${m} meses">`; }).join("")}</div></div>`:""}
+    <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
+    <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
+      <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Cargar los de Proyección» para empezar.</p>`;
+  $("#paqAdd").hidden = PAQ.items.length >= 3;
+}
+$("#paqs").addEventListener("input", e => {
+  const row = e.target.closest("[data-p]"); if (!row) return; const p = PAQ.items[+row.dataset.p], k = e.target.dataset.k;
+  if (e.target.dataset.pzp) { const z = (p.plazos||[]).find(x=>x.m===+e.target.dataset.pzp); if (z) z.precio = +e.target.value||0; return; }
+  if (!k) return;
+  p[k] = ["clases","precio"].includes(k) ? (+e.target.value||0) : e.target.value;
+  if (k==="tipo") { p.clases = p.tipo==="suelta" ? 1 : p.tipo==="ilimitada" ? 0 : Math.max(p.clases||8, 2); if (p.tipo!=="ilimitada") p.plazos = []; pintarPaq(); return; }
+  const g = row.querySelector("[data-reg]"), desc = (FUND && FUND.descuento) ?? 20; if (g) g.textContent = regular(p,desc) ? `Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}` : "Sin precio fundador";
+});
+$("#paqs").addEventListener("change", e => {
+  const row = e.target.closest("[data-p]"); if (!row || !e.target.dataset.pz) return; const p = PAQ.items[+row.dataset.p], m = +e.target.dataset.pz;
+  p.plazos = (p.plazos||[]).filter(x=>x.m!==m); if (e.target.checked) p.plazos.push({m, precio:+row.querySelector(`[data-pzp="${m}"]`).value||p.precio}); p.plazos.sort((a,b)=>a.m-b.m); pintarPaq();
+});
+$("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); pintarPaq(); });
+$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); pintarPaq(); };
+$("#paqSeed").onclick = () => { if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return; PAQ.items = PAQ_BASE(); pintarPaq(); };
+$("#fPaq").onsubmit = async e => {
+  e.preventDefault(); const usados = new Set(), items = [];
+  for (const p of PAQ.items){
+    const nombre = (p.nombre||"").trim(); if (!nombre) { toast("Cada paquete necesita nombre"); return; }
+    if (!(+p.precio>0)) { toast(`${nombre}: pon un precio`); return; }
+    let id = p.id || nombre.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "paquete";
+    while (usados.has(id)) id += "-2"; usados.add(id);
+    items.push({id, nombre, tipo:p.tipo, clases:p.tipo==="suelta"?1:p.tipo==="ilimitada"?0:Math.max(2,+p.clases||2), precio:+p.precio, plazos:p.tipo==="ilimitada"?(p.plazos||[]):[], incluye:(p.incluye||"").trim()});
+  }
+  try { await docs("_paquetes", {publicar:e.target.publicar.checked && items.length>0, items}); toast(e.target.publicar.checked ? "Paquetes guardados. Ya se ven en la página." : "Paquetes guardados (la página sigue con los suyos)"); cargarDir(); } catch(err){ toast(err.message); }
+};
 $("#fFund").onsubmit = async e => {
   e.preventDefault(); const f = e.target; const t = f.tomados.value.trim();
   try { await docs("_fundadores", {cupo:+f.cupo.value||0, descuento:+f.descuento.value||0, tomados:t===""?null:+t}); toast("Precio fundador guardado"); } catch(err){ toast(err.message); }
@@ -556,6 +678,7 @@ $("#nuevoAl").onclick = async () => {
   try { YO = await api("yo"); } catch(e){}
   $("#who").textContent = YO.nombre ? `Hola, ${YO.nombre}` : "";
   $("#tabEq").hidden = YO.rol !== "admin"; $("#areas").hidden = YO.rol !== "admin";
+  if (YO.rol === "admin") { try { const l = await docs(""); const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (pq && Array.isArray(pq.items)) planesDesdePaquetes(pq.items); } catch(e){} }
   prepararNueva(); cargarA();
   const h = location.hash; area(h==="#proyeccion"?"proy":h==="#directorio"?"dir":"crm", true);
 })();
