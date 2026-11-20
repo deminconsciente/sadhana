@@ -1719,9 +1719,8 @@ function aplicarPaquetes(L){
   PAQUETES.splice(0, PAQUETES.length, ...ok.map(p => {
     const unl = p.tipo==="ilimitada", n = p.tipo==="suelta" ? 1 : unl ? 20 : Math.max(2, +p.clases||2);
     const inc = [p.tipo==="suelta" ? "1 clase de la agenda" : unl ? "Todas las clases de la agenda" : `${n} clases en 30 días`]
-      .concat((p.plazos||[]).map(z => `${z.m} meses: ${money(z.precio)} al mes`))
       .concat(String(p.incluye||"").split("\n").map(x => x.trim()).filter(Boolean));
-    return {id:String(p.id), t:String(p.nombre), precio:+p.precio, clases:n, unl, tipo:p.tipo, plazos:(p.plazos||[]).filter(z=>z&&+z.m>0&&+z.precio>0), creditos:{clases:unl?30:n}, inc};
+    return {id:String(p.id), t:String(p.nombre), precio:+p.precio, clases:n, unl, tipo:p.tipo, creditos:{clases:unl?30:n}, inc};
   }));
   const r = $("#nClases"); r.max = PAQUETES.length-1; r.value = Math.min(+r.value, PAQUETES.length-1);
   $("#nTicks").innerHTML = PAQUETES.map(p => `<span>${p.unl?"∞":p.clases}</span>`).join("");
@@ -1742,7 +1741,6 @@ function packArte(p, pick, b, n){
     <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
       <div class="pills">${inc.join("")}</div>
       ${precioRegular(p)?`<div class="pills">${pill(`Precio fundador −${FUNDADORES.descuento}%`,"","star")}</div>`:""}
-      ${(p.plazos||[]).length?`<div class="pills">${p.plazos.map(z=>pill(`${z.m} meses: ${money(z.precio)}/mes`,"line","cal")).join("")}</div>`:""}
       <div class="pills">${p.unl?pill("Todas las clases que quieras","ok","check"):p.clases*PU()>p.precio?pill(`Ahorras ${money(p.clases*PU()-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
       <div class="ev-ft"><span class="meta">${esSuelta(p)?"Pagas solo lo que tomas":p.unl?"Sin límite de clases":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
   </article>`;
