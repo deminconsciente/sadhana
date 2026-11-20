@@ -78,6 +78,11 @@ h3{margin:4px 0 0;font-size:1rem}
 .dchips button{flex:1;min-width:0;font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;min-height:42px;padding:0;cursor:pointer}
 .dchips button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
 .dq{display:flex;gap:12px;flex-wrap:wrap}
+.hchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hchips>button[data-t]{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;min-height:38px;cursor:pointer}
+.hchips>button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.hotra{display:inline-flex;gap:6px;align-items:center}
+.hotra input{width:auto;min-height:38px}
 .lnk{font:inherit;font-size:.85rem;background:none;border:0;padding:4px 0;color:var(--acc);text-decoration:underline;cursor:pointer}
 .hr{display:grid;grid-template-columns:1.2fr 1fr .8fr 1fr auto;gap:6px;align-items:end}
 .hr label{font-size:.78rem}
@@ -438,20 +443,27 @@ function resumenH(H){
   for (const h of H){ const k = `${pad(h.h)}:${pad(h.m||0)}`; if (!g.has(k)) g.set(k,[]); g.get(k).push(+h.dia); }
   const pos = d => Math.min(...d.map(x=>(x+6)%7)); return [...g].sort((a,b)=>pos(a[1])-pos(b[1])||(a[0]<b[0]?-1:1)).map(([k,d])=>`${DORD.filter(x=>d.includes(x)).map(x=>DC[x]).join(" ")} ${k}`).join(" · ");
 }
-// horarios sueltos (uno por día) ⇄ bloques (varios días con la misma hora)
+// horarios sueltos (uno por día y hora) ⇄ bloques (varios días × varias horas con la misma duración, cupo y precio)
+const HORAS = ["06:00","07:00","08:00","09:00","10:00","11:00","12:00","16:00","17:00","18:00","19:00","20:00","21:00"];
+const hhmm = (h,m) => `${pad(h)}:${pad(m||0)}`;
+const hAmPm = t => { const [h,m] = t.split(":").map(Number); return `${h%12||12}${m?":"+pad(m):""} ${h>=12?"pm":"am"}`; };
 function aBloques(H){
-  const m = new Map();
+  const porHora = new Map();
   for (const h of H){ const k = [h.h,h.m||0,h.dur||60,h.cupo||12,h.precio??300].join("|");
-    if (!m.has(k)) m.set(k,{dias:[],h:+h.h,m:+h.m||0,dur:+h.dur||60,cupo:+h.cupo||12,precio:h.precio??300}); m.get(k).dias.push(+h.dia); }
-  return [...m.values()];
+    if (!porHora.has(k)) porHora.set(k,{dias:[],hora:hhmm(h.h,h.m),dur:+h.dur||60,cupo:+h.cupo||12,precio:h.precio??300}); porHora.get(k).dias.push(+h.dia); }
+  const m = new Map();
+  for (const g of porHora.values()){ const k = [g.dur,g.cupo,g.precio,[...g.dias].sort().join(",")].join("|");
+    if (!m.has(k)) m.set(k,{dias:g.dias,horas:[],dur:g.dur,cupo:g.cupo,precio:g.precio}); m.get(k).horas.push(g.hora); }
+  return [...m.values()].map(b => ({...b, horas:b.horas.sort()}));
 }
 // Conserva el id de cada horario que ya existía (las reservas dependen de él).
 function aHorarios(B, id, previos){
-  const viejo = new Map(previos.filter(h=>h.id).map(h=>[`${h.dia}|${h.h}|${h.m||0}`, h.id])), usados = new Set(previos.map(h=>h.id).filter(Boolean)), out = [];
+  const viejo = new Map(previos.filter(h=>h.id).map(h=>[`${h.dia}|${h.h}|${h.m||0}`, h.id])), usados = new Set(previos.map(h=>h.id).filter(Boolean)), out = [], vistos = new Set();
   let n = 1; const nuevo = () => { while (usados.has(`${id}-${n}`)) n++; usados.add(`${id}-${n}`); return `${id}-${n}`; };
-  for (const b of B) for (const d of DORD.filter(x=>b.dias.includes(x))){
-    const k = `${d}|${b.h}|${b.m}`, hid = viejo.get(k); if (hid) viejo.delete(k);
-    out.push({id:hid || nuevo(), dia:d, h:b.h, m:b.m, dur:b.dur, cupo:b.cupo, precio:b.precio});
+  for (const b of B) for (const d of DORD.filter(x=>b.dias.includes(x))) for (const t of b.horas){
+    const [hh,mm] = t.split(":").map(Number), k = `${d}|${hh}|${mm}`; if (vistos.has(k)) continue; vistos.add(k);
+    const hid = viejo.get(k); if (hid) viejo.delete(k);
+    out.push({id:hid || nuevo(), dia:d, h:hh, m:mm, dur:b.dur, cupo:b.cupo, precio:b.precio});
   }
   return out;
 }
@@ -499,15 +511,23 @@ function editarClase(c){
   const nueva = !c; c = c || {id:"", titulo:"", guia:"", fam:"yoga", estado:"pronto", intensidad:"Suave", regula:"", desc:"", orden:(D.length+1), horarios:[]};
   let B = aBloques(c.horarios||[]);
   $("#dT").textContent = nueva ? "Nueva clase" : c.titulo;
-  const pintarH = () => $("#hrs").innerHTML = B.map((b,i)=>`<div class="hb" data-b="${i}">
+  const resumen = () => { const H = aHorarios(B.filter(b=>b.dias.length&&b.horas.length), "x", []); const el = $("#resH"); if (!el) return;
+    el.textContent = H.length ? `Se da: ${resumenH(H)} (${H.length} ${H.length===1?"horario":"horarios"} por semana)` : "Todavía sin horarios."; };
+  const pintarH = () => { $("#hrs").innerHTML = B.map((b,i)=>{ const extra = b.horas.filter(t=>!HORAS.includes(t));
+    return `<div class="hb" data-b="${i}">
+      <b class="hint">1 · ¿Qué días?</b>
       <div class="dchips" role="group" aria-label="Días de la semana">${DORD.map(d=>`<button type="button" data-d="${d}" aria-pressed="${b.dias.includes(d)}" aria-label="${DIAS[d]}">${DC[d]}</button>`).join("")}</div>
       <div class="dq"><button type="button" class="lnk" data-q="lv">Lun a Vie</button><button type="button" class="lnk" data-q="fin">Sáb y Dom</button><button type="button" class="lnk" data-q="todos">Todos</button><button type="button" class="lnk" data-q="nada">Quitar días</button></div>
-      <div class="hr">
-        <label>Hora<input data-k="hora" type="time" step="900" value="${pad(b.h??19)}:${pad(b.m||0)}"></label>
-        <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${b.dur||60}"></label>
-        <label>Cupo<input data-k="cupo" type="number" min="1" value="${b.cupo||12}"></label>
-        <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${b.precio??300}"></label>
-        <button type="button" class="btn s x" data-quitar="${i}" aria-label="Quitar horario">✕</button></div></div>`).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
+      <b class="hint">2 · ¿A qué hora? <span style="font-weight:400">(toca una o varias)</span></b>
+      <div class="hchips" role="group" aria-label="Horas">${[...HORAS,...extra].sort().map(t=>`<button type="button" data-t="${t}" aria-pressed="${b.horas.includes(t)}">${hAmPm(t)}</button>`).join("")}
+        <span class="hotra"><input data-k="otra" type="time" step="300" aria-label="Otra hora"><button type="button" class="btn s" data-otra>+ Otra</button></span></div>
+      <details><summary class="hint" style="cursor:pointer">Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})</summary>
+        <div class="hr" style="margin-top:6px">
+          <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${b.dur||60}"></label>
+          <label>Cupo<input data-k="cupo" type="number" min="1" value="${b.cupo||12}"></label>
+          <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${b.precio??300}"></label></div></details>
+      <button type="button" class="btn s" data-quitar="${i}" style="justify-self:start">Quitar este horario</button></div>`; }).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
+    resumen(); };
   $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" style="border:0;padding:0;background:none">
     <label>Nombre de la clase<input name="titulo" required value="${esc(c.titulo)}" placeholder="Yin yoga"></label>
     <div class="grid2"><label>Maestro o maestra<input name="guia" value="${esc(c.guia)}" placeholder="Por anunciar"></label>
@@ -517,27 +537,32 @@ function editarClase(c){
     <label>Qué regula (una frase)<textarea name="regula" rows="2" maxlength="160">${esc(c.regula)}</textarea></label>
     <label>Descripción<textarea name="desc" rows="2" maxlength="240">${esc(c.desc)}</textarea></label>
     <label>Orden en el directorio<input name="orden" type="number" min="1" value="${esc(c.orden)}"></label>
-    <h3>Días y horarios</h3><p class="hint" style="margin:0">Toca los días en que se da la clase y pon la hora. Si hay otra hora distinta, agrega otro horario.</p>
+    <h3>Días y horarios</h3><p class="hint" style="margin:0">Toca los días y las horas: se aplican todas las combinaciones. Si otra hora va en otros días, agrega otro horario.</p>
     <div id="hrs" style="display:grid;gap:8px"></div>
-    <button type="button" class="btn s" id="addH">+ Otro horario</button>
+    <button type="button" class="btn s" id="addH">+ Otros días u otra hora</button>
+    <p class="hint" id="resH" style="margin:0;font-weight:600"></p>
     <button class="btn p w" type="submit">Guardar</button>
     ${nueva?"":`<button type="button" class="btn w" id="delCl" style="color:var(--bad)">Borrar esta clase</button>`}
   </form>`;
   pintarH();
   const leerH = () => $$("#hrs [data-b]").forEach(row => { const b = B[+row.dataset.b], v = k => row.querySelector(`[data-k=${k}]`).value;
-    const [hh,mm] = (v("hora")||"19:00").split(":"); Object.assign(b,{h:+hh,m:+mm,dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
+    Object.assign(b,{dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
   $("#hrs").onclick = e => {
     const q = e.target.closest("[data-quitar]"); if (q){ leerH(); B.splice(+q.dataset.quitar,1); pintarH(); return; }
     const row = e.target.closest("[data-b]"); if (!row) return; const b = B[+row.dataset.b];
-    const d = e.target.closest("[data-d]"); if (d){ const k = +d.dataset.d, on = !b.dias.includes(k); b.dias = on ? [...b.dias,k] : b.dias.filter(x=>x!==k); d.setAttribute("aria-pressed", on); return; }
+    const d = e.target.closest("[data-d]"); if (d){ const k = +d.dataset.d, on = !b.dias.includes(k); b.dias = on ? [...b.dias,k] : b.dias.filter(x=>x!==k); d.setAttribute("aria-pressed", on); resumen(); return; }
+    const t = e.target.closest("[data-t]"); if (t){ const k = t.dataset.t, on = !b.horas.includes(k); b.horas = on ? [...b.horas,k].sort() : b.horas.filter(x=>x!==k); t.setAttribute("aria-pressed", on); resumen(); return; }
+    const o = e.target.closest("[data-otra]"); if (o){ const v = row.querySelector('[data-k=otra]').value; if (!v) { toast("Elige la hora y toca + Otra"); return; } leerH(); if (!b.horas.includes(v)) b.horas = [...b.horas,v].sort(); pintarH(); return; }
     const z = e.target.closest("[data-q]"); if (z){ leerH(); b.dias = {lv:[1,2,3,4,5], fin:[6,0], todos:[0,1,2,3,4,5,6], nada:[]}[z.dataset.q]; pintarH(); }
   };
-  $("#addH").onclick = () => { leerH(); const u = B[B.length-1]; B.push(u?{...u,dias:[]}:{dias:[],h:19,m:0,dur:60,cupo:12,precio:300}); pintarH(); };
+  $("#hrs").addEventListener("change", e => { if (e.target.closest("details")) { leerH(); const sm = e.target.closest("details").querySelector("summary"), b = B[+e.target.closest("[data-b]").dataset.b]; sm.textContent = `Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})`; } });
+  $("#addH").onclick = () => { leerH(); const u = B[B.length-1]; B.push({dias:[],horas:u?[...u.horas]:["19:00"],dur:u?u.dur:60,cupo:u?u.cupo:12,precio:u?u.precio:300}); pintarH(); };
   $("#fCl").onsubmit = async e => {
     e.preventDefault(); leerH(); const d = Object.fromEntries(new FormData(e.target));
     let id = c.id || d.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
     if (nueva && D.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-3);
-    if (B.some(b=>!b.dias.length)) { toast("Elige al menos un día en cada horario, o quita el que sobre"); return; }
+    if (B.some(b=>!b.dias.length || !b.horas.length)) { toast("Cada horario necesita al menos un día y una hora, o quítalo"); return; }
+    if (B.length && d.estado==="pronto" && confirm("Tiene horarios pero está en «Próximamente», y así no se ven ni se puede reservar.\n¿Pasarla a Activa?")) d.estado = "activa";
     if (d.estado==="activa" && !B.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
     const horarios = aHorarios(B, id, c.horarios||[]);
     const ch = d.estado==="activa" ? choques(horarios, D.filter(x=>x.id!==id && x.estado==="activa")) : [];
