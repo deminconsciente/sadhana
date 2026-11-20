@@ -307,7 +307,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dc-art svg{position:absolute;right:-8px;top:-8px;width:96px;height:96px;opacity:.55}
 .dc-art .ev-cat{left:12px;top:12px}
 .dc.pronto .dc-art{filter:grayscale(.55) brightness(.95)}
-.dc-tag{position:absolute;left:12px;bottom:10px;z-index:1;font-family:var(--f-ui);font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.92);color:#2c1f33}
+.dc-tag{position:absolute;left:12px;right:12px;bottom:10px;z-index:1;width:max-content;max-width:calc(100% - 24px);font-family:var(--f-ui);font-size:.72rem;font-weight:700;line-height:1.3;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,.92);color:#2c1f33}
+.dc-wk{display:flex;gap:4px;margin:2px 0 0}
+.dc-wk i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-family:var(--f-ui);font-size:.66rem;font-weight:700;color:var(--ink-2);border:1px solid color-mix(in srgb,var(--ink-2) 30%,transparent)}
+.dc-wk i.on{background:var(--cat,var(--primary));border-color:transparent;color:#fff}
 .dc-bd{display:grid;gap:8px;align-content:start;padding:12px 14px 14px}
 .dc-ti{font-family:var(--f-display);font-size:1.2rem;line-height:1.15}
 .dc-g{font-family:var(--f-ui);font-size:.8rem;color:var(--ink-2)}
@@ -1272,7 +1275,7 @@ const CATALOGO = [
 ];
 const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta","try"]};
 // Precio regular = el que tendrá el paquete al llenarse el cupo. El precio actual ES el de fundador (20% menos que el regular).
-const precioRegular = p => FUNDADORES.sin.includes(p.id) ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
+const precioRegular = p => FUNDADORES.sin.includes(p.id) || p.clases===1 ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
 
 const TERAPEUTAS = {
   isa: {nombre:"Isa", completo:"Isabela Arciniega", ig:"dakini.isa",
@@ -1624,16 +1627,25 @@ function clsCard(x, anchorId){
       <div class="ev-ft"><span class="price">${x.aporte?`<small style="font-size:.7em;font-weight:500">Desde </small>`:""}${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
     </div></article>`;
 }
+/* «Lun · Mié 7:00 pm · Sáb 9:00 am»: los días que comparten hora van juntos */
+function resumenSemana(zs){
+  const g = new Map();
+  for (const z of zs){ const k = z.h*60+z.m; if (!g.has(k)) g.set(k,[]); g.get(k).push(z.dia); }
+  const cap = t => t.charAt(0).toUpperCase()+t.slice(1);
+  const pos = d => Math.min(...d.map(x=>(x+6)%7)); return [...g].sort((a,b)=>pos(a[1])-pos(b[1])||a[0]-b[0]).map(([k,d]) => `${[1,2,3,4,5,6,0].filter(x=>d.includes(x)).map(x=>cap(DIAS[x])).join(" · ")} ${fHora(new Date(2000,0,1,Math.floor(k/60),k%60))}`).join("  |  ");
+}
 function paintDir(){
   const el = $("#dirClases"); if (!el) return;
   const prox = id => { const c = CATALOGO.find(x=>x.id===id); const L = (INST||[]).filter(x => (c.clases||[]).includes(x.base)); return L[0]; };
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
   el.innerHTML = orden.map(c => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
-    const hs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean).map(z => `${DIAS_L[z.dia]} ${fHora(new Date(2000,0,1,z.h,z.m))}`).join(" · ");
+    const zs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean);
+    const hs = resumenSemana(zs);
     return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam})" aria-label="${esc(c.titulo)}">
       <div class="dc-art" style="${aura(c.id)}">${glyph(FAM_G[c.fam])}<span class="ev-cat">${FAMILIAS[c.fam]}</span><span class="dc-tag">${pronto?"Próximamente":esc(hs||"Horario por anunciar")}</span></div>
       <div class="dc-bd"><div class="dc-ti">${esc(c.titulo)}</div><div class="dc-g">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${esc(c.intensidad)}</div>
         <p class="dc-r">${esc(c.regula)}</p>
+        ${!pronto&&zs.length?`<div class="dc-wk" aria-hidden="true">${[1,2,3,4,5,6,0].map(d=>`<i class="${zs.some(z=>z.dia===d)?"on":""}">${["D","L","M","M","J","V","S"][d]}</i>`).join("")}</div>`:""}
         <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
           : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">Reservar</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
   const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
@@ -1649,7 +1661,7 @@ let need = "estres";
 function recItem([tipo, id]){
   if (tipo==="clase"){ const x = INST.find(i => i.base===id); if (!x) return ""; return {k:"Clase grupal", t:x.titulo, pills:[[fFecha(x.ini),"","cal"],[fHora(x.ini),"","clock"],[x.guia,"","user"]], p:money(x.precio), g:x.cat==="yoga"?"lotus":x.cat==="resp"?"wave":"sound", attr:`data-book="${x.id}"`, seed:id}; }
   if (tipo==="ter"){ const [tid,xid]=id.split(":"); const T=TERAPEUTAS[tid], x=T.terapias.find(t=>t.id===xid); return {k:"1:1 con "+T.nombre, t:x.t, pills:[[fDur(x.dur),"","clock"]].concat(x.tags.slice(0,2).map(t=>[t,"line","dot"])), p:money(x.precio), g:x.g, attr:`data-ter="${id}"`, seed:id}; }
-  if (tipo==="pack"){ const p=PAQUETES.find(x=>x.id===id); return {k:"Paquete", t:p.t, pills:[[p.clases+" clases","","check"],["30 días","","cal"]], p:money(p.precio), g:"lotus", attr:`data-pack="${id}"`, seed:id}; }
+  if (tipo==="pack"){ const p=PAQUETES.find(x=>x.id===id); if(!p) return ""; return {k:"Paquete", t:p.t, pills:[[p.unl?"Ilimitadas":p.clases+" clases","","check"],["30 días","","cal"]], p:money(p.precio), g:"lotus", attr:`data-pack="${id}"`, seed:id}; }
   if (tipo==="ruta"){ const r=RUTAS.find(x=>x.id===id); return {k:"Formación", t:r.t, pills:[["6 meses","","cal"],["EC1375","","star"],["Consultorio","","check"]], p:"Llamada gratis", g:"sun", attr:`data-ruta="${id}:llamada"`, seed:id}; }
   if (tipo==="taller"){ const t=TALLERES.find(x=>x.id===id); return {k:"Taller", t:t.t, pills:[[t.linea+" h en línea","","laptop"],[t.prac+" h práctica","","hand"]], p:money(t.precio), g:"star", attr:`data-taller="${id}"`, seed:id}; }
   if (tipo==="renta"){ const r=RENTAS.find(x=>x.id===id); return {k:"Para terapeutas", t:r.t, pills:[["Por hora","","clock"],["Todo listo","","check"]], p:money(r.precioHora)+" / h", g:r.g, attr:`data-renta="${id}"`, seed:id}; }
@@ -1688,39 +1700,54 @@ $("#tab-diego").onclick = () => { terActual="diego"; paintTer(); };
 /* =====================================================================
    Paquetes con calculadora
    ===================================================================== */
+const esSuelta = p => p.clases===1;
+const PU = () => (PAQUETES.find(esSuelta)||{precio:300}).precio; // lo que cuesta una clase suelta
 function mejorPaquete(n){
   let best = null;
   for (const p of PAQUETES){
-    if (p.id==="suelta") continue;
-    const extra = Math.max(0, n - p.clases), costo = p.precio + extra*300;
+    if (esSuelta(p)) continue;
+    const extra = Math.max(0, n - p.clases), costo = p.precio + extra*PU();
     if (!best || costo < best.costo) best = {p, costo, extra};
   }
-  const suelta = n*300;
-  return suelta <= best.costo ? {p:PAQUETES[0], costo:suelta, extra:0} : best;
+  const suelta = n*PU(), s0 = PAQUETES.find(esSuelta) || PAQUETES[0];
+  return !best || suelta <= best.costo ? {p:s0, costo:suelta, extra:0} : best;
+}
+/* Paquetes que el equipo arma en /equipo → Directorio (máx. 3). Una membresía ilimitada cuenta como 20 clases
+   de referencia para comparar y da 30 créditos en sus 30 días. */
+function aplicarPaquetes(L){
+  const ok = L.filter(p => p && p.nombre && +p.precio>0).slice(0,3); if (!ok.length) return;
+  PAQUETES.splice(0, PAQUETES.length, ...ok.map(p => {
+    const unl = p.tipo==="ilimitada", n = p.tipo==="suelta" ? 1 : unl ? 20 : Math.max(2, +p.clases||2);
+    const inc = [p.tipo==="suelta" ? "1 clase de la agenda" : unl ? "Todas las clases de la agenda" : `${n} clases en 30 días`]
+      .concat(String(p.incluye||"").split("\n").map(x => x.trim()).filter(Boolean));
+    return {id:String(p.id), t:String(p.nombre), precio:+p.precio, clases:n, unl, tipo:p.tipo, creditos:{clases:unl?30:n}, inc};
+  }));
+  const r = $("#nClases"); r.max = PAQUETES.length-1; r.value = Math.min(+r.value, PAQUETES.length-1);
+  $("#nTicks").innerHTML = PAQUETES.map(p => `<span>${p.unl?"∞":p.clases}</span>`).join("");
 }
 let PAQ = "arte";
 const PK_G = {suelta:"moon", try:"lotus", conexion:"spiral", practica:"sun", inmersion:"star"};
 const PK_K = {suelta:"Sin compromiso", try:"Para empezar", conexion:"Mensualidad", practica:"Mensualidad", inmersion:"Mensualidad"};
 function packArte(p, pick, b, n){
   const c = p.creditos, flag = pick ? "★ Para ti" : p.badge || "";
-  const inc = [pill(`${c.clases} ${c.clases>1?"clases":"clase"}`,"","check")]
+  const inc = [pill(p.unl?"Clases ilimitadas":`${c.clases} ${c.clases>1?"clases":"clase"}`,"","check")]
     .concat(c.terapias?[pill(`${c.terapias} terapias 30 min`,"","hand")]:[])
     .concat(c.tarot?[pill("Tarot","","star")]:[])
     .concat(c.sonora?[pill("Armonización sonora","","dot")]:[]);
   return `<article class="pack arte ${pick?"pick":""}">
-    <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id])}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]}</span>
-      <span class="ev-date"><small>${p.id==="suelta"?"una":"30 días"}</small><b>${p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
-      <span class="ev-hr">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s>`:""}${money(p.precio)}<small>${p.id==="suelta"?"por clase":"al mes"}</small></span></div>
+    <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id] || (esSuelta(p)?"moon":p.unl?"star":"spiral"))}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]||(esSuelta(p)?"Sin compromiso":"Mensualidad")}</span>
+      <span class="ev-date"><small>${esSuelta(p)?"una":"30 días"}</small><b>${p.unl?"∞":p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
+      <span class="ev-hr">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s>`:""}${money(p.precio)}<small>${esSuelta(p)?"por clase":"al mes"}</small></span></div>
     <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
       <div class="pills">${inc.join("")}</div>
       ${precioRegular(p)?`<div class="pills">${pill(`Precio fundador −${FUNDADORES.descuento}%`,"","star")}</div>`:""}
-      <div class="pills">${p.clases*300>p.precio?pill(`Ahorras ${money(p.clases*300-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
-      <div class="ev-ft"><span class="meta">${p.id==="suelta"?"Pagas solo lo que tomas":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
+      <div class="pills">${p.unl?pill("Todas las clases que quieras","ok","check"):p.clases*PU()>p.precio?pill(`Ahorras ${money(p.clases*PU()-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
+      <div class="ev-ft"><span class="meta">${esSuelta(p)?"Pagas solo lo que tomas":p.unl?"Sin límite de clases":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
   </article>`;
 }
 function paintPacks(){
-  const n = PAQUETES[+$("#nClases").value].clases; $("#nOut").textContent = n; $("#nClases").setAttribute("aria-valuetext", n+" clases");
-  const b = mejorPaquete(n), suelta = n*300;
+  const pk0 = PAQUETES[Math.min(+$("#nClases").value, PAQUETES.length-1)], n = pk0.clases; $("#nOut").textContent = pk0.unl ? "∞" : n; $("#nClases").setAttribute("aria-valuetext", n+" clases");
+  const b = mejorPaquete(n), suelta = n*PU();
   $("#calcRes").hidden = true;
   const ORD = [b.p].concat(PAQUETES.filter(p => p.id!==b.p.id));
   if (false) $("#calcRes").innerHTML = b.p.id==="suelta" ? `Con ${n} clase${n>1?"s":""} te conviene pagar <b>clase por clase</b>: ${money(suelta)}.`
@@ -1732,7 +1759,7 @@ function paintPacks(){
     ${p.id===b.p.id?`<span class="badge">Tu mejor opción</span>`:p.badge?`<span class="badge">${p.badge}</span>`:""}
     <h3>${esc(p.t)}</h3>
     <div class="amt">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s> `:""}${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
-    ${p.id===b.p.id&&n*300>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*300-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
+    ${p.id===b.p.id&&n*PU()>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*PU()-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
     <ul>${p.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>
     <button class="btn ${p.id===b.p.id?"btn-p":"btn-g"}" data-pack="${p.id}">Comprar</button></article>`).join("");
 }
@@ -2441,6 +2468,7 @@ paintAll();
     });
     CATALOGO.splice(0, CATALOGO.length, ...cat);
     CLASES.splice(0, CLASES.length, ...cls);
+    if (Array.isArray(j.paquetes) && j.paquetes.length) aplicarPaquetes(j.paquetes);
     if (j.fundadores) Object.assign(FUNDADORES, Object.fromEntries(Object.entries(j.fundadores).filter(([,v]) => v!==undefined)));
     paintAll();
   } catch(e){}
