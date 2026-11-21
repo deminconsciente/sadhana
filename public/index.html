@@ -678,6 +678,15 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .cmp.open .mas::after{transform:rotate(45deg)}
 .ev.cmp:not(.open) .pills,.ev.cmp:not(.open) .seats{display:none}
 .card.cmp:not(.open) .pills ~ .pills{display:none}
+/* Toques fáciles (21 nov): toda la fila abre y cierra; "Detalles" es una píldora de 44 px; la caja invisible
+   de la burbuja de contacto ya no se come los toques en la mitad derecha de la pantalla */
+body .sb{pointer-events:none}body .sb .sb-fab,body .sb.abierta .sb-menu{pointer-events:auto}
+.s-head.tg{min-height:52px;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.s-head.tg::after{pointer-events:none}
+.s-head.tg:active{opacity:.75}
+.mas{min-height:44px;padding:0 16px;border:1px solid var(--line-strong);border-radius:999px;font-size:.88rem;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.mas:active{opacity:.7}
+body:not([data-despl="no"]) .cmp:not(.open){cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body[data-despl="no"] .sec.cerrada .s-body{display:grid}body[data-despl="no"] .s-head.tg{cursor:default}body[data-despl="no"] .s-head.tg::after,body[data-despl="no"] .mas{display:none}body[data-despl="no"] .cmp .pills,body[data-despl="no"] .cmp .seats{display:flex!important}body[data-despl="no"] .band:has(> .sec.cerrada){padding-block:84px}body[data-despl="no"] .sec.cerrada{gap:30px}body[data-despl="no"] .sec.cerrada .s-head .pills{display:flex}
 
 /* Sello limpio: sin fondo, sin giro */
@@ -1075,9 +1084,9 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="s-head"><p class="eyebrow">Paquetes y mensualidades</p><h2 id="h-pa">Practica con constancia</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
       <div class="calc">
         <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
-        <span class="big" id="nOut">8</span>
-        <input type="range" id="nClases" min="0" max="4" step="1" value="2" aria-describedby="nTicks">
-        <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>4</span><span>8</span><span>12</span><span>20</span></div>
+        <span class="big" id="nOut">12</span>
+        <input type="range" id="nClases" min="0" max="2" step="1" value="1" aria-describedby="nTicks">
+        <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>12</span><span>∞</span></div>
         <p class="res" id="calcRes"></p>
       </div>
       <div class="packs" id="packs"></div>
@@ -1273,7 +1282,7 @@ const CATALOGO = [
   {id:"embodiment", titulo:"Embodiment yoga", guia:"Por anunciar", fam:"yoga", estado:"pronto", intensidad:"Media",
    regula:"Yoga desde la sensación y no desde la forma de la postura.", desc:"Moverte como se siente, no como se ve."},
 ];
-const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta","try"]};
+const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta"]};
 // Precio regular = el que tendrá el paquete al llenarse el cupo. El precio actual ES el de fundador (20% menos que el regular).
 const precioRegular = p => FUNDADORES.sin.includes(p.id) || p.clases===1 ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
 
@@ -1301,12 +1310,12 @@ const TERAPEUTAS = {
     ]},
 };
 
+/* Paquetes de respaldo: la página pública solo muestra estos 3. Si en /equipo → Directorio → Paquetes
+   está activo "Mostrar en la página pública", se usan los de ahí (ver aplicarPaquetes). */
 const PAQUETES = [
-  {id:"suelta", t:"Clase suelta", precio:300, clases:1, creditos:{clases:1}, inc:["1 clase de la agenda"]},
-  {id:"try", t:"TRY 4 clases", precio:1000, clases:4, creditos:{clases:4}, inc:["4 clases en 30 días","Ideal para empezar"]},
-  {id:"conexion", t:"Conexión Sadhana", precio:1800, clases:8, valor:2200, creditos:{clases:8, terapias:2}, inc:["8 clases","2 terapias personalizadas de 30 min"], badge:"Más elegido"},
-  {id:"practica", t:"Práctica", precio:2500, clases:12, valor:2690, creditos:{clases:12, terapias:5, tarot:1}, inc:["12 clases","5 terapias de 30 min","1 tarot de una pregunta"]},
-  {id:"inmersion", t:"Inmersión", precio:3000, clases:20, valor:5000, creditos:{clases:20, terapias:10, tarot:1, sonora:1}, inc:["20 clases","10 terapias de 30 min","1 tarot","1 armonización sonora de 30 min"]},
+  {id:"suelta", t:"Clase individual", precio:300, clases:1, creditos:{clases:1}, inc:["1 clase de la agenda"]},
+  {id:"doce", t:"Paquete de 12 clases", precio:1500, clases:12, creditos:{clases:12}, inc:["12 clases en 30 días"]},
+  {id:"ilimitada", t:"Ilimitada", precio:1600, clases:20, unl:true, tipo:"ilimitada", creditos:{clases:30}, inc:["Todas las clases de la agenda","30 días"]},
 ];
 
 const ESCUELAS = {
@@ -1361,7 +1370,7 @@ const NECESIDADES = [
   {id:"claridad", t:"Claridad para decidir", g:"eye", rec:[["ter","isa:tarot"],["ter","diego:coach"],["ter","diego:pnl"]]},
   {id:"historia", t:"Entender mi historia", g:"tree", rec:[["ter","diego:biodesc"],["ter","diego:transg"],["ter","diego:hipno"]]},
   {id:"energia", t:"Limpiar mi energía", g:"star", rec:[["ter","isa:tameana"],["ter","isa:personal"],["clase","breath"]]},
-  {id:"moverme", t:"Moverme y fortalecerme", g:"lotus", rec:[["clase","vinyasa"],["clase","hatha"],["pack","try"]]},
+  {id:"moverme", t:"Moverme y fortalecerme", g:"lotus", rec:[["clase","vinyasa"],["clase","hatha"],["pack","doce"]]},
   {id:"formarme", t:"Formarme como terapeuta", g:"sun", rec:[["ruta","residencia"],["taller","reiki1"],["renta","consultorio"]]},
 ];
 
@@ -1726,8 +1735,8 @@ function aplicarPaquetes(L){
   $("#nTicks").innerHTML = PAQUETES.map(p => `<span>${p.unl?"∞":p.clases}</span>`).join("");
 }
 let PAQ = "arte";
-const PK_G = {suelta:"moon", try:"lotus", conexion:"spiral", practica:"sun", inmersion:"star"};
-const PK_K = {suelta:"Sin compromiso", try:"Para empezar", conexion:"Mensualidad", practica:"Mensualidad", inmersion:"Mensualidad"};
+const PK_G = {suelta:"moon", doce:"spiral", ilimitada:"star"};
+const PK_K = {suelta:"Sin compromiso", doce:"Mensualidad", ilimitada:"Mensualidad"};
 function packArte(p, pick, b, n){
   const c = p.creditos, flag = pick ? "★ Para ti" : p.badge || "";
   const inc = [pill(p.unl?"Clases ilimitadas":`${c.clases} ${c.clases>1?"clases":"clase"}`,"","check")]
@@ -2519,8 +2528,16 @@ function compactar(){
     ft ? bd.insertBefore(b, ft) : bd.appendChild(b);
   });
 }
-document.addEventListener("click", e => { const b = e.target.closest(".mas"); if (!b) return; e.stopPropagation(); e.preventDefault();
-  const c = b.closest(".cmp"); const o = !c.classList.contains("open"); c.classList.toggle("open", o); b.setAttribute("aria-expanded", o); b.textContent = o ? "Menos" : "Detalles"; }, true);
+/* "Detalles" abre y cierra; tocar cualquier parte de una tarjeta cerrada (que no sea un botón o enlace) también la abre */
+document.addEventListener("click", e => {
+  let b = e.target.closest(".mas"), c = b && b.closest(".cmp");
+  if (!b){
+    if (document.body.dataset.despl === "no") return;
+    c = e.target.closest(".cmp:not(.open)"); if (!c || e.target.closest("a,button,input,select,textarea,label")) return;
+    b = c.querySelector(".mas"); if (!b) return;
+  }
+  e.stopPropagation(); e.preventDefault();
+  const o = !c.classList.contains("open"); c.classList.toggle("open", o); b.setAttribute("aria-expanded", o); b.textContent = o ? "Menos" : "Detalles"; }, true);
 try { new MutationObserver(compactar).observe(document.querySelector("main") || document.body, {childList:true, subtree:true}); } catch(e){}
 compactar();
 
