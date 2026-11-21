@@ -678,6 +678,13 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .cmp.open .mas::after{transform:rotate(45deg)}
 .ev.cmp:not(.open) .pills,.ev.cmp:not(.open) .seats{display:none}
 .card.cmp:not(.open) .pills ~ .pills{display:none}
+/* Primera clase gratis */
+.gratis-ban{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:22px;
+  background:linear-gradient(100deg,color-mix(in srgb,#c9875a 22%,var(--surface)),color-mix(in srgb,#a45a2a 14%,var(--surface)));border:1px solid color-mix(in srgb,#a45a2a 40%,transparent)}
+.gratis-ban[hidden]{display:none}
+.gratis-ban .gb-t{display:grid;gap:2px;min-width:0;flex:1 1 220px}.gratis-ban b{font-size:1.15rem}.gratis-ban small{color:var(--ink-2);font-size:.92rem}
+.gratis-ban .btn{min-height:44px;white-space:normal;text-align:center}
+@media (max-width:560px){.gratis-ban .btn{width:100%}}
 /* Toques fáciles (21 nov): toda la fila abre y cierra; "Detalles" es una píldora de 44 px; la caja invisible
    de la burbuja de contacto ya no se come los toques en la mitad derecha de la pantalla */
 body .sb{pointer-events:none}body .sb .sb-fab,body .sb.abierta .sb-menu{pointer-events:auto}
@@ -1056,6 +1063,7 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
   <div data-v="c" class="band">
     <section class="wrap sec" id="agenda" aria-labelledby="h-ag">
       <div class="s-head"><p class="eyebrow">Agenda</p><h2 id="h-ag">Clases y eventos</h2></div>
+      <div class="gratis-ban" id="gratisBan" hidden><span class="gb-t"><b>Tu primera clase es gratis</b><small>Elige clase y horario, y reserva solo con tu nombre y WhatsApp. Sin pago.</small></span><button type="button" class="btn btn-p btn-s" id="gratisGo">Regístrate a tu primera clase gratis</button></div>
       <div class="dir-head"><h3>Directorio de clases</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto.</p></div>
       <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
       <p class="fund" id="dirFund"></p>
@@ -1283,6 +1291,16 @@ const CATALOGO = [
    regula:"Yoga desde la sensación y no desde la forma de la postura.", desc:"Moverte como se siente, no como se ve."},
 ];
 const FUNDADORES = {cupo:50, tomados:null, descuento:20, sin:["suelta"]};
+/* Promo de apertura (se edita en /equipo → Directorio → Paquetes). La clase individual sigue costando su precio
+   normal; mientras la promo esté viva se muestra tachado junto al precio de apertura. «gratis» = primera clase gratis. */
+const PROMO = {activa:true, precio:200, hasta:"", gratis:true};
+const promoViva = () => !!PROMO.activa && +PROMO.precio > 0 && (!PROMO.hasta || ymd(new Date()) <= PROMO.hasta);
+const conPromo = precio => promoViva() && precio > +PROMO.precio ? +PROMO.precio : precio;
+const promoHasta = () => { if (!PROMO.hasta) return "por tiempo limitado"; const [y,m,d] = PROMO.hasta.split("-").map(Number); return `hasta el ${d} ${MESES[m-1]}`; };
+/* Primera clase gratis: una por persona (el servidor lo revisa por WhatsApp). Aquí solo se esconde si en este
+   navegador ya se usó o ya hay clases o paquetes reservados. */
+const gratisDisponible = () => PROMO.gratis !== false && !ST.gratisUsada && !ST.tickets.some(t => t.metodo === "primera-gratis" || /^(Clase|Paquete|Acceso activado)$/.test(t.tipo));
+const esClaseReg = x => x && x.cat !== "evento" && !x.aporte;
 // Precio regular = el que tendrá el paquete al llenarse el cupo. El precio actual ES el de fundador (20% menos que el regular).
 const precioRegular = p => FUNDADORES.sin.includes(p.id) || p.clases===1 ? null : Math.round(p.precio/(1-FUNDADORES.descuento/100)/50)*50; // tomados: número real cuando se lleve en el CRM; null = no se muestra el contador
 
@@ -1409,6 +1427,18 @@ const Registro = {
       fetch(CONFIG.reservasAPI, {method:"POST", keepalive:true, headers:{"Content-Type":"application/json"}, body:JSON.stringify(cuerpo)})
         .then(r => { if (r.ok || r.status === 400) { t.registrado = true; save(); } }).catch(() => {});
     } catch(e){}
+  },
+  // Igual que guardar, pero espera la respuesta: «ok», «ya_usada», «promo_cerrada» o «sin_red» (se reintenta luego).
+  async guardarYa(t, d){
+    if (!CONFIG.reservasAPI) return "ok";
+    d = d || ST.datos || {};
+    try {
+      const r = await fetch(CONFIG.reservasAPI, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({folio:t.folio, tipo:t.tipo, titulo:t.titulo, ini:t.ini||null, detalle:t.detalle||null,
+        nombre:t.nombre, tel:d.tel, email:d.email, monto:0, metodo:t.metodo, estado:t.estado, aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad})});
+      if (r.status === 409){ const j = await r.json().catch(()=>({})); return j.error === "promo_cerrada" ? "promo_cerrada" : "ya_usada"; }
+      if (r.ok || r.status === 400){ t.registrado = true; save(); }
+      return "ok";
+    } catch(e){ return "sin_red"; }
   },
   // Reintenta los tickets que no llegaron y trae el estado que marcó Sadhana (pago recibido, cancelado…).
   async sincronizar(){
@@ -1578,7 +1608,8 @@ function instancias(desde, hasta, incluirPasadas){
   for (let d = startOfDay(desde); d < hasta; d = addDays(d,1)){
     for (const c of CLASES) if (c.dia === d.getDay()){
       const ini = new Date(d.getFullYear(), d.getMonth(), d.getDate(), c.h, c.m);
-      out.push({...c, id:c.id+"-"+ymd(d), base:c.id, ini});
+      const pr = conPromo(c.precio);
+      out.push({...c, id:c.id+"-"+ymd(d), base:c.id, ini, precio:pr, antes: pr !== c.precio ? c.precio : 0});
     }
   }
   for (const e of EVENTOS){
@@ -1618,7 +1649,7 @@ function paintAgenda(){
   $("#agView").innerHTML = !dias.length ? `<div class="empty">Pronto abrimos nuevas fechas.</div>` :
     `<p class="ag-dia">${fFechaL(g[fDia][0].ini)} · ${g[fDia].length} ${g[fDia].length>1?"prácticas":"práctica"}</p><div class="ag-list">` + g[fDia].map(x => clsCard(x, "")).join("") + `</div>`;
   $("#nextList").innerHTML = INST.slice(0,5).map(x => `<button class="nx" style="--cat:var(--c-${x.cat})" data-book="${x.id}">
-    <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${x.aporte?"Desde ":""}${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
+    <span class="when">${x.destacado?"★ ":""}${fFecha(x.ini)} · ${fHora(x.ini)}</span><b>${esc(x.titulo)}</b><span class="p">${x.aporte?"Desde ":""}${x.antes?`<s class="orig">${money(x.antes)}</s> `:""}${money(x.precio)}</span><span class="g">Con ${esc(x.guia)}</span></button>`).join("");
 }
 function clsCard(x, anchorId){
   const oc = ocupados(x), libres = x.cupo - oc, lleno = libres <= 0;
@@ -1633,7 +1664,7 @@ function clsCard(x, anchorId){
       ${CONFIG.cupoReal?`<div><div class="seats" aria-hidden="true">${Array.from({length:nSeats},(_,i)=>`<i class="${i<nSeats-libresV?"o":""}"></i>`).join("")}</div>
         <span class="seats-l">${lleno?"Cupo lleno":libres<=3?`¡Solo ${libres} ${libres>1?"lugares":"lugar"}!`:`${libres} lugares libres`}</span></div>`:""}
       ${x.url?`<a class="ev-link" href="${x.url}" target="_blank" rel="noopener">Ver evento →</a>`:""}
-      <div class="ev-ft"><span class="price">${x.aporte?`<small style="font-size:.7em;font-weight:500">Desde </small>`:""}${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":"Reservar"}</button></div>
+      <div class="ev-ft"><span class="price">${x.aporte?`<small style="font-size:.7em;font-weight:500">Desde </small>`:""}${x.antes?`<s class="orig">${money(x.antes)}</s> `:""}${money(x.precio)}</span><button class="btn btn-p btn-s" ${lleno?"disabled":`data-book="${x.id}"`}>${lleno?"Lleno":esClaseReg(x)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button></div>
     </div></article>`;
 }
 /* «Lun · Mié 7:00 pm · Sáb 9:00 am»: los días que comparten hora van juntos */
@@ -1644,6 +1675,7 @@ function resumenSemana(zs){
   const pos = d => Math.min(...d.map(x=>(x+6)%7)); return [...g].sort((a,b)=>pos(a[1])-pos(b[1])||a[0]-b[0]).map(([k,d]) => `${[1,2,3,4,5,6,0].filter(x=>d.includes(x)).map(x=>cap(DIAS[x])).join(" · ")} ${fHora(new Date(2000,0,1,Math.floor(k/60),k%60))}`).join("  |  ");
 }
 function paintDir(){
+  const gb = $("#gratisBan"); if (gb) gb.hidden = !gratisDisponible();
   const el = $("#dirClases"); if (!el) return;
   const prox = id => { const c = CATALOGO.find(x=>x.id===id); const L = (INST||[]).filter(x => (c.clases||[]).includes(x.base)); return L[0]; };
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
@@ -1656,9 +1688,10 @@ function paintDir(){
         <p class="dc-r">${esc(c.regula)}</p>
         ${!pronto&&zs.length?`<div class="dc-wk" aria-hidden="true">${[1,2,3,4,5,6,0].map(d=>`<i class="${zs.some(z=>z.dia===d)?"on":""}">${["D","L","M","M","J","V","S"][d]}</i>`).join("")}</div>`:""}
         <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
-          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">Reservar</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
+          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
   const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
 }
+$("#gratisGo").addEventListener("click", () => { const d = $("#dirClases"); if (d) d.scrollIntoView({behavior:"smooth", block:"start"}); });
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
 $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
   fDia = b.dataset.go; const sl = $("#agStrip").scrollLeft; paintAgenda(); $("#agStrip").scrollLeft = sl; });
@@ -1737,6 +1770,8 @@ function aplicarPaquetes(L){
 let PAQ = "arte";
 const PK_G = {suelta:"moon", doce:"spiral", ilimitada:"star"};
 const PK_K = {suelta:"Sin compromiso", doce:"Mensualidad", ilimitada:"Mensualidad"};
+const precioPack = p => esSuelta(p) ? conPromo(p.precio) : p.precio;
+const tachadoPack = p => precioRegular(p) || (precioPack(p) !== p.precio ? p.precio : null);
 function packArte(p, pick, b, n){
   const c = p.creditos, flag = pick ? "★ Para ti" : p.badge || "";
   const inc = [pill(p.unl?"Clases ilimitadas":`${c.clases} ${c.clases>1?"clases":"clase"}`,"","check")]
@@ -1746,10 +1781,12 @@ function packArte(p, pick, b, n){
   return `<article class="pack arte ${pick?"pick":""}">
     <div class="ev-art" style="${aura("pk"+p.id)}">${glyph(PK_G[p.id] || (esSuelta(p)?"moon":p.unl?"star":"spiral"))}<span class="ev-cat ${flag?"flag":""}">${flag||PK_K[p.id]||(esSuelta(p)?"Sin compromiso":"Mensualidad")}</span>
       <span class="ev-date"><small>${esSuelta(p)?"una":"30 días"}</small><b>${p.unl?"∞":p.clases}</b><small>${p.clases>1?"clases":"clase"}</small></span>
-      <span class="ev-hr">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s>`:""}${money(p.precio)}<small>${esSuelta(p)?"por clase":"al mes"}</small></span></div>
+      <span class="ev-hr">${tachadoPack(p)?`<s class="orig">${money(tachadoPack(p))}</s>`:""}${money(precioPack(p))}<small>${esSuelta(p)?"por clase":"al mes"}</small></span></div>
     <div class="ev-bd"><h3 class="ev-ti">${esc(p.t)}</h3>
       <div class="pills">${inc.join("")}</div>
       ${precioRegular(p)?`<div class="pills">${pill(`Precio fundador −${FUNDADORES.descuento}%`,"","star")}</div>`:""}
+      ${esSuelta(p)&&precioPack(p)!==p.precio?`<div class="pills">${pill(`Precio de apertura · ${promoHasta()}`,"","star")}</div>`:""}
+      ${esSuelta(p)&&gratisDisponible()?`<div class="pills">${pill("Tu primera clase es gratis","ok","check")}</div>`:""}
       <div class="pills">${p.unl?pill("Todas las clases que quieras","ok","check"):p.clases*PU()>p.precio?pill(`Ahorras ${money(p.clases*PU()-p.precio)}`,"ok","check"):pill("Sin mensualidad","line")}</div>
       <div class="ev-ft"><span class="meta">${esSuelta(p)?"Pagas solo lo que tomas":p.unl?"Sin límite de clases":`${money(Math.round(p.precio/p.clases))} por clase`}</span><button class="btn ${pick?"btn-p":"btn-g"} btn-s" data-pack="${p.id}">Comprar</button></div></div>
   </article>`;
@@ -1767,7 +1804,7 @@ function paintPacks(){
   $("#packs").innerHTML = ORD.map(p => `<article class="pack ${p.id===b.p.id?"pick":""}">
     ${p.id===b.p.id?`<span class="badge">Tu mejor opción</span>`:p.badge?`<span class="badge">${p.badge}</span>`:""}
     <h3>${esc(p.t)}</h3>
-    <div class="amt">${precioRegular(p)?`<s class="orig">${money(precioRegular(p))}</s> `:""}${money(p.precio)} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
+    <div class="amt">${tachadoPack(p)?`<s class="orig">${money(tachadoPack(p))}</s> `:""}${money(precioPack(p))} <small>${p.id==="suelta"?"por clase":"al mes"}</small></div>
     ${p.id===b.p.id&&n*PU()>b.costo?`<div class="val">Para ${n} clases: ${money(b.costo)}${b.extra?` (+${b.extra} sueltas)`:""} · ahorras ${money(n*PU()-b.costo)}</div>`:p.valor?`<div class="val">Valor ${money(p.valor)} · ahorras ${money(p.valor-p.precio)}</div>`:`<div class="val" style="color:var(--ink-2)">${p.id==="try"?"$250 por clase":"Sin compromiso"}</div>`}
     <ul>${p.inc.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>
     <button class="btn ${p.id===b.p.id?"btn-p":"btn-g"}" data-pack="${p.id}">Comprar</button></article>`).join("");
@@ -1926,7 +1963,7 @@ function abrir(flujo){
 }
 function cerrar(){
   const t = F && F.orden && F.orden.ticket;
-  if (t && !t.enviado && !confirm("Aún no envías tu reserva por WhatsApp. Sin ese mensaje Sadhana no la recibe. ¿Cerrar de todos modos?")) return;
+  if (t && !t.enviado && !(gratisT(t) && t.registrado) && !confirm("Aún no envías tu reserva por WhatsApp. Sin ese mensaje Sadhana no la recibe. ¿Cerrar de todos modos?")) return;
   ov.hidden = true; document.body.classList.remove("lock"); F = null; paintAll(); if (lastFocus && document.contains(lastFocus)) lastFocus.focus(); }
 $("#shClose").onclick = cerrar;
 ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
@@ -1960,15 +1997,15 @@ function pasoDatos(){
       el.innerHTML = `${F.simbolo ? `<div id="bolVivo">${boletoDe(o)}</div>` : ""}
       <div class="field"><label class="lbl" for="fNom">Nombre completo</label><input class="inp" id="fNom" autocomplete="name" value="${esc(o.datos.nombre)}">${err&&!o.datos.nombre.trim()?`<span class="err">Escribe tu nombre.</span>`:""}</div>
       <div class="field"><label class="lbl" for="fTel">WhatsApp</label><input class="inp" id="fTel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" value="${esc(o.datos.tel)}">${err&&o.datos.tel.replace(/\D/g,"").length<10?`<span class="err">Escribe un número de 10 dígitos para enviarte tu ticket.</span>`:""}</div>
-      <div class="field"><label class="lbl" for="fMail">Correo</label><input class="inp" id="fMail" type="email" autocomplete="email" placeholder="tu@correo.com" value="${esc(o.datos.email)}">${err&&!/^\S+@\S+\.\S+$/.test(o.datos.email)?`<span class="err">Revisa tu correo, ahí llega tu acceso.</span>`:""}</div>
+      ${F.correoOpcional && F.correoOpcional(o) ? "" : `<div class="field"><label class="lbl" for="fMail">Correo</label><input class="inp" id="fMail" type="email" autocomplete="email" placeholder="tu@correo.com" value="${esc(o.datos.email)}">${err&&!/^\S+@\S+\.\S+$/.test(o.datos.email)?`<span class="err">Revisa tu correo, ahí llega tu acceso.</span>`:""}</div>`}
       <label class="opt" style="grid-template-columns:auto 1fr"><input type="checkbox" id="fCom" ${o.datos.comunidad?"checked":""}><span><b>Quiero unirme a la comunidad</b><small>Avisos de eventos y prácticas por WhatsApp. Puedes salir cuando quieras.</small></span></label>
       <p class="note">Tu ticket llega a tu WhatsApp y a tu correo. Usamos tus datos solo para tus reservas, como dice el <a href="/privacidad/" target="_blank" rel="noopener">aviso de privacidad</a>; al reservar aceptas los <a href="/terminos/" target="_blank" rel="noopener">términos y la política de cancelación</a>.</p>`;
       el.querySelector("#fNom").oninput = e => { o.datos.nombre = e.target.value; const n = el.querySelector("#bolVivo .b-nombre"); if (n){ const v = o.datos.nombre.trim(); n.textContent = v || "Tu lugar en el círculo"; n.classList.toggle("vacio", !v); } };
       el.querySelector("#fTel").oninput = e => o.datos.tel = e.target.value;
-      el.querySelector("#fMail").oninput = e => o.datos.email = e.target.value;
+      const fm = el.querySelector("#fMail"); if (fm) fm.oninput = e => o.datos.email = e.target.value;
       el.querySelector("#fCom").onchange = e => o.datos.comunidad = e.target.checked;
     },
-    valido: o => o.datos.nombre.trim() && o.datos.tel.replace(/\D/g,"").length>=10 && /^\S+@\S+\.\S+$/.test(o.datos.email),
+    valido: o => o.datos.nombre.trim() && o.datos.tel.replace(/\D/g,"").length>=10 && ((F.correoOpcional && F.correoOpcional(o)) || /^\S+@\S+\.\S+$/.test(o.datos.email)),
     alSeguir: o => { ST.datos = {...o.datos}; save(); }
   };
 }
@@ -2026,6 +2063,37 @@ function pasoPago(){
     }
   };
 }
+/* Primera clase gratis: se guarda en la base ANTES de dar el ticket, para que el servidor revise que ese
+   WhatsApp no la haya usado. Si ya la usó, ofrece pagar la clase. */
+function pasoGratis(){
+  return {nombre:"Confirmar", propioBoton:true,
+    si: o => o.pagoCon === "gratis",
+    pintar(el, o){
+      el.innerHTML = `<dl class="sum">${F.resumen(o).map(([k,v])=>`<div><span>${k}</span><span>${esc(v)}</span></div>`).join("")}<div><span>Total</span><span class="price">Sin costo</span></div></dl>
+        <p class="note">Tu lugar queda <b>pendiente</b> hasta que Sadhana te confirme por WhatsApp. La primera clase gratis es una por persona.</p>
+        <p class="err" id="grErr" hidden></p>
+        <button class="btn btn-p" id="grBtn" style="width:100%">Reservar mi clase gratis</button>
+        <button class="btn btn-g" id="grBack" style="width:100%">Atrás</button>`;
+      el.querySelector("#grBack").onclick = () => { F.paso--; pintar(); };
+      el.querySelector("#grBtn").onclick = async () => {
+        const btn = el.querySelector("#grBtn"), er = el.querySelector("#grErr");
+        btn.disabled = true; btn.textContent = "Apartando tu lugar…"; er.hidden = true;
+        o.metodo = "primera-gratis"; o.pago = {pendiente:true}; o.sinRegistro = true;
+        emitir(o);
+        const r = await Registro.guardarYa(o.ticket, o.datos);
+        if (r === "ya_usada" || r === "promo_cerrada"){
+          if (r === "ya_usada") ST.gratisUsada = true;
+          ST.tickets = ST.tickets.filter(t => t !== o.ticket); o.ticket = null; o.folio = null; o.pago = null; o.metodo = null; save();
+          er.innerHTML = r === "ya_usada" ? `Este WhatsApp ya usó su primera clase gratis. Puedes tomar esta clase por ${money(F.total({...o, pagoCon:"pago"}))}.` : "La promo de primera clase gratis ya terminó. Puedes tomar esta clase pagándola.";
+          er.hidden = false; btn.disabled = false; btn.textContent = "Pagar esta clase";
+          btn.onclick = () => { o.pagoCon = "pago"; F.paso = 0; pintar(); };
+          return;
+        }
+        siguiente();
+      };
+    }
+  };
+}
 function pasoTicket(){
   return {nombre:"Tu ticket", final:true,
     pintar(el, o){
@@ -2071,7 +2139,7 @@ function emitir(o){
   if (t.usaCredito){ ST.creditos[t.usaCredito] = Math.max(0,(ST.creditos[t.usaCredito]||0)-1); }
   if (t.daCreditos && t.estado === "confirmado"){ for (const [k,v] of Object.entries(t.daCreditos)) ST.creditos[k] = (ST.creditos[k]||0)+v; }
   ST.tickets.unshift(t); save();
-  Registro.guardar(t, o.datos);
+  if (!o.sinRegistro) Registro.guardar(t, o.datos);
   o.ticket = t;
 }
 function gcal(t){
@@ -2083,14 +2151,15 @@ function gcal(t){
 }
 function waLink(t){
   const det = (t.detalle||[]).map(([k,v]) => `${k}: ${v}`).join(". ");
-  const pago = t.metodo==="credito" ? "Con 1 crédito de mi paquete" : t.metodo==="stripe" ? `${money(t.pagado)} con tarjeta (Stripe)${t.estado==="confirmado"?", pagado":""}` : t.pagado ? `${money(t.pagado)} por transferencia u OXXO` : "Sin costo";
-  const txt = `Hola Sadhana, soy ${t.nombre}. Reservé ${t.titulo}${t.ini?`, ${fFechaL(new Date(t.ini))} a las ${fHora(new Date(t.ini))}`:""}. Folio ${t.folio}.${det?` ${det}.`:""} Pago: ${pago}.${t.estado==="pendiente"&&t.metodo!=="stripe"?" Te envío mi comprobante.":""}`;
+  const pago = gratisT(t) ? "Primera clase gratis" : t.metodo==="credito" ? "Con 1 crédito de mi paquete" : t.metodo==="stripe" ? `${money(t.pagado)} con tarjeta (Stripe)${t.estado==="confirmado"?", pagado":""}` : t.pagado ? `${money(t.pagado)} por transferencia u OXXO` : "Sin costo";
+  const txt = `Hola Sadhana, soy ${t.nombre}. Reservé ${t.titulo}${t.ini?`, ${fFechaL(new Date(t.ini))} a las ${fHora(new Date(t.ini))}`:""}. Folio ${t.folio}.${det?` ${det}.`:""} Pago: ${pago}.${t.estado==="pendiente"&&t.metodo!=="stripe"&&!gratisT(t)?" Te envío mi comprobante.":""}`;
   return (CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}` : "https://wa.me/") + "?text=" + encodeURIComponent(txt);
 }
+const gratisT = t => t && t.metodo === "primera-gratis";
 function ticketHTML(t, nuevo){
   const ini = t.ini ? new Date(t.ini) : null;
   const pend = t.estado === "pendiente";
-  return `${nuevo ? `<p style="font-size:1.06rem">${pend ? `Listo, ${esc(t.nombre.split(" ")[0])}. ${t.metodo==="stripe"?"Tu pago con tarjeta no se completó. Puedes intentarlo de nuevo desde la agenda.":"Tu lugar queda apartado 24 horas mientras envías tu comprobante."}` : `Listo, ${esc(t.nombre.split(" ")[0])}. ${esc(t.mensaje || "Tu lugar está confirmado.")}`}</p>` : ""}
+  return `${nuevo ? `<p style="font-size:1.06rem">${pend ? `Listo, ${esc(t.nombre.split(" ")[0])}. ${gratisT(t)?"Tu primera clase gratis está apartada. Te confirmamos por WhatsApp.":t.metodo==="stripe"?"Tu pago con tarjeta no se completó. Puedes intentarlo de nuevo desde la agenda.":"Tu lugar queda apartado 24 horas mientras envías tu comprobante."}` : `Listo, ${esc(t.nombre.split(" ")[0])}. ${esc(t.mensaje || "Tu lugar está confirmado.")}`}</p>` : ""}
   ${t.simbolo ? boletoHTML({titulo:t.titulo, nombre:t.nombre, cuando: ini?`${fFecha(ini)} · ${fHora(ini)}`:"", modo:t.modo, monto:t.pagado, simbolo:t.simbolo, estado: pend ? "Por confirmar" : "Confirmado"}) : ""}
   <div class="ticket ${t.simbolo?"con-boleto":""}">
     <div class="tk-top"><span class="mk mk-sello tk-seal" aria-hidden="true"></span><p class="eyebrow">${esc(t.tipo)}</p><h3>${esc(t.titulo)}</h3>${ini?`<p>${fFechaL(ini)} · ${fHora(ini)}</p>`:""}</div>
@@ -2099,14 +2168,14 @@ function ticketHTML(t, nuevo){
       <dl>
         <div><dt>Folio</dt><dd class="folio">${t.folio}</dd></div>
         ${t.detalle ? t.detalle.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("") : ""}
-        <div><dt>Pago</dt><dd>${t.metodo==="credito"?"Con 1 crédito de tu paquete":t.pagado?`${money(t.pagado)} · ${({tarjeta:"Tarjeta",mercadopago:"Mercado Pago",transferencia:"Transferencia u OXXO",stripe:"Tarjeta (Stripe)"})[t.metodo]||""}`:"Sin costo"}</dd></div>
-        <span class="status ${pend?"pend":"ok"}">${pend?(t.metodo==="stripe"?"Pago con tarjeta sin completar":"Apartado 24 h · pago pendiente"):(t.metodo==="stripe"?"Pagado":"Confirmado")}</span>
+        <div><dt>Pago</dt><dd>${gratisT(t)?"Sin costo · primera clase gratis":t.metodo==="credito"?"Con 1 crédito de tu paquete":t.pagado?`${money(t.pagado)} · ${({tarjeta:"Tarjeta",mercadopago:"Mercado Pago",transferencia:"Transferencia u OXXO",stripe:"Tarjeta (Stripe)"})[t.metodo]||""}`:"Sin costo"}</dd></div>
+        <span class="status ${pend?"pend":"ok"}">${pend?(gratisT(t)?"Por confirmar · sin costo":t.metodo==="stripe"?"Pago con tarjeta sin completar":"Apartado 24 h · pago pendiente"):(t.metodo==="stripe"?"Pagado":"Confirmado")}</span>
       </dl>
       <div class="qr" data-qr="${t.folio}" aria-label="Código QR del folio ${t.folio}"></div>
     </div>
   </div>
-  ${nuevo ? `<a class="btn btn-p wa-go" data-wa="1" href="${waLink(t)}" target="_blank" rel="noopener" style="width:100%">${t.enviado?"Volver a enviar por WhatsApp":"Enviar mi reserva por WhatsApp"}</a>${t.enviado?"":`<p class="note" style="margin:0">Sin este mensaje Sadhana no recibe tu reserva.</p>`}` : ""}
-  ${pend && t.metodo!=="stripe" ? datosPagoHTML(t.pagado, `${t.folio} ${t.nombre||""}`.trim()) : ""}
+  ${nuevo ? `<a class="btn btn-p wa-go" data-wa="1" href="${waLink(t)}" target="_blank" rel="noopener" style="width:100%">${t.enviado?"Volver a enviar por WhatsApp":"Enviar mi reserva por WhatsApp"}</a>${t.enviado||gratisT(t)?"":`<p class="note" style="margin:0">Sin este mensaje Sadhana no recibe tu reserva.</p>`}` : ""}
+  ${pend && t.metodo!=="stripe" && !gratisT(t) ? datosPagoHTML(t.pagado, `${t.folio} ${t.nombre||""}`.trim()) : ""}
   <div class="tk-acts">
     ${ini?`<a class="btn btn-g btn-s" href="${gcal(t)}" target="_blank" rel="noopener">Agregar a Google Calendar</a>`:""}
     ${t.ini?`<a class="btn btn-g btn-s" href="${CONFIG.mapa}" target="_blank" rel="noopener">Cómo llegar</a>`:""}
@@ -2187,12 +2256,13 @@ function confeti(){
 function flujoClase(id, modoIni, aporteIni){
   const x = INST.find(i => i.id === id); if (!x) return false;
   const conCredito = (ST.creditos.clases||0) > 0 && !x.aporte;
+  const puedeGratis = esClaseReg(x) && gratisDisponible();
   const pasosBase = [
     {nombre:"Tu reserva",
       pintar(el, o){
         o.modo ||= x.modos ? (x.modos.includes(modoIni) ? modoIni : x.modos[0]) : "Presencial";
         if (x.aporte && !o.aporte){ const a = parseInt(aporteIni,10); o.aporte = a >= x.precio ? Math.min(x.aporte.max, a) : x.precio; }
-        o.pagoCon ||= conCredito ? "credito" : "pago";
+        o.pagoCon ||= puedeGratis ? "gratis" : conCredito ? "credito" : "pago";
         el.innerHTML = `<dl class="sum">
           <div><span>Cuándo</span><span>${fFechaL(x.ini)} · ${fHora(x.ini)}</span></div>
           <div><span>Duración</span><span>${fDur(x.dur)}</span></div>
@@ -2201,8 +2271,9 @@ function flujoClase(id, modoIni, aporteIni){
           ${x.desc?`<p class="muted">${esc(x.desc)}</p>`:""}
           ${x.modos?`<div><span class="lbl">Cómo vas a asistir</span><div class="opts">${x.modos.map(m=>`<label class="opt"><input type="radio" name="modo" value="${m}" ${o.modo===m?"checked":""}><span><b>${m}</b><small>${m==="Presencial"?"En Sadhana, Satélite Acueducto":"El enlace llega a tu WhatsApp"}</small></span><span></span></label>`).join("")}</div></div>`:""}
           <div><span class="lbl">Cómo vas a pagar</span><div class="opts">
+            ${esClaseReg(x)&&gratisDisponible()?`<label class="opt"><input type="radio" name="pc" value="gratis" ${o.pagoCon==="gratis"?"checked":""}><span><b>Mi primera clase gratis</b><small>Solo tu nombre y WhatsApp. Una por persona.</small></span><span class="p">$0</span></label>`:""}
             ${x.aporte?"":`<label class="opt"><input type="radio" name="pc" value="credito" ${o.pagoCon==="credito"?"checked":""} ${conCredito?"":"disabled"}><span><b>Usar 1 crédito</b><small>${conCredito?`Te quedan ${ST.creditos.clases} clases en tu paquete`:"No tienes créditos. Compra un paquete en la sección Paquetes."}</small></span><span class="p">$0</span></label>`}
-            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>${x.aporte?"Aportación consciente":"Pagar esta clase"}</b><small>${x.aporte?"Tú eliges cuánto, desde "+money(x.precio):"Pago en línea"}</small></span><span class="p">${money(x.aporte?o.aporte:x.precio)}</span></label>
+            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>${x.aporte?"Aportación consciente":"Pagar esta clase"}</b><small>${x.aporte?"Tú eliges cuánto, desde "+money(x.precio):"Pago en línea"}</small></span><span class="p">${x.antes&&!x.aporte?`<s class="orig">${money(x.antes)}</s> `:""}${money(x.aporte?o.aporte:x.precio)}</span></label>
           </div></div>
           ${x.aporte && o.pagoCon==="pago" ? `<div class="aporte"><span class="lbl">Tu aportación</span>
             <output class="ap-val" id="apVal">${money(o.aporte)}</output>
@@ -2217,14 +2288,15 @@ function flujoClase(id, modoIni, aporteIni){
           el.querySelectorAll("[data-ap]").forEach(b => b.onclick = () => { o.aporte = +b.dataset.ap; pintar(); });
         }
       }},
-    pasoDatos(), pasoPago(), pasoTicket()];
+    pasoDatos(), pasoPago(), pasoGratis(), pasoTicket()];
   abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, ref:x.id, pasosBase, simbolo: /^om-/.test(x.id) ? "ॐ" : "✦",
+    correoOpcional: o => o.pagoCon === "gratis",
     cuando: `${fFecha(x.ini)} · ${fHora(x.ini)}`,
-    total: o => o.pagoCon==="credito" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
+    total: o => o.pagoCon==="credito" || o.pagoCon==="gratis" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
     resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
     armar: o => ({tipo: x.cat==="evento"?"Evento":"Clase", titulo:x.titulo, ref:x.id, ini:x.ini.toISOString(), dur:x.dur,
       usaCredito: o.pagoCon==="credito" ? "clases" : null, credito: o.pagoCon==="credito",
-      detalle:[["Guía",x.guia],["Modalidad",o.modo]], simbolo: /^om-/.test(x.id) ? "ॐ" : "✦", modo:o.modo,
+      detalle:[["Guía",x.guia],["Modalidad",o.modo]].concat(o.pagoCon==="gratis"?[["Promo","Primera clase gratis"]]:[]), simbolo: /^om-/.test(x.id) ? "ॐ" : "✦", modo:o.modo,
       siguiente: o.modo==="En línea" ? "El enlace de la transmisión llega a tu WhatsApp el día del evento." : "Llega 10 minutos antes y trae ropa cómoda. Usa el botón Cómo llegar para abrir la ubicación."})
   });
 }
@@ -2279,7 +2351,7 @@ function flujoPaquete(id){
       <p class="note">Al pagar, tus créditos se activan al momento. Reservas cada clase desde la agenda con 1 crédito.</p>`; }},
     pasoDatos(), pasoPago(), pasoTicket()];
   const vence = addDays(NOW, 30);
-  abrir({tipo:"Paquete", titulo:p.t, pasosBase, total:()=>p.precio,
+  abrir({tipo:"Paquete", titulo:p.t, pasosBase, total:()=>precioPack(p),
     resumen:()=>[["Paquete", p.t],["Vigencia", "30 días"]],
     armar:()=>({tipo:"Acceso activado", titulo:p.t, daCreditos:p.creditos, mensaje:"Tu paquete está activo.",
       detalle:[["Incluye", p.inc.join(" · ")],["Vence", fFechaL(vence)]],
@@ -2467,7 +2539,9 @@ paintAll();
 (async () => {
   try {
     const r = await fetch("/api/catalogo"); if (!r.ok) return;
-    const j = await r.json(); if (!j || !Array.isArray(j.clases) || !j.clases.length) return;
+    const j = await r.json(); if (!j) return;
+    if (j.promo) Object.assign(PROMO, j.promo);
+    if (!Array.isArray(j.clases) || !j.clases.length){ if (j.promo) paintAll(); return; }
     const famCat = f => CATS[f] ? f : "yoga";
     const cat = j.clases.map(c => ({...c, clases:(c.estado==="activa" ? (c.horarios||[]) : []).map((h,i) => h.id || `${c.id}-${i+1}`)}));
     const cls = [];

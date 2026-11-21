@@ -5,7 +5,8 @@
 //   GET  /api/reservas/estado   ?folios=A,B → {A:"pendiente",B:"confirmado"} (sin datos personales).
 //   GET  /api/catalogo          directorio de clases editable desde /equipo → {clases:[...], fundadores}.
 //                               Vacío = la landing usa el directorio que trae escrito.
-//                               Trae también `paquetes` (máx. 3) si el equipo los activó.
+//                               Trae también `paquetes` (máx. 3) si el equipo los activó y `promo`
+//                               (precio de apertura de la clase individual y primera clase gratis).
 // Privado (contraseña en el secreto ADMIN_CLAVE):
 //   GET  /admin                 panel para Isa y Diego.
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
@@ -92,6 +93,16 @@ async function crear(request, env) {
   const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM reservas WHERE tel = ? AND creado > ?').bind(tel, desde).first();
   if (n >= 15) return json({ ok: false, error: 'Demasiadas reservas' }, 429);
 
+  // Primera clase gratis: una por WhatsApp. Se niega si ese número ya tiene una clase o paquete
+  // (no cancelados) o una membresía, o si el equipo apagó la promo en /equipo.
+  const gratis = b.metodo === 'primera-gratis';
+  if (gratis) {
+    if (Number(b.monto)) return json({ ok: false, error: 'La clase gratis no lleva cobro' }, 400);
+    const promo = await leerPromo(env);
+    if (promo && promo.gratis === false) return json({ ok: false, error: 'promo_cerrada' }, 409);
+    if (await yaTomoClase(env, tel)) return json({ ok: false, error: 'ya_usada' }, 409);
+  }
+
   const detalle = Array.isArray(b.detalle) ? JSON.stringify(b.detalle.slice(0, 12).map(([k, v]) => [txt(k, 40), txt(v, 160)])) : null;
   const estado = b.estado === 'confirmado' && (b.metodo === 'credito' || !Number(b.monto)) ? 'confirmado' : 'pendiente';
   const ahora = new Date().toISOString();
@@ -108,6 +119,27 @@ async function crear(request, env) {
   ).run();
 
   return json({ ok: true, folio, estado }, 201);
+}
+
+async function leerPromo(env) {
+  try {
+    const r = await env.DB.prepare("SELECT data FROM proyeccion_docs WHERE col = 'catalogo' AND id = '_paquetes'").first();
+    const d = r ? JSON.parse(r.data) : null;
+    return d && d.promo ? d.promo : null;
+  } catch (e) { return null; }
+}
+async function yaTomoClase(env, tel) {
+  const r = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM reservas WHERE substr(tel, -10) = ? AND estado != 'cancelado' AND (tipo IN ('Clase', 'Paquete') OR metodo = 'primera-gratis')"
+  ).bind(tel.slice(-10)).first();
+  if (r && r.n > 0) return true;
+  try { // membresías del CRM (la tabla puede no existir en una base nueva)
+    const m = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM membresias m JOIN alumnos a ON a.id = m.alumno_id WHERE substr(a.tel, -10) = ?"
+    ).bind(tel.slice(-10)).first();
+    if (m && m.n > 0) return true;
+  } catch (e) {}
+  return false;
 }
 
 async function estados(url, env) {
@@ -192,17 +224,18 @@ async function catalogo(env) {
   } catch (e) {
     rows = []; // la tabla aún no existe: la landing usa su directorio escrito
   }
-  let fundadores = null, paquetes = null;
+  let fundadores = null, paquetes = null, promo = null;
   const clases = [];
   for (const r of rows) {
     let d;
     try { d = JSON.parse(r.data); } catch (e) { continue; }
     if (r.id === '_fundadores') { fundadores = { cupo: d.cupo, tomados: d.tomados ?? null, descuento: d.descuento }; continue; }
     // Paquetes de alumno: solo salen si el equipo activó «Mostrar en la página».
-    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 3); continue; }
+    // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
+    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 3); if (d.promo) promo = d.promo; continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;
     clases.push({ ...d, id: r.id });
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
-  return json({ clases, fundadores, paquetes }, 200, { 'cache-control': 'public, max-age=20' });
+  return json({ clases, fundadores, paquetes, promo }, 200, { 'cache-control': 'public, max-age=20' });
 }
