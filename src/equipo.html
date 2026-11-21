@@ -213,7 +213,7 @@ body.proy nav.tab{display:none}
     <div id="dirVacio" class="r" hidden><p class="hint">El directorio todavía usa lo que viene escrito en la página. Cárgalo aquí una vez para poder editarlo.</p><button class="btn p" id="dirSeed">Cargar el directorio actual</button></div>
     <div class="list" id="listaDir"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
-    <form class="form" id="fPaq" autocomplete="off" style="margin-top:16px">
+    <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
       <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
       <p class="hint">Son los mismos de Proyección (sección 3 · Paquetes). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
       <div id="paqs" style="display:grid;gap:10px"></div>
@@ -222,11 +222,12 @@ body.proy nav.tab{display:none}
         <legend style="font-weight:700;padding:0 6px">Promo de apertura</legend>
         <p class="hint" style="margin:0 0 8px">El precio de la clase individual no cambia. Mientras la promo esté prendida, la página lo muestra tachado junto al precio de apertura. Al apagarla o al pasar la fecha de fin vuelve solo al precio normal.</p>
         <label class="tog"><input type="checkbox" name="promoActiva"> <span>Precio de apertura en la clase individual</span></label>
-        <div class="grid2"><label>Precio de apertura<input name="promoPrecio" type="number" min="0" step="50" inputmode="numeric"></label>
+        <div class="grid2"><label>Precio de apertura<input name="promoPrecio" type="number" min="0" step="1" inputmode="numeric"></label>
           <label>Termina el <small class="hint">(opcional)</small><input name="promoHasta" type="date"></label></div>
         <label class="tog"><input type="checkbox" name="promoGratis"> <span>Primera clase gratis <small class="hint">(una por WhatsApp; reservan sin pagar y queda «pendiente» hasta que la confirmen)</small></span></label>
       </fieldset>
       <label class="tog"><input type="checkbox" name="publicar"> <span>Mostrar en la página pública <small class="hint">(si no, la página usa los que trae escritos)</small></span></label>
+      <p class="hint" id="paqSin" hidden style="margin:0;color:var(--bad);font-weight:600">Tienes cambios sin guardar en los paquetes.</p>
       <button class="btn p w" type="submit">Guardar paquetes</button>
     </form>
     <form class="form" id="fFund" autocomplete="off" style="margin-top:16px">
@@ -483,7 +484,9 @@ const choques = (mine, otros) => { const r = [];
   }
   return [...new Set(r)]; };
 const PROMO_DEF = {activa:true, precio:200, hasta:"", gratis:true}; // igual que la página cuando aún no se guarda nada
-let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}};
+let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}}, paqSucio = false;
+// Si hay cambios de paquetes sin guardar, recargar el directorio (p. ej. al guardar una clase) no los borra.
+const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el) el.hidden = !v; };
 async function docs(path, body, metodo){
   const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
@@ -491,7 +494,7 @@ async function docs(path, body, metodo){
 async function cargarDir(){
   let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
   FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
-  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
+  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
   planesDesdePaquetes(PAQ.items);
   D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
   $("#dirVacio").hidden = D.length>0;
@@ -503,7 +506,7 @@ async function cargarDir(){
         <button class="btn s" data-edit>Editar</button>
       </div></div>`).join("");
   const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
-  pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo();
+  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); }
   f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
 }
 $("#dirSeed").onclick = async () => {
@@ -519,25 +522,28 @@ async function guardarClase(c){ const {id, ...d} = c; await docs(id, d); }
 function editarClase(c){
   const nueva = !c; c = c || {id:"", titulo:"", guia:"", fam:"yoga", estado:"pronto", intensidad:"Suave", regula:"", desc:"", orden:(D.length+1), horarios:[]};
   let B = aBloques(c.horarios||[]);
+  // La hora escrita en «Otra» cuenta aunque no se toque «+ Otra» (antes se perdía y el horario quedaba sin hora).
+  const otraDe = i => { const el = document.querySelector(`#hrs [data-b="${i}"] [data-k=otra]`); return el && el.value ? el.value : ""; };
+  const conOtras = () => B.map((b,i) => { const v = otraDe(i); return v && !b.horas.includes(v) ? {...b, horas:[...b.horas,v].sort()} : b; });
   $("#dT").textContent = nueva ? "Nueva clase" : c.titulo;
-  const resumen = () => { const H = aHorarios(B.filter(b=>b.dias.length&&b.horas.length), "x", []); const el = $("#resH"); if (!el) return;
+  const resumen = () => { const H = aHorarios(conOtras().filter(b=>b.dias.length&&b.horas.length), "x", []); const el = $("#resH"); if (!el) return;
     el.textContent = H.length ? `Se da: ${resumenH(H)} (${H.length} ${H.length===1?"horario":"horarios"} por semana)` : "Todavía sin horarios."; };
   const pintarH = () => { $("#hrs").innerHTML = B.map((b,i)=>{ const extra = b.horas.filter(t=>!HORAS.includes(t));
     return `<div class="hb" data-b="${i}">
       <b class="hint">1 · ¿Qué días?</b>
       <div class="dchips" role="group" aria-label="Días de la semana">${DORD.map(d=>`<button type="button" data-d="${d}" aria-pressed="${b.dias.includes(d)}" aria-label="${DIAS[d]}">${DC[d]}</button>`).join("")}</div>
       <div class="dq"><button type="button" class="lnk" data-q="lv">Lun a Vie</button><button type="button" class="lnk" data-q="fin">Sáb y Dom</button><button type="button" class="lnk" data-q="todos">Todos</button><button type="button" class="lnk" data-q="nada">Quitar días</button></div>
-      <b class="hint">2 · ¿A qué hora? <span style="font-weight:400">(toca una o varias)</span></b>
+      <b class="hint">2 · ¿A qué hora? <span style="font-weight:400">(toca una o varias, o escribe otra)</span></b>
       <div class="hchips" role="group" aria-label="Horas">${[...HORAS,...extra].sort().map(t=>`<button type="button" data-t="${t}" aria-pressed="${b.horas.includes(t)}">${hAmPm(t)}</button>`).join("")}
         <span class="hotra"><input data-k="otra" type="time" step="300" aria-label="Otra hora"><button type="button" class="btn s" data-otra>+ Otra</button></span></div>
       <details><summary class="hint" style="cursor:pointer">Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})</summary>
         <div class="hr" style="margin-top:6px">
-          <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${b.dur||60}"></label>
+          <label>Minutos<input data-k="dur" type="number" min="15" step="5" value="${b.dur||60}"></label>
           <label>Cupo<input data-k="cupo" type="number" min="1" value="${b.cupo||12}"></label>
-          <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${b.precio??300}"></label></div></details>
+          <label>Precio<input data-k="precio" type="number" min="0" step="1" value="${b.precio??300}"></label></div></details>
       <button type="button" class="btn s" data-quitar="${i}" style="justify-self:start">Quitar este horario</button></div>`; }).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
     resumen(); };
-  $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" style="border:0;padding:0;background:none">
+  $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" novalidate style="border:0;padding:0;background:none">
     <label>Nombre de la clase<input name="titulo" required value="${esc(c.titulo)}" placeholder="Yin yoga"></label>
     <div class="grid2"><label>Maestro o maestra<input name="guia" value="${esc(c.guia)}" placeholder="Por anunciar"></label>
       <label>Estado<select name="estado">${Object.entries(EST).map(([k,v])=>`<option value="${k}" ${c.estado===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
@@ -555,22 +561,26 @@ function editarClase(c){
   </form>`;
   pintarH();
   const leerH = () => $$("#hrs [data-b]").forEach(row => { const b = B[+row.dataset.b], v = k => row.querySelector(`[data-k=${k}]`).value;
-    Object.assign(b,{dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
+    Object.assign(b,{dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0});
+    const o = v("otra"); if (o && !b.horas.includes(o)) b.horas = [...b.horas,o].sort(); });
   $("#hrs").onclick = e => {
     const q = e.target.closest("[data-quitar]"); if (q){ leerH(); B.splice(+q.dataset.quitar,1); pintarH(); return; }
     const row = e.target.closest("[data-b]"); if (!row) return; const b = B[+row.dataset.b];
     const d = e.target.closest("[data-d]"); if (d){ const k = +d.dataset.d, on = !b.dias.includes(k); b.dias = on ? [...b.dias,k] : b.dias.filter(x=>x!==k); d.setAttribute("aria-pressed", on); resumen(); return; }
     const t = e.target.closest("[data-t]"); if (t){ const k = t.dataset.t, on = !b.horas.includes(k); b.horas = on ? [...b.horas,k].sort() : b.horas.filter(x=>x!==k); t.setAttribute("aria-pressed", on); resumen(); return; }
-    const o = e.target.closest("[data-otra]"); if (o){ const v = row.querySelector('[data-k=otra]').value; if (!v) { toast("Elige la hora y toca + Otra"); return; } leerH(); if (!b.horas.includes(v)) b.horas = [...b.horas,v].sort(); pintarH(); return; }
+    const o = e.target.closest("[data-otra]"); if (o){ const v = row.querySelector('[data-k=otra]').value; if (!v) { toast("Escribe la hora en el recuadro"); return; } leerH(); pintarH(); return; }
     const z = e.target.closest("[data-q]"); if (z){ leerH(); b.dias = {lv:[1,2,3,4,5], fin:[6,0], todos:[0,1,2,3,4,5,6], nada:[]}[z.dataset.q]; pintarH(); }
   };
-  $("#hrs").addEventListener("change", e => { if (e.target.closest("details")) { leerH(); const sm = e.target.closest("details").querySelector("summary"), b = B[+e.target.closest("[data-b]").dataset.b]; sm.textContent = `Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})`; } });
+  $("#hrs").addEventListener("input", e => { if (e.target.matches("[data-k=otra]")) resumen(); });
+  $("#hrs").addEventListener("change", e => { if (e.target.matches("[data-k=otra]")) { resumen(); return; } if (e.target.closest("details")) { leerH(); const sm = e.target.closest("details").querySelector("summary"), b = B[+e.target.closest("[data-b]").dataset.b]; sm.textContent = `Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})`; } });
   $("#addH").onclick = () => { leerH(); const u = B[B.length-1]; B.push({dias:[],horas:u?[...u.horas]:["19:00"],dur:u?u.dur:60,cupo:u?u.cupo:12,precio:u?u.precio:300}); pintarH(); };
   $("#fCl").onsubmit = async e => {
     e.preventDefault(); leerH(); const d = Object.fromEntries(new FormData(e.target));
     let id = c.id || d.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
     if (nueva && D.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-3);
-    if (B.some(b=>!b.dias.length || !b.horas.length)) { toast("Cada horario necesita al menos un día y una hora, o quítalo"); return; }
+    if (!(d.titulo||"").trim()) { toast("Ponle nombre a la clase"); return; }
+    const malo = B.findIndex(b=>!b.dias.length || !b.horas.length);
+    if (malo >= 0) { const b = B[malo]; toast(`Horario ${malo+1}: ${!b.dias.length?"elige al menos un día":"elige o escribe una hora"}, o quítalo`); return; }
     if (B.length && d.estado==="pronto" && confirm("Tiene horarios pero está en «Próximamente», y así no se ven ni se puede reservar.\n¿Pasarla a Activa?")) d.estado = "activa";
     if (d.estado==="activa" && !B.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
     const horarios = aHorarios(B, id, c.horarios||[]);
@@ -613,13 +623,15 @@ function pintarPaq(){
     <div class="grid2"><label>Nombre<input data-k="nombre" value="${esc(p.nombre)}" maxlength="40"></label>
       <label>Tipo<select data-k="tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${p.tipo===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
     <div class="grid2">${p.tipo==="paquete"?`<label>Clases al mes<input data-k="clases" type="number" min="2" inputmode="numeric" value="${esc(p.clases)}"></label>`:`<span></span>`}
-      <label>${p.tipo==="suelta"?"Precio por clase":"Precio al mes"}<input data-k="precio" type="number" min="0" step="50" inputmode="numeric" value="${esc(p.precio)}"></label></div>
+      <label>${p.tipo==="suelta"?"Precio por clase":"Precio al mes"}<input data-k="precio" type="number" min="0" step="1" inputmode="numeric" value="${esc(p.precio)}"></label></div>
     ${p.tipo==="ilimitada"?`<small class="hint">La membresía ilimitada es solo mensual (1 mes).</small>`:""}
     <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
     <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
       <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Cargar los de Proyección» para empezar.</p>`;
   $("#paqAdd").hidden = PAQ.items.length >= 3;
 }
+$("#fPaq").addEventListener("input", () => marcarPaq(true));
+$("#fPaq").addEventListener("change", () => marcarPaq(true));
 $("#paqs").addEventListener("input", e => {
   const row = e.target.closest("[data-p]"); if (!row) return; const p = PAQ.items[+row.dataset.p], k = e.target.dataset.k;
   if (!k) return;
@@ -627,9 +639,9 @@ $("#paqs").addEventListener("input", e => {
   if (k==="tipo") { p.clases = p.tipo==="suelta" ? 1 : p.tipo==="ilimitada" ? 0 : Math.max(p.clases||8, 2); p.plazos = []; pintarPaq(); return; }
   const g = row.querySelector("[data-reg]"), desc = (FUND && FUND.descuento) ?? 20; if (g) g.textContent = regular(p,desc) ? `Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}` : "Sin precio fundador";
 });
-$("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); pintarPaq(); });
-$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); pintarPaq(); };
-$("#paqSeed").onclick = () => { if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return; PAQ.items = PAQ_BASE(); pintarPaq(); };
+$("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); marcarPaq(true); pintarPaq(); });
+$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
+$("#paqSeed").onclick = () => { if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return; PAQ.items = PAQ_BASE(); marcarPaq(true); pintarPaq(); };
 function pintarPromo(){ const f = $("#fPaq"), p = PAQ.promo;
   f.promoActiva.checked = !!p.activa; f.promoPrecio.value = p.precio ?? ""; f.promoHasta.value = p.hasta || ""; f.promoGratis.checked = p.gratis !== false; }
 $("#fPaq").onsubmit = async e => {
@@ -644,7 +656,7 @@ $("#fPaq").onsubmit = async e => {
   const f = e.target, promo = {activa:f.promoActiva.checked, precio:+f.promoPrecio.value||0, hasta:f.promoHasta.value||"", gratis:f.promoGratis.checked};
   if (promo.activa && !(promo.precio>0)) { toast("Pon el precio de apertura o apaga la promo"); return; }
   PAQ.promo = promo;
-  try { await docs("_paquetes", {publicar:f.publicar.checked && items.length>0, items, promo}); toast(e.target.publicar.checked ? "Paquetes guardados. Ya se ven en la página." : "Paquetes guardados (la página sigue con los suyos)"); cargarDir(); } catch(err){ toast(err.message); }
+  try { await docs("_paquetes", {publicar:f.publicar.checked && items.length>0, items, promo}); marcarPaq(false); toast(e.target.publicar.checked ? "Paquetes guardados. Ya se ven en la página." : "Paquetes guardados (la página sigue con los suyos)"); cargarDir(); } catch(err){ toast(err.message); }
 };
 $("#fFund").onsubmit = async e => {
   e.preventDefault(); const f = e.target; const t = f.tomados.value.trim();
