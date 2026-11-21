@@ -293,6 +293,16 @@ function pintarR(){
     ? `${pend.length} por verificar · ${money(pend.reduce((a,r)=>a+r.monto,0))}`
     : `${l.length} reservas · ${vienen} esperadas${conf?` · ${conf} confirmaron`:""}`;
   $("#listaR").innerHTML = l.length ? l.map(cardR).join("") : `<p class="empty">${fR==="hoy"?"Nadie agendado hoy todavía.":"Nada por aquí."}</p>`;
+  if (fR==="hoy" && !l.length && !q) avisoOtras();
+}
+// «Hoy» solo muestra lo que empieza hoy. Si está vacío, avisa cuántas hay en Próximas y por verificar,
+// para que una reserva de mañana (o un pago por revisar) no parezca perdida.
+async function avisoOtras(){
+  let px = [], pv = [];
+  try { [px, pv] = await Promise.all([api("reservas?filtro=proximas"), api("reservas?filtro=pendientes")]); } catch(e){ return; }
+  if (fR!=="hoy" || R.length || (!px.length && !pv.length)) return;
+  const b = (f, n, t) => n ? `<button class="btn" data-ir="${f}">${n} ${t}</button>` : "";
+  $("#listaR").innerHTML = `<p class="empty">Nadie agendado hoy todavía.<br><br>Hay reservas en otras pestañas:<br>${b("proximas", px.length, px.length===1?"próxima":"próximas")} ${b("pendientes", pv.length, "por verificar")}</p>`;
 }
 function cardR(r){
   const asis = r.asistencia ? `<span class="chip ${r.asistencia}">${r.asistencia==="confirmada"?"Confirmó que va":"Avisó que no va"}</span>` : r.recordado ? `<span class="chip recordado">Recordatorio enviado</span>` : "";
@@ -683,6 +693,7 @@ function vista(v){
 document.addEventListener("click", async e => {
   const t = e.target;
   const nav = t.closest("nav.tab [data-v]"); if (nav){ vCRM = nav.dataset.v; area("crm"); return; }
+  const ir = t.closest("[data-ir]"); if (ir){ const tab = document.querySelector(`button[data-f="${ir.dataset.ir}"]`); if (tab) tab.click(); return; }
   const f = t.closest("[data-f]"); if (f){ fR=f.dataset.f; $$("[data-f]").forEach(b=>b.setAttribute("aria-pressed",b===f)); cargarR(); return; }
   const s = t.closest("[data-s]"); if (s){ sA=s.dataset.s; $$("[data-s]").forEach(b=>b.setAttribute("aria-pressed",b===s)); cargarA(); return; }
   const fi = t.closest("[data-ficha]"); if (fi){ e.preventDefault(); ficha(fi.dataset.ficha); return; }

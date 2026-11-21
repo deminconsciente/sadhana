@@ -75,7 +75,7 @@ async function crear(request, env) {
     let host = '';
     try { host = new URL(origen).host; } catch (e) {}
     if (host !== new URL(request.url).host && !/(^|\.)sadhanaholistics\.com$/.test(host))
-      return json({ ok: false, error: 'Origen no permitido' }, 403);
+    { console.warn('reserva rechazada: origen', origen); return json({ ok: false, error: 'Origen no permitido' }, 403); }
   }
 
   let b;
@@ -85,13 +85,16 @@ async function crear(request, env) {
   const nombre = txt(b.nombre, 120);
   const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
   const titulo = txt(b.titulo, 160);
-  if (!folio || !FOLIO.test(folio)) return json({ ok: false, error: 'Folio inválido' }, 400);
-  if (!nombre || tel.length < 10 || !titulo) return json({ ok: false, error: 'Faltan datos' }, 400);
+  // Cada reserva que entra o se rechaza deja rastro en los registros del Worker (Observability),
+  // con lo justo para recuperarla a mano: folio, nombre, qué reservó, monto y últimos 4 del WhatsApp.
+  const rastro = { folio: folio || txt(b.folio, 40), nombre, titulo, monto: Number(b.monto) || 0, metodo: txt(b.metodo, 30), tel4: tel.slice(-4) };
+  if (!folio || !FOLIO.test(folio)) { console.warn('reserva rechazada: folio', JSON.stringify(rastro)); return json({ ok: false, error: 'Folio inválido' }, 400); }
+  if (!nombre || tel.length < 10 || !titulo) { console.warn('reserva rechazada: faltan datos', JSON.stringify(rastro)); return json({ ok: false, error: 'Faltan datos' }, 400); }
 
   // Límite suave contra spam: 15 reservas por teléfono en 24 h.
   const desde = new Date(Date.now() - 864e5).toISOString();
   const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM reservas WHERE tel = ? AND creado > ?').bind(tel, desde).first();
-  if (n >= 15) return json({ ok: false, error: 'Demasiadas reservas' }, 429);
+  if (n >= 15) { console.warn('reserva rechazada: límite', JSON.stringify(rastro)); return json({ ok: false, error: 'Demasiadas reservas' }, 429); }
 
   // Primera clase gratis: una por WhatsApp. Se niega si ese número ya tiene una clase o paquete
   // (no cancelados) o una membresía, o si el equipo apagó la promo en /equipo.
@@ -108,7 +111,7 @@ async function crear(request, env) {
   const ahora = new Date().toISOString();
 
   // INSERT OR IGNORE: si la landing reintenta el mismo folio, no se duplica ni se pisa.
-  await env.DB.prepare(
+  const res = await env.DB.prepare(
     `INSERT OR IGNORE INTO reservas
      (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
@@ -117,6 +120,7 @@ async function crear(request, env) {
     Math.max(0, Math.round(Number(b.monto) || 0)), txt(b.metodo, 30), estado, ahora,
     b.aceptaPrivacidad ? 1 : 0, b.aceptaComunidad ? 1 : 0
   ).run();
+  console.log(res.meta && res.meta.changes ? 'reserva guardada' : 'reserva repetida (ya existía)', JSON.stringify({ ...rastro, estado }));
 
   return json({ ok: true, folio, estado }, 201);
 }
