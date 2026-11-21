@@ -491,7 +491,7 @@ const choques = (mine, otros) => { const r = [];
 const PROMO_DEF = {activa:true, precio:200, hasta:"", gratis:true}; // igual que la página cuando aún no se guarda nada
 let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}}, paqSucio = false;
 // Si hay cambios de paquetes sin guardar, recargar el directorio (p. ej. al guardar una clase) no los borra.
-const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el) el.hidden = !v; };
+const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el){ el.hidden = !v; el.textContent = "Tienes cambios sin guardar en los paquetes."; } };
 async function docs(path, body, metodo){
   const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
@@ -511,7 +511,7 @@ async function cargarDir(){
         <button class="btn s" data-edit>Editar</button>
       </div></div>`).join("");
   const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
-  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); }
+  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); if (!pq) precargarPaq(); }
   f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
 }
 $("#dirSeed").onclick = async () => {
@@ -653,13 +653,24 @@ const escAPaq = sc => { let L = (sc.packages||[]).filter(p => p && p.name && +p.
     return {id:"", nombre:String(p.name).slice(0,40), tipo, clases:tipo==="suelta"?1:tipo==="ilimitada"?0:c, precio:+p.price, plazos:[], incluye:""}; }); };
 const verEsc = () => { const sc = ESC.find(x => x.id===$("#paqEsc").value); const L = sc ? escAPaq(sc) : [];
   $("#paqEscVer").textContent = L.length ? L.map(p => `${p.nombre} ${money(p.precio)}`).join(" · ") + ((sc.packages||[]).length>3 ? " (los 3 que más se eligen)" : "") : "Este escenario no tiene paquetes."; };
+async function escVigente(){
+  const [escs, meta] = await Promise.all([leerCol("escenarios"), leerCol("meta").catch(() => [])]);
+  ESC = escs.map(x => ({...x.data, id:x.id})).filter(x => !x.bk && (x.packages||[]).length).sort((a,b) => (+a.order||0) - (+b.order||0));
+  const plan = ((meta.find(x => x.id==="plan")||{}).data||{}).plan;
+  return {plan, def: ESC.find(x => x.id===plan) || ESC.find(x => /bolillo/i.test(x.name||"")) || ESC[0]};
+}
+// Si todavía no hay paquetes guardados, salen precargados del escenario vigente para editarlos y guardarlos.
+async function precargarPaq(){
+  try { const {def} = await escVigente(); const L = def ? escAPaq(def) : [];
+    if (!L.length || paqSucio || PAQ.items.length) return;
+    PAQ.items = L; PAQ.publicar = true; $("#fPaq").publicar.checked = true; marcarPaq(true); pintarPaq();
+    const el = $("#paqSin"); if (el) el.textContent = `Precargados del escenario «${def.name}». Cámbialos si quieres y toca Guardar paquetes para que salgan en la página.`;
+  } catch(e){}
+}
 $("#paqSeed").onclick = async () => {
   try {
-    const [escs, meta] = await Promise.all([leerCol("escenarios"), leerCol("meta").catch(() => [])]);
-    ESC = escs.map(x => ({...x.data, id:x.id})).filter(x => !x.bk && (x.packages||[]).length).sort((a,b) => (+a.order||0) - (+b.order||0));
+    const {plan, def} = await escVigente();
     if (!ESC.length) { toast("Ningún escenario de Proyección tiene paquetes"); return; }
-    const plan = ((meta.find(x => x.id==="plan")||{}).data||{}).plan;
-    const def = ESC.find(x => x.id===plan) || ESC.find(x => /bolillo/i.test(x.name||"")) || ESC[0];
     $("#paqEsc").innerHTML = ESC.map(x => `<option value="${esc(x.id)}" ${x.id===def.id?"selected":""}>${esc(x.name||"Sin nombre")}${x.id===plan?" · plan vigente":""}</option>`).join("");
     verEsc(); $("#paqEscBox").hidden = false;
   } catch(err){ toast(err.message); }
