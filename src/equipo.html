@@ -215,9 +215,14 @@ body.proy nav.tab{display:none}
     <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
     <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
       <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
-      <p class="hint">Son los mismos de Proyección (sección 3 · Paquetes). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
+      <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
       <div id="paqs" style="display:grid;gap:10px"></div>
-      <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Cargar los de Proyección</button></div>
+      <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Traer de un escenario de Proyección</button></div>
+      <div id="paqEscBox" class="pq" hidden>
+        <label>¿De qué escenario?<select id="paqEsc"></select></label>
+        <small class="hint" id="paqEscVer"></small>
+        <div class="row"><button type="button" class="btn s p" id="paqEscOk">Traer estos paquetes</button><button type="button" class="btn s" id="paqEscX">Cancelar</button></div>
+      </div>
       <fieldset class="pq" id="promoBox" style="border:1px solid var(--line);margin:0">
         <legend style="font-weight:700;padding:0 6px">Promo de apertura</legend>
         <p class="hint" style="margin:0 0 8px">El precio de la clase individual no cambia. Mientras la promo esté prendida, la página lo muestra tachado junto al precio de apertura. Al apagarla o al pasar la fecha de fin vuelve solo al precio normal.</p>
@@ -486,7 +491,7 @@ const choques = (mine, otros) => { const r = [];
 const PROMO_DEF = {activa:true, precio:200, hasta:"", gratis:true}; // igual que la página cuando aún no se guarda nada
 let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}}, paqSucio = false;
 // Si hay cambios de paquetes sin guardar, recargar el directorio (p. ej. al guardar una clase) no los borra.
-const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el) el.hidden = !v; };
+const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el){ el.hidden = !v; el.textContent = "Tienes cambios sin guardar en los paquetes."; } };
 async function docs(path, body, metodo){
   const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
@@ -506,7 +511,7 @@ async function cargarDir(){
         <button class="btn s" data-edit>Editar</button>
       </div></div>`).join("");
   const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
-  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); }
+  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); if (!pq) precargarPaq(); }
   f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
 }
 $("#dirSeed").onclick = async () => {
@@ -602,10 +607,6 @@ $("#listaDir").addEventListener("click", async e => {
 });
 // ---------- Paquetes de alumno (máx. 3): los mismos de Proyección · sección 3 ----------
 const TIPOS = {suelta:"Clase suelta", paquete:"Paquete de clases", ilimitada:"Membresía ilimitada"};
-const PAQ_BASE = () => [
-  {id:"suelta", nombre:"Clase suelta", tipo:"suelta", clases:1, precio:300, plazos:[], incluye:""},
-  {id:"mensual-8", nombre:"Paquete 8 clases al mes", tipo:"paquete", clases:8, precio:1300, plazos:[], incluye:""},
-  {id:"ilimitada", nombre:"Membresía ilimitada", tipo:"ilimitada", clases:0, precio:1600, plazos:[], incluye:""}];
 // Las altas manuales de membresía (pestaña Alumnos) ofrecen los mismos paquetes.
 function planesDesdePaquetes(items){
   const L = [];
@@ -627,7 +628,7 @@ function pintarPaq(){
     ${p.tipo==="ilimitada"?`<small class="hint">La membresía ilimitada es solo mensual (1 mes).</small>`:""}
     <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
     <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
-      <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Cargar los de Proyección» para empezar.</p>`;
+      <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Traer de un escenario de Proyección» o «+ Agregar paquete».</p>`;
   $("#paqAdd").hidden = PAQ.items.length >= 3;
 }
 $("#fPaq").addEventListener("input", () => marcarPaq(true));
@@ -641,7 +642,45 @@ $("#paqs").addEventListener("input", e => {
 });
 $("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); marcarPaq(true); pintarPaq(); });
 $("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
-$("#paqSeed").onclick = () => { if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return; PAQ.items = PAQ_BASE(); marcarPaq(true); pintarPaq(); };
+// Trae los paquetes de un escenario de Proyección. Sale elegido el escenario que es el plan
+// (Proyección → Presupuesto vs real); si no hay plan, el que se llame «Bolillo».
+let ESC = [];
+const leerCol = async col => { const r = await fetch("/api/crm/docs/"+col, {cache:"no-store"}); if (!r.ok) throw new Error("No se pudo leer Proyección"); return r.json(); };
+const escAPaq = sc => { let L = (sc.packages||[]).filter(p => p && p.name && +p.price > 0);
+  if (L.length > 3) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,3);
+  const ord = p => +p.classes===1 ? 0 : +p.classes===0 ? 999 : +p.classes;
+  return L.sort((a,b) => ord(a)-ord(b)).map(p => { const c = +p.classes||0, tipo = c===1 ? "suelta" : c===0 ? "ilimitada" : "paquete";
+    return {id:"", nombre:String(p.name).slice(0,40), tipo, clases:tipo==="suelta"?1:tipo==="ilimitada"?0:c, precio:+p.price, plazos:[], incluye:""}; }); };
+const verEsc = () => { const sc = ESC.find(x => x.id===$("#paqEsc").value); const L = sc ? escAPaq(sc) : [];
+  $("#paqEscVer").textContent = L.length ? L.map(p => `${p.nombre} ${money(p.precio)}`).join(" · ") + ((sc.packages||[]).length>3 ? " (los 3 que más se eligen)" : "") : "Este escenario no tiene paquetes."; };
+async function escVigente(){
+  const [escs, meta] = await Promise.all([leerCol("escenarios"), leerCol("meta").catch(() => [])]);
+  ESC = escs.map(x => ({...x.data, id:x.id})).filter(x => !x.bk && (x.packages||[]).length).sort((a,b) => (+a.order||0) - (+b.order||0));
+  const plan = ((meta.find(x => x.id==="plan")||{}).data||{}).plan;
+  return {plan, def: ESC.find(x => x.id===plan) || ESC.find(x => /bolillo/i.test(x.name||"")) || ESC[0]};
+}
+// Si todavía no hay paquetes guardados, salen precargados del escenario vigente para editarlos y guardarlos.
+async function precargarPaq(){
+  try { const {def} = await escVigente(); const L = def ? escAPaq(def) : [];
+    if (!L.length || paqSucio || PAQ.items.length) return;
+    PAQ.items = L; PAQ.publicar = true; $("#fPaq").publicar.checked = true; marcarPaq(true); pintarPaq();
+    const el = $("#paqSin"); if (el) el.textContent = `Precargados del escenario «${def.name}». Cámbialos si quieres y toca Guardar paquetes para que salgan en la página.`;
+  } catch(e){}
+}
+$("#paqSeed").onclick = async () => {
+  try {
+    const {plan, def} = await escVigente();
+    if (!ESC.length) { toast("Ningún escenario de Proyección tiene paquetes"); return; }
+    $("#paqEsc").innerHTML = ESC.map(x => `<option value="${esc(x.id)}" ${x.id===def.id?"selected":""}>${esc(x.name||"Sin nombre")}${x.id===plan?" · plan vigente":""}</option>`).join("");
+    verEsc(); $("#paqEscBox").hidden = false;
+  } catch(err){ toast(err.message); }
+};
+$("#paqEsc").onchange = e => { e.stopPropagation(); verEsc(); }; $("#paqEsc").oninput = e => e.stopPropagation();
+$("#paqEscX").onclick = () => { $("#paqEscBox").hidden = true; };
+$("#paqEscOk").onclick = () => { const sc = ESC.find(x => x.id===$("#paqEsc").value), L = sc ? escAPaq(sc) : [];
+  if (!L.length) { toast("Ese escenario no tiene paquetes"); return; }
+  if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return;
+  PAQ.items = L; $("#paqEscBox").hidden = true; marcarPaq(true); pintarPaq(); toast(`Traídos de «${sc.name}». Revisa y toca Guardar paquetes.`); };
 function pintarPromo(){ const f = $("#fPaq"), p = PAQ.promo;
   f.promoActiva.checked = !!p.activa; f.promoPrecio.value = p.precio ?? ""; f.promoHasta.value = p.hasta || ""; f.promoGratis.checked = p.gratis !== false; }
 $("#fPaq").onsubmit = async e => {
