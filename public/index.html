@@ -1806,7 +1806,7 @@ function paintPacks(){
   const pk0 = PAQUETES[Math.min(+$("#nClases").value, PAQUETES.length-1)], n = pk0.clases; $("#nOut").textContent = pk0.unl ? "∞" : n; $("#nClases").setAttribute("aria-valuetext", n+" clases");
   const b = mejorPaquete(n), suelta = n*PU();
   $("#calcRes").hidden = true;
-  const ORD = [b.p].concat(PAQUETES.filter(p => p.id!==b.p.id));
+  const ORD = PAQUETES; // siempre en orden: 1 · 4 · 12 · ∞ (la recomendada solo lleva «Para ti»)
   if (false) $("#calcRes").innerHTML = b.p.id==="suelta" ? `Con ${n} clase${n>1?"s":""} te conviene pagar <b>clase por clase</b>: ${money(suelta)}.`
     : `Te conviene <b>${b.p.t}</b>${b.extra?` más ${b.extra} clase${b.extra>1?"s":""} suelta${b.extra>1?"s":""}`:""}: <b>${money(b.costo)}</b> al mes, contra ${money(suelta)} en clases sueltas. Ahorras <b>${money(suelta-b.costo)}</b>${b.p.creditos.terapias?` y te llevas ${b.p.creditos.terapias} terapias de 30 min`:""}.`;
   $("#packs").classList.toggle("arte", PAQ==="arte");
