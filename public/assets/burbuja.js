@@ -7,7 +7,7 @@
 (() => {
   const CONTACTO = {
     whatsapp: '528115458500', // WhatsApp Business de Sadhana (81 1545 8500)
-    comunidad: '',            // Enlace de la Comunidad de WhatsApp. Vacío = aparece como «Pronto».
+    comunidad: 'https://chat.whatsapp.com/E3bSUz1NS2P48ZwU0xkWtv', // Enlace de la Comunidad de WhatsApp. Vacío = aparece como «Pronto».
     redes: [                  // Las que no tengan url no se muestran.
       { red: 'instagram', nombre: 'Instagram', url: 'https://www.instagram.com/sadhana.holistics/' },
       { red: 'facebook', nombre: 'Facebook', url: '' },

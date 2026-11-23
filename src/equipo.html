@@ -98,8 +98,9 @@ body.proy{padding-bottom:0}
 body.proy main{max-width:none;padding:0}
 body.proy header{max-width:none}
 body.proy nav.tab{display:none}
+.vcard{display:grid;gap:6px}.vb{display:grid;grid-template-columns:76px 1fr 28px;align-items:center;gap:6px;font-size:.82rem;margin-top:4px}.vb i{display:block;height:8px;border-radius:99px;background:var(--acc);min-width:4px}.vb b{text-align:right}
 #ifProy{display:block;width:100%;border:0;background:var(--bg)}
-@media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 11px}}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 9px;font-size:.92rem}}
 </style>
 </head>
 <body>
@@ -204,6 +205,12 @@ body.proy nav.tab{display:none}
     </form>
   </section>
 
+  <!-- VOTOS: qué clase y qué horario pide la gente -->
+  <section id="v-votos" hidden>
+    <p class="hint" style="margin:8px 0 12px">Lo que vota la gente en <b>sadhanaholistics.com/votar</b>. Cada persona cuenta una vez por clase; si marca varios días y horas, cuenta en todos. Abre el horario con más votos y avísales por WhatsApp.</p>
+    <div class="list" id="listaV"><p class="empty">Cargando…</p></div>
+  </section>
+
   <!-- PROYECCIÓN (admin): la calculadora de siempre, embebida -->
   <section id="v-proy" hidden><iframe id="ifProy" title="Proyección Sadhana"></iframe></section>
 
@@ -250,6 +257,7 @@ body.proy nav.tab{display:none}
 <nav class="tab" aria-label="Secciones">
   <button data-v="agenda" aria-current="page">Agenda</button>
   <button data-v="alumnos">Alumnos</button>
+  <button data-v="votos">Votos</button>
   <button data-v="nueva">+ Registrar</button>
   <button data-v="equipo" hidden id="tabEq">Equipo</button>
 </nav>
@@ -285,6 +293,24 @@ async function api(path, body){
   const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || "No se pudo guardar");
   return j;
+}
+
+// ---------- Votos por horario ----------
+const DIAS_V = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const hV = h => new Date(2000,0,1,h).toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit"});
+async function cargarV(){
+  let L = []; try { L = await api("votos"); } catch(e){ toast(e.message); }
+  const el = $("#listaV");
+  if (!L.length){ el.innerHTML = `<p class="empty">Aún no hay votos. Comparte sadhanaholistics.com/votar en Instagram, en el parque y en la comunidad.</p>`; return; }
+  const barras = (obj, lbl) => { const E = Object.entries(obj).sort((a,b)=>b[1]-a[1]); const mx = Math.max(1, ...E.map(e=>e[1]));
+    return E.map(([k,n]) => `<div class="vb"><span>${esc(lbl(+k))}</span><i style="width:${Math.round(n/mx*100)}%"></i><b>${n}</b></div>`).join(""); };
+  el.innerHTML = L.map(c => `<article class="r vcard">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0;font-size:1.05rem">${esc(c.titulo)}</h3><b>${c.personas.length} ${c.personas.length>1?"personas":"persona"}</b></div>
+    ${c.top.length?`<p class="hint" style="margin:6px 0">Más votado: <b>${c.top.slice(0,3).map(t => `${DIAS_V[t.dia]} ${hV(t.h)} (${t.n})`).join(" · ")}</b></p>`:""}
+    <div class="grid2"><div><small class="hint">Por día</small>${barras(c.dias, d=>DIAS_V[d])}</div><div><small class="hint">Por hora</small>${barras(c.horas, hV)}</div></div>
+    <p class="hint" style="margin:6px 0">${Object.entries(c.modalidad).map(([k,n])=>`${esc(k)}: ${n}`).join(" · ")}</p>
+    <details><summary>Ver quién votó</summary>${c.personas.map(p => `<div class="row" style="justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)"><span><b>${esc(p.nombre)}</b><br><small class="hint">${p.dias.map(d=>DIAS_V[d].slice(0,3)).join(", ")} · ${p.horas.map(hV).join(", ")} · ${esc(p.modalidad||"")}</small></span><a class="btn s" href="${wa(p.tel)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Sadhana por tu voto para ${c.titulo}.`)}" target="_blank" rel="noopener">WhatsApp</a></div>`).join("")}</details>
+  </article>`).join("");
 }
 
 // ---------- Agenda ----------
@@ -712,7 +738,7 @@ function area(a, sinHash){
   document.body.classList.toggle("proy", a==="proy");
   if (a==="crm") vista(vCRM);
   else {
-    ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==a);
+    ["agenda","alumnos","votos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==a);
     if (a==="dir") cargarDir();
     if (a==="proy"){ const f = $("#ifProy"); if (!f.getAttribute("src")) f.src = "/proyeccion?embed=1"; requestAnimationFrame(altoProy); }
     scrollTo(0,0);
@@ -727,8 +753,8 @@ function vista(v){
   vCRM = v;
   $$("nav.tab button").forEach(b=>b.toggleAttribute("aria-current", b.dataset.v===v) || b.removeAttribute("aria-current"));
   $$("nav.tab button").forEach(b=>{ if (b.dataset.v===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==v);
-  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE();
+  ["agenda","alumnos","votos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==v);
+  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE(); if (v==="votos") cargarV();
   scrollTo(0,0);
 }
 document.addEventListener("click", async e => {

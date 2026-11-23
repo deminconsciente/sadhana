@@ -168,6 +168,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* Chips */
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}
+.chips.wrap{flex-wrap:wrap;overflow:visible;padding-left:0;padding-right:0}
 .chip{font-family:var(--f-ui);font-size:.86rem;white-space:nowrap;padding:9px 15px;border-radius:999px;border:1px solid var(--line-strong);background:var(--glass);color:var(--ink);cursor:pointer;transition:background .2s}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip:disabled{opacity:.35;cursor:not-allowed}
@@ -682,6 +683,10 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .gratis-ban{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:22px;
   background:linear-gradient(100deg,color-mix(in srgb,#c9875a 22%,var(--surface)),color-mix(in srgb,#a45a2a 14%,var(--surface)));border:1px solid color-mix(in srgb,#a45a2a 40%,transparent)}
 .gratis-ban[hidden]{display:none}
+.voto-ban{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px;padding:14px 16px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--glass)}
+.voto-ban .gb-t{display:grid;gap:2px;flex:1 1 220px}.voto-ban b{font-family:var(--f-ui)}.voto-ban small{font-family:var(--f-ui);font-size:.8rem;color:var(--ink-2)}
+.voto-meta{display:grid;gap:4px}.voto-meta small{font-family:var(--f-ui);font-size:.74rem;color:var(--ink-2)}
+.vm-bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden}.vm-bar i{display:block;height:100%;min-width:6px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--c-sonido,var(--accent)))}
 .gratis-ban .gb-t{display:grid;gap:2px;min-width:0;flex:1 1 220px}.gratis-ban b{font-size:1.15rem}.gratis-ban small{color:var(--ink-2);font-size:.92rem}
 .gratis-ban .btn{min-height:44px;white-space:normal;text-align:center}
 @media (max-width:560px){.gratis-ban .btn{width:100%}}
@@ -1067,9 +1072,25 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="dir-head"><h3>Directorio de clases</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto.</p></div>
       <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
       <p class="fund" id="dirFund"></p>
+      <div class="voto-ban"><span class="gb-t"><b>¿Quieres otra clase u otro horario?</b><small>Vota en 1 minuto. Abrimos donde se junte más gente y te avisamos por WhatsApp.</small></span><button type="button" class="btn btn-g btn-s" data-votar="">Votar horarios</button></div>
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
       <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
       <div id="agView"></div>
+    </section>
+  </div>
+
+  <!-- PAQUETES -->
+  <div data-v="c" class="band paper">
+    <section class="wrap sec" id="paquetes" aria-labelledby="h-pa">
+      <div class="s-head"><p class="eyebrow">Paquetes y mensualidades</p><h2 id="h-pa">Practica con constancia</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
+      <div class="calc">
+        <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
+        <span class="big" id="nOut">12</span>
+        <input type="range" id="nClases" min="0" max="2" step="1" value="1" aria-describedby="nTicks">
+        <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>12</span><span>∞</span></div>
+        <p class="res" id="calcRes"></p>
+      </div>
+      <div class="packs" id="packs"></div>
     </section>
   </div>
 
@@ -1083,21 +1104,6 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       </div>
       <div id="panel-ter" role="tabpanel"></div>
       <p class="disc">Las terapias de Sadhana son complementarias. No diagnostican ni tratan enfermedades y no sustituyen la atención médica o psicológica.</p>
-    </section>
-  </div>
-
-  <!-- PAQUETES -->
-  <div data-v="c" class="band">
-    <section class="wrap sec" id="paquetes" aria-labelledby="h-pa">
-      <div class="s-head"><p class="eyebrow">Paquetes y mensualidades</p><h2 id="h-pa">Practica con constancia</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
-      <div class="calc">
-        <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
-        <span class="big" id="nOut">12</span>
-        <input type="range" id="nClases" min="0" max="2" step="1" value="1" aria-describedby="nTicks">
-        <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>12</span><span>∞</span></div>
-        <p class="res" id="calcRes"></p>
-      </div>
-      <div class="packs" id="packs"></div>
     </section>
   </div>
 
@@ -1242,7 +1248,7 @@ const CONFIG = {
     stripeAporte: { endpoint: "https://www.deminconsciente.com/api/aporte-sadhana", eventos: ["om-2026-11-22"] },
   },
   diasAgenda: 14,
-  comunidad: "",      // Liga de invitación a la Comunidad de WhatsApp; vacía = no se muestra
+  comunidad: "https://chat.whatsapp.com/E3bSUz1NS2P48ZwU0xkWtv", // Liga de invitación a la Comunidad de WhatsApp; vacía = no se muestra
   reservasAPI: "/api/reservas", // Copia de cada ticket en la base de datos de Sadhana
   cupoReal: false,   // true cuando las reservas vivan en la base de datos; mientras, no se muestran lugares libres
 };
@@ -1552,7 +1558,7 @@ const qsa = q => [...document.querySelectorAll(q)];
    Dos vistas: consultante (c) y terapeuta (t)
    ===================================================================== */
 const NAVS = {
-  c: [["#agenda","Agenda"],["#terapias","Terapias"],["#paquetes","Paquetes"],["#necesitas","Para ti"],["#equipo","Visítanos"]],
+  c: [["#agenda","Agenda"],["#paquetes","Paquetes"],["#terapias","Terapias"],["#necesitas","Para ti"],["#equipo","Visítanos"]],
   t: [["#formacion","Formación"],["#ec1375","EC1375"],["#terapeutas","Renta"],["#equipo","Equipo"]]
 };
 let navIO = null;
@@ -1687,7 +1693,8 @@ function paintDir(){
       <div class="dc-bd"><div class="dc-ti">${esc(c.titulo)}</div><div class="dc-g">${/anunciar/i.test(c.guia||"")||!c.guia?"Maestro por anunciar":"Con "+esc(c.guia)} · ${esc(c.intensidad)}</div>
         <p class="dc-r">${esc(c.regula)}</p>
         ${!pronto&&zs.length?`<div class="dc-wk" aria-hidden="true">${[1,2,3,4,5,6,0].map(d=>`<i class="${zs.some(z=>z.dia===d)?"on":""}">${["D","L","M","M","J","V","S"][d]}</i>`).join("")}</div>`:""}
-        <div class="dc-ft">${pronto ? `<small>Abre cuando se junten 8 interesados</small><a class="btn btn-s" href="${(CONFIG.whatsapp?`https://wa.me/${CONFIG.whatsapp}`:"https://wa.me/")+"?text="+encodeURIComponent(`Hola Sadhana, avísenme cuando abra ${c.titulo}.`)}" target="_blank" rel="noopener">Avísame</a>`
+        ${pronto ? `<div class="voto-meta"><div class="vm-bar"><i style="width:${Math.min(100,(VOTOS[c.id]||0)/VOTO_META*100)}%"></i></div><small>${VOTOS[c.id]?`${VOTOS[c.id]} de ${VOTO_META} interesados para abrir`:`Abre cuando se junten ${VOTO_META} interesados`}</small></div>` : ""}
+        <div class="dc-ft">${pronto ? `<small>Tú eliges el horario</small><button type="button" class="btn btn-p btn-s" data-votar="${c.id}">Vota tu horario</button>`
           : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
   const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
 }
@@ -2254,16 +2261,24 @@ function confeti(){
    Flujos
    ===================================================================== */
 function flujoClase(id, modoIni, aporteIni){
-  const x = INST.find(i => i.id === id); if (!x) return false;
+  let x = INST.find(i => i.id === id); if (!x) return false;
   const conCredito = (ST.creditos.clases||0) > 0 && !x.aporte;
   const puedeGratis = esClaseReg(x) && gratisDisponible();
+  // Otras fechas de la misma clase, para cambiar de día sin salir del flujo
+  const alts = x.base ? INST.filter(i => i.base === x.base && (!CONFIG.cupoReal || i.cupo - ocupados(i) > 0)).slice(0, 6) : [x];
+  // Paquetes que se pueden comprar en el mismo paso: esta clase cuenta como la primera
+  const packs = x.aporte ? [] : PAQUETES.filter(p => !esSuelta(p));
+  const packDe = o => /^pk:/.test(o.pagoCon || "") ? packs.find(p => "pk:"+p.id === o.pagoCon) : null;
   const pasosBase = [
     {nombre:"Tu reserva",
       pintar(el, o){
         o.modo ||= x.modos ? (x.modos.includes(modoIni) ? modoIni : x.modos[0]) : "Presencial";
         if (x.aporte && !o.aporte){ const a = parseInt(aporteIni,10); o.aporte = a >= x.precio ? Math.min(x.aporte.max, a) : x.precio; }
         o.pagoCon ||= puedeGratis ? "gratis" : conCredito ? "credito" : "pago";
-        el.innerHTML = `<dl class="sum">
+        const opPack = p => { const ahorro = p.clases*PU() - p.precio, tch = tachadoPack(p);
+          return `<label class="opt"><input type="radio" name="pc" value="pk:${p.id}" ${o.pagoCon==="pk:"+p.id?"checked":""}><span><b>${esc(p.t)}</b><small>${p.unl?"Esta clase y todas las que quieras por 30 días":`Esta clase y ${p.clases-1} más en 30 días · ${money(Math.round(p.precio/p.clases))} cada una`}${!p.unl&&ahorro>0?` · ahorras ${money(ahorro)}`:""}</small></span><span class="p">${tch?`<s class="orig">${money(tch)}</s> `:""}${money(precioPack(p))}</span></label>`; };
+        el.innerHTML = `${alts.length > 1 ? `<div><span class="lbl">Elige el día</span><div class="chips wrap" id="rAlts">${alts.map(a => `<button type="button" class="chip daychip" data-alt="${a.id}" aria-pressed="${a.id===x.id}"><small>${DIAS[a.ini.getDay()]} · ${fHora(a.ini)}</small><b>${a.ini.getDate()} ${MESES[a.ini.getMonth()]}</b></button>`).join("")}</div></div>` : ""}
+          <dl class="sum">
           <div><span>Cuándo</span><span>${fFechaL(x.ini)} · ${fHora(x.ini)}</span></div>
           <div><span>Duración</span><span>${fDur(x.dur)}</span></div>
           <div><span>Guía</span><span>${esc(x.guia)}</span></div>
@@ -2271,14 +2286,17 @@ function flujoClase(id, modoIni, aporteIni){
           ${x.desc?`<p class="muted">${esc(x.desc)}</p>`:""}
           ${x.modos?`<div><span class="lbl">Cómo vas a asistir</span><div class="opts">${x.modos.map(m=>`<label class="opt"><input type="radio" name="modo" value="${m}" ${o.modo===m?"checked":""}><span><b>${m}</b><small>${m==="Presencial"?"En Sadhana, Satélite Acueducto":"El enlace llega a tu WhatsApp"}</small></span><span></span></label>`).join("")}</div></div>`:""}
           <div><span class="lbl">Cómo vas a pagar</span><div class="opts">
-            ${esClaseReg(x)&&gratisDisponible()?`<label class="opt"><input type="radio" name="pc" value="gratis" ${o.pagoCon==="gratis"?"checked":""}><span><b>Mi primera clase gratis</b><small>Solo tu nombre y WhatsApp. Una por persona.</small></span><span class="p">$0</span></label>`:""}
-            ${x.aporte?"":`<label class="opt"><input type="radio" name="pc" value="credito" ${o.pagoCon==="credito"?"checked":""} ${conCredito?"":"disabled"}><span><b>Usar 1 crédito</b><small>${conCredito?`Te quedan ${ST.creditos.clases} clases en tu paquete`:"No tienes créditos. Compra un paquete en la sección Paquetes."}</small></span><span class="p">$0</span></label>`}
-            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>${x.aporte?"Aportación consciente":"Pagar esta clase"}</b><small>${x.aporte?"Tú eliges cuánto, desde "+money(x.precio):"Pago en línea"}</small></span><span class="p">${x.antes&&!x.aporte?`<s class="orig">${money(x.antes)}</s> `:""}${money(x.aporte?o.aporte:x.precio)}</span></label>
+            ${puedeGratis?`<label class="opt"><input type="radio" name="pc" value="gratis" ${o.pagoCon==="gratis"?"checked":""}><span><b>Mi primera clase gratis</b><small>Solo tu nombre y WhatsApp. Una por persona.</small></span><span class="p">$0</span></label>`:""}
+            ${conCredito?`<label class="opt"><input type="radio" name="pc" value="credito" ${o.pagoCon==="credito"?"checked":""}><span><b>Usar 1 crédito</b><small>Te quedan ${ST.creditos.clases} clases en tu paquete</small></span><span class="p">$0</span></label>`:""}
+            <label class="opt"><input type="radio" name="pc" value="pago" ${o.pagoCon==="pago"?"checked":""}><span><b>${x.aporte?"Aportación consciente":"Solo esta clase"}</b><small>${x.aporte?"Tú eliges cuánto, desde "+money(x.precio):"Pagas solo esta visita"}</small></span><span class="p">${x.antes&&!x.aporte?`<s class="orig">${money(x.antes)}</s> `:""}${money(x.aporte?o.aporte:x.precio)}</span></label>
           </div></div>
+          ${packs.length ? `<div><span class="lbl">O empieza un paquete con esta clase</span><div class="opts">${packs.map(opPack).join("")}</div>
+            ${packDe(o) ? `<p class="note" style="margin-top:8px">Esta clase ya cuenta como la primera de tu paquete. ${packDe(o).unl?"Las demás":`Las otras ${packDe(o).clases-1}`} las reservas desde la agenda cuando Sadhana verifique tu pago.</p>` : ""}</div>` : ""}
           ${x.aporte && o.pagoCon==="pago" ? `<div class="aporte"><span class="lbl">Tu aportación</span>
             <output class="ap-val" id="apVal">${money(o.aporte)}</output>
             <input type="range" id="apRange" min="${x.precio}" max="${x.aporte.max}" step="${x.aporte.paso}" value="${o.aporte}" aria-label="Monto de tu aportación">
             <div class="chips">${x.aporte.atajos.map(v=>`<button type="button" class="chip" data-ap="${v}" aria-pressed="${o.aporte===v}">${money(v)}</button>`).join("")}</div></div>` : ""}`;
+        const ra = el.querySelector("#rAlts"); if (ra) ra.onclick = e => { const b = e.target.closest("[data-alt]"); if (!b) return; const n = INST.find(i => i.id === b.dataset.alt); if (n){ x = n; pintar(); } };
         el.querySelectorAll("input[name=modo]").forEach(r => r.onchange = e => o.modo = e.target.value);
         el.querySelectorAll("input[name=pc]").forEach(r => r.onchange = e => { o.pagoCon = e.target.value; pintar(); });
         const ar = el.querySelector("#apRange");
@@ -2291,13 +2309,15 @@ function flujoClase(id, modoIni, aporteIni){
     pasoDatos(), pasoPago(), pasoGratis(), pasoTicket()];
   abrir({tipo: x.cat==="evento" ? "Evento" : "Clase", titulo:x.titulo, ref:x.id, pasosBase, simbolo: /^om-/.test(x.id) ? "ॐ" : "✦",
     correoOpcional: o => o.pagoCon === "gratis",
-    cuando: `${fFecha(x.ini)} · ${fHora(x.ini)}`,
-    total: o => o.pagoCon==="credito" || o.pagoCon==="gratis" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio),
-    resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
-    armar: o => ({tipo: x.cat==="evento"?"Evento":"Clase", titulo:x.titulo, ref:x.id, ini:x.ini.toISOString(), dur:x.dur,
+    total: o => { const p = packDe(o); return p ? precioPack(p) : o.pagoCon==="credito" || o.pagoCon==="gratis" ? 0 : (x.aporte ? (o.aporte || x.precio) : x.precio); },
+    resumen: o => [["Práctica", x.titulo],["Cuándo", `${fFecha(x.ini)} · ${fHora(x.ini)}`],["Modalidad", o.modo]].concat(packDe(o) ? [["Paquete", packDe(o).t]] : []).concat(x.aporte && o.pagoCon!=="credito" ? [["Aportación consciente", money(o.aporte || x.precio)]] : []),
+    armar: o => { const p = packDe(o);
+      return {tipo: x.cat==="evento"?"Evento":"Clase", titulo: p ? `${x.titulo} + ${p.t}` : x.titulo, ref:x.id, ini:x.ini.toISOString(), dur:x.dur,
       usaCredito: o.pagoCon==="credito" ? "clases" : null, credito: o.pagoCon==="credito",
-      detalle:[["Guía",x.guia],["Modalidad",o.modo]].concat(o.pagoCon==="gratis"?[["Promo","Primera clase gratis"]]:[]), simbolo: /^om-/.test(x.id) ? "ॐ" : "✦", modo:o.modo,
-      siguiente: o.modo==="En línea" ? "El enlace de la transmisión llega a tu WhatsApp el día del evento." : "Llega 10 minutos antes y trae ropa cómoda. Usa el botón Cómo llegar para abrir la ubicación."})
+      daCreditos: p ? {clases: Math.max(0, p.creditos.clases - 1)} : null,
+      detalle:[["Guía",x.guia],["Modalidad",o.modo]].concat(o.pagoCon==="gratis"?[["Promo","Primera clase gratis"]]:[])
+        .concat(p ? [["Paquete", `${p.t}: esta clase + ${p.unl?"ilimitadas":(p.clases-1)+" más"} en 30 días`]] : []), simbolo: /^om-/.test(x.id) ? "ॐ" : "✦", modo:o.modo,
+      siguiente: o.modo==="En línea" ? "El enlace de la transmisión llega a tu WhatsApp el día del evento." : "Llega 10 minutos antes y trae ropa cómoda. Usa el botón Cómo llegar para abrir la ubicación." + (p ? " Tus demás clases del paquete aparecen en Mis reservas cuando Sadhana verifique tu pago." : "")}; }
   });
 }
 /* Enlace directo: ?reservar=<id>&modo=En%20línea abre el flujo de esa práctica o evento */
@@ -2316,6 +2336,7 @@ window.addEventListener("load", () => {
       setTimeout(confeti, 500);
       return;
     }
+    if (q.has("votar")){ const vc = q.get("votar") || ""; limpiar(); setVista("c", "#agenda"); setTimeout(() => flujoVoto(vc), 450); return; }
     const id = q.get("reservar"); if (!id) return;
     // Si vuelve de cancelar Stripe, quita el ticket sin pagar que se creó antes de salir
     ST.tickets = ST.tickets.filter(t => !(t.stripe && t.estado === "pendiente" && t.ref === id));
@@ -2345,17 +2366,31 @@ function flujoTerapia(key){
 }
 function flujoPaquete(id){
   const p = PAQUETES.find(x => x.id===id);
+  // Clases próximas para apartar la primera de una vez (opcional)
+  const prox = INST.filter(i => i.cat !== "evento" && !i.aporte).slice(0, 8);
+  const claseDe = o => o.primera ? INST.find(i => i.id === o.primera) : null;
   const pasosBase = [
     {nombre:"Tu paquete", pintar(el){
       el.innerHTML = `<div class="art" style="height:90px;border-radius:16px;${aura("pk"+p.id)}">${glyph("lotus")}</div><dl class="sum">${p.inc.map(i=>`<div><span>Incluye</span><span>${esc(i)}</span></div>`).join("")}<div><span>Vigencia</span><span>30 días desde la compra</span></div></dl>
-      <p class="note">Al pagar, tus créditos se activan al momento. Reservas cada clase desde la agenda con 1 crédito.</p>`; }},
+      <p class="note">${esSuelta(p) ? "Pagas una clase y la eliges en el siguiente paso." : "En el siguiente paso puedes apartar tu primera clase. Las demás las reservas desde la agenda con tus créditos."}</p>`; }},
+    {nombre:"Tu primera clase", si: () => prox.length > 0,
+      pintar(el, o, err){
+        if (esSuelta(p) && !o.primera) o.primera = prox[0].id;
+        o.primera ??= "";
+        el.innerHTML = `<span class="lbl">${esSuelta(p) ? "¿A qué clase vienes?" : "¿Apartamos ya tu primera clase?"}</span><div class="opts">
+          ${prox.map(i => `<label class="opt"><input type="radio" name="pr" value="${i.id}" ${o.primera===i.id?"checked":""}><span><b>${esc(i.titulo)}</b><small>${fFecha(i.ini)} · ${fHora(i.ini)} · con ${esc(i.guia)}</small></span><span></span></label>`).join("")}
+          ${esSuelta(p) ? "" : `<label class="opt"><input type="radio" name="pr" value="" ${!o.primera?"checked":""}><span><b>La elijo después</b><small>Reservas desde la agenda cuando quieras</small></span><span></span></label>`}</div>`;
+        el.querySelectorAll("input[name=pr]").forEach(r => r.onchange = e => { o.primera = e.target.value; });
+      }},
     pasoDatos(), pasoPago(), pasoTicket()];
   const vence = addDays(NOW, 30);
   abrir({tipo:"Paquete", titulo:p.t, pasosBase, total:()=>precioPack(p),
-    resumen:()=>[["Paquete", p.t],["Vigencia", "30 días"]],
-    armar:()=>({tipo:"Acceso activado", titulo:p.t, daCreditos:p.creditos, mensaje:"Tu paquete está activo.",
-      detalle:[["Incluye", p.inc.join(" · ")],["Vence", fFechaL(vence)]],
-      siguiente:"Tus créditos aparecen en Mis reservas. Úsalos al reservar en la agenda o en terapias de 30 minutos."})
+    resumen:o=>[["Paquete", p.t],["Vigencia", "30 días"]].concat(claseDe(o) ? [["Primera clase", `${claseDe(o).titulo} · ${fFecha(claseDe(o).ini)} · ${fHora(claseDe(o).ini)}`]] : []),
+    armar:o=>{ const c = claseDe(o);
+      return {tipo: c ? "Clase + paquete" : "Paquete", titulo: c ? `${c.titulo} + ${p.t}` : p.t, ref: c ? c.id : undefined, ini: c ? c.ini.toISOString() : undefined, dur: c ? c.dur : undefined,
+      daCreditos: c ? {clases: Math.max(0, p.creditos.clases - 1)} : p.creditos, mensaje:"Tu paquete está activo.", simbolo: c ? "✦" : undefined, modo: c ? "Presencial" : undefined,
+      detalle:[["Incluye", p.inc.join(" · ")],["Vence", fFechaL(vence)]].concat(c ? [["Primera clase", `${fFecha(c.ini)} · ${fHora(c.ini)} · con ${c.guia}`]] : []),
+      siguiente: c ? "Llega 10 minutos antes y trae ropa cómoda. Tus demás créditos aparecen en Mis reservas cuando Sadhana verifique tu pago." : "Tus créditos aparecen en Mis reservas cuando Sadhana verifique tu pago. Úsalos al reservar en la agenda."}; }
   });
 }
 function flujoTaller(id){
@@ -2459,6 +2494,97 @@ function flujoRenta(id){
    Mis reservas
    ===================================================================== */
 let prevCount = ST.tickets.length;
+/* =====================================================================
+   Votar horarios: la persona elige clase, días y horas, deja nombre y WhatsApp.
+   Se guarda en la base (tabla votos). Abrimos la clase u horario donde se junten más.
+   Enlace directo: /?votar  o  /?votar=<id de clase>  (también /votar/)
+   ===================================================================== */
+const VOTO_META = 8; // interesados para abrir una clase (lo mismo que dice la tarjeta «Próximamente»)
+const VOTO_HORAS = [["Mañana",[7,8,9,10,11]],["Mediodía",[12,13,14]],["Tarde y noche",[17,18,19,20,21]]];
+let VOTOS = {}; // {claseId: personas}
+async function cargarVotos(){
+  try { const r = await fetch("/api/votos/conteo", {cache:"no-store"}); if (!r.ok) return; VOTOS = await r.json() || {}; paintDir(); } catch(e){}
+}
+const hLbl = h => fHora(new Date(2000,0,1,h,0));
+function flujoVoto(claseId){
+  const fija = claseId && CATALOGO.some(c => c.id === claseId);
+  const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?1:0)-(b.estado==="activa"?1:0));
+  const claseDe = o => CATALOGO.find(c => c.id === o.clase);
+  const diasTxt = o => [1,2,3,4,5,6,0].filter(d => o.dias.includes(d)).map(d => DIAS_L[d]).join(", ");
+  const horasTxt = o => [...o.horas].sort((a,b)=>a-b).map(hLbl).join(", ");
+  const pasosBase = [
+    {nombre:"La clase", si: () => !fija,
+      pintar(el, o, err){
+        el.innerHTML = `<p class="muted" style="margin:0">Elige la clase que te gustaría tomar. Si ya existe, vota por otro horario.</p><div class="opts">
+          ${orden.map(c => `<label class="opt"><input type="radio" name="vc" value="${c.id}" ${o.clase===c.id?"checked":""}><span><b>${esc(c.titulo)}</b><small>${c.estado==="activa"?"Ya abierta · vota por otro horario":"Próximamente"}${VOTOS[c.id]?` · ${VOTOS[c.id]} ${VOTOS[c.id]>1?"interesados":"interesado"}`:""}</small></span><span></span></label>`).join("")}</div>
+          ${err&&!o.clase?`<span class="err">Elige una clase.</span>`:""}`;
+        el.querySelectorAll("input[name=vc]").forEach(r => r.onchange = e => { o.clase = e.target.value; });
+      },
+      valido: o => !!o.clase},
+    {nombre:"Días y horas",
+      pintar(el, o, err){
+        const c = claseDe(o);
+        el.innerHTML = `${c?`<dl class="sum"><div><span>Clase</span><span>${esc(c.titulo)}</span></div></dl>`:""}
+          <div><span class="lbl">¿Qué días podrías? <small class="muted">Marca todos los que te sirvan</small></span><div class="chips wrap" id="vDias">${[1,2,3,4,5,6,0].map(d => `<button type="button" class="chip" data-d="${d}" aria-pressed="${o.dias.includes(d)}">${DIAS_L[d]}</button>`).join("")}</div>${err&&!o.dias.length?`<span class="err">Marca al menos un día.</span>`:""}</div>
+          <div><span class="lbl">¿A qué hora? <small class="muted">Puedes marcar varias</small></span>
+            ${VOTO_HORAS.map(([t,hs]) => `<p class="small muted" style="margin:6px 0 4px">${t}</p><div class="slots">${hs.map(h => `<button type="button" class="slot" data-h="${h}" aria-pressed="${o.horas.includes(h)}">${hLbl(h)}</button>`).join("")}</div>`).join("")}
+            ${err&&!o.horas.length?`<span class="err">Marca al menos una hora.</span>`:""}</div>
+          <div><span class="lbl">¿Cómo la tomarías?</span><div class="opts">${[["Presencial","En Sadhana, Satélite Acueducto"],["En línea","En vivo por Zoom"],["Cualquiera","Me sirven las dos"]].map(([v,s]) => `<label class="opt"><input type="radio" name="vm" value="${v}" ${o.modalidad===v?"checked":""}><span><b>${v}</b><small>${s}</small></span><span></span></label>`).join("")}</div></div>`;
+        el.querySelector("#vDias").onclick = e => { const b = e.target.closest("[data-d]"); if (!b) return; const d = +b.dataset.d; o.dias = o.dias.includes(d) ? o.dias.filter(x=>x!==d) : o.dias.concat(d); b.setAttribute("aria-pressed", o.dias.includes(d)); };
+        el.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { const h = +b.dataset.h; o.horas = o.horas.includes(h) ? o.horas.filter(x=>x!==h) : o.horas.concat(h); b.setAttribute("aria-pressed", o.horas.includes(h)); });
+        el.querySelectorAll("input[name=vm]").forEach(r => r.onchange = e => { o.modalidad = e.target.value; });
+      },
+      valido: o => o.dias.length > 0 && o.horas.length > 0},
+    {nombre:"Tus datos", propioBoton:true,
+      pintar(el, o, err){
+        o.datos ||= {...ST.datos};
+        const c = claseDe(o);
+        el.innerHTML = `<dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Días</span><span>${esc(diasTxt(o))}</span></div><div><span>Horas</span><span>${esc(horasTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
+          <div class="field"><label class="lbl" for="vNom">Tu nombre</label><input class="inp" id="vNom" autocomplete="name" value="${esc(o.datos.nombre)}"></div>
+          <div class="field"><label class="lbl" for="vTel">WhatsApp</label><input class="inp" id="vTel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" value="${esc(o.datos.tel)}"></div>
+          <label class="opt" style="grid-template-columns:auto 1fr"><input type="checkbox" id="vCom" ${o.datos.comunidad?"checked":""}><span><b>Quiero unirme a la comunidad</b><small>Avisos de clases nuevas y eventos por WhatsApp.</small></span></label>
+          <p class="note">Te escribimos por WhatsApp solo cuando abra esta clase. Usamos tus datos como dice el <a href="/privacidad/" target="_blank" rel="noopener">aviso de privacidad</a>.</p>
+          <p class="err" id="vErr" hidden></p>
+          <button class="btn btn-p" id="vBtn" style="width:100%">Enviar mi voto</button>
+          <button class="btn btn-g" id="vBack" style="width:100%">Atrás</button>`;
+        el.querySelector("#vNom").oninput = e => o.datos.nombre = e.target.value;
+        el.querySelector("#vTel").oninput = e => o.datos.tel = e.target.value;
+        el.querySelector("#vCom").onchange = e => o.datos.comunidad = e.target.checked;
+        el.querySelector("#vBack").onclick = () => { F.paso--; pintar(); };
+        el.querySelector("#vBtn").onclick = async () => {
+          const er = el.querySelector("#vErr"), btn = el.querySelector("#vBtn"); er.hidden = true;
+          if (!o.datos.nombre.trim()){ er.textContent = "Escribe tu nombre."; er.hidden = false; return; }
+          if (o.datos.tel.replace(/\D/g,"").length < 10){ er.textContent = "Escribe tu WhatsApp de 10 dígitos para avisarte."; er.hidden = false; return; }
+          btn.disabled = true; btn.textContent = "Enviando…";
+          try {
+            const r = await fetch("/api/votos", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({clase:o.clase, titulo:c?c.titulo:"", dias:o.dias, horas:o.horas, modalidad:o.modalidad, nombre:o.datos.nombre, tel:o.datos.tel, comunidad:!!o.datos.comunidad})});
+            const j = await r.json().catch(()=>({}));
+            if (!r.ok) throw new Error(j.error || "HTTP " + r.status);
+            o.interesados = j.interesados || 0; if (o.interesados) VOTOS[o.clase] = o.interesados;
+            ST.datos = {...ST.datos, nombre:o.datos.nombre, tel:o.datos.tel, comunidad:o.datos.comunidad}; save();
+            siguiente();
+          } catch(e){ btn.disabled = false; btn.textContent = "Enviar mi voto"; er.textContent = "No pudimos guardar tu voto. Revisa tu conexión e intenta de nuevo."; er.hidden = false; }
+        };
+      }},
+    {nombre:"Listo", final:true,
+      pintar(el, o){
+        const c = claseDe(o), n = o.interesados || 0, falta = Math.max(0, VOTO_META - n);
+        const url = location.origin + "/?votar=" + encodeURIComponent(o.clase);
+        const inv = `Estoy votando para que abran ${c?c.titulo:"una clase"} en Sadhana. Vota tu horario aquí: ${url}`;
+        el.innerHTML = `<p style="font-size:1.06rem">Gracias, ${esc(o.datos.nombre.trim().split(" ")[0])}. Tu voto ya cuenta.</p>
+          <dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Días</span><span>${esc(diasTxt(o))}</span></div><div><span>Horas</span><span>${esc(horasTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
+          ${n ? `<div class="voto-meta"><div class="vm-bar"><i style="width:${Math.min(100, n/VOTO_META*100)}%"></i></div><p class="small" style="margin:6px 0 0">${n} ${n>1?"personas quieren":"persona quiere"} esta clase. ${falta ? `Con ${falta} ${falta>1?"más":"más"} la abrimos en el horario más votado.` : "Ya hay suficientes: estamos armando el horario."}</p></div>` : ""}
+          <p class="note">Cuando abra, te escribimos a tu WhatsApp con el horario y tu lugar.</p>
+          <a class="btn btn-p" href="https://wa.me/?text=${encodeURIComponent(inv)}" target="_blank" rel="noopener" style="width:100%">Invita a alguien a votar</a>
+          ${CONFIG.comunidad ? `<a class="btn btn-g" href="${CONFIG.comunidad}" target="_blank" rel="noopener" style="width:100%">Únete a la comunidad Sadhana en WhatsApp</a>` : ""}
+          <button class="btn btn-g" id="vOtra" style="width:100%">Votar por otra clase</button>
+          <button class="btn btn-g" data-goto="agenda" style="width:100%">Ver la agenda</button>`;
+        el.querySelector("#vOtra").onclick = () => { cerrar(); setTimeout(() => flujoVoto(), 50); };
+        el.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => { cerrar(); document.getElementById(b.dataset.goto).scrollIntoView(); });
+      }}];
+  abrir({tipo:"Vota tu horario", titulo: fija ? (CATALOGO.find(c=>c.id===claseId)||{}).titulo : "Nueva clase u horario", pasosBase,
+    orden:{clase: fija ? claseId : "", dias:[], horas:[], modalidad:"Presencial"}});
+}
 function paintMine(bump){
   $("#mineCount").textContent = ST.tickets.length;
   if (bump && ST.tickets.length !== prevCount){ const b = $("#btnMine"); b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); }
@@ -2485,6 +2611,7 @@ $("#btnMine").onclick = abrirMias;
 
 document.addEventListener("click", e => {
   if (e.target.closest(".ev-link")) return;
+  const v = e.target.closest("[data-votar]"); if (v){ flujoVoto(v.dataset.votar); return; }
   const b = e.target.closest("[data-book],[data-ter],[data-pack],[data-taller],[data-ruta],[data-renta]");
   if (!b || b.disabled) return;
   if (b.dataset.book) flujoClase(b.dataset.book);
@@ -2619,5 +2746,6 @@ compactar();
 /* Comunidad en el pie y estado de las reservas al cargar */
 if (CONFIG.comunidad){ const l = $("#lnkCom"); if (l){ l.href = CONFIG.comunidad; l.hidden = false; } }
 Registro.sincronizar();
+cargarVotos();
 </script>
 <script src="/assets/burbuja.js" defer></script>
