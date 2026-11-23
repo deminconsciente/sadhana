@@ -43,7 +43,7 @@ de distintas disciplinas, más terapias y terapias de movimiento.
   preparación EC1375, Residencia Sadhana de 6 meses, clínica escuela).
 - **4 escuelas:** cuerpo y sistema nervioso; energía y símbolo; mente y lenguaje; linaje y transversal.
   Teoría en línea y asíncrona; prácticas en el espacio físico.
-- **Paquetes de alumno:** máximo 3 opciones visibles (clase suelta, paquete, membresía ilimitada 3/6/9/12 meses).
+- **Paquetes de alumno:** máximo 4 (clase suelta + 3 mensualidades; decisión de Diego 23 nov: p. ej. 4 clases, 12 clases e ilimitada $2,000). Se editan en /equipo → Directorio → Paquetes.
 
 ## Modelo de clase: presencial + en línea + activo grabado
 

@@ -5,7 +5,7 @@
 //   GET  /api/reservas/estado   ?folios=A,B → {A:"pendiente",B:"confirmado"} (sin datos personales).
 //   GET  /api/catalogo          directorio de clases editable desde /equipo → {clases:[...], fundadores}.
 //                               Vacío = la landing usa el directorio que trae escrito.
-//                               Trae también `paquetes` (máx. 3) si el equipo los activó y `promo`
+//                               Trae también `paquetes` (máx. 4) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
 //   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
 //   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
@@ -236,7 +236,7 @@ async function catalogo(env) {
     if (r.id === '_fundadores') { fundadores = { cupo: d.cupo, tomados: d.tomados ?? null, descuento: d.descuento }; continue; }
     // Paquetes de alumno: solo salen si el equipo activó «Mostrar en la página».
     // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
-    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 3); if (d.promo) promo = d.promo; continue; }
+    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 4); if (d.promo) promo = d.promo; continue; }
     // Terapias 1:1: solo salen las activas.
     if (r.id === '_terapias') { if (Array.isArray(d.items)) terapias = d.items.filter(x => x && x.estado !== 'oculta'); continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;

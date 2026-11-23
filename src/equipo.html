@@ -226,7 +226,7 @@ body.proy nav.tab{display:none}
     <div class="list" id="listaTer"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="terNueva">+ Nueva terapia</button></div>
     <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
-      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
+      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· clase suelta + 3 mensualidades</small></h2>
       <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
       <div id="paqs" style="display:grid;gap:10px"></div>
       <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Traer de un escenario de Proyección</button></div>
@@ -530,7 +530,7 @@ async function docs(path, body, metodo){
 async function cargarDir(){
   let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
   FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
-  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
+  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,4), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
   planesDesdePaquetes(PAQ.items);
   cargarTer(l);
   D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
@@ -705,7 +705,7 @@ $("#listaTer").addEventListener("click", async e => {
   try { await guardarTer(); toast(`${x.t}: ${es.dataset.test==="oculta"?"Oculta":"Activa"}`); pintarTer(); } catch(err){ TER = antes; toast(err.message); }
 });
 
-// ---------- Paquetes de alumno (máx. 3): los mismos de Proyección · sección 3 ----------
+// ---------- Paquetes de alumno (máx. 4: clase suelta + 3 mensualidades): los mismos de Proyección · sección 3 ----------
 const TIPOS = {suelta:"Clase suelta", paquete:"Paquete de clases", ilimitada:"Membresía ilimitada"};
 // Las altas manuales de membresía (pestaña Alumnos) ofrecen los mismos paquetes.
 function planesDesdePaquetes(items){
@@ -729,7 +729,7 @@ function pintarPaq(){
     <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
     <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
       <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Traer de un escenario de Proyección» o «+ Agregar paquete».</p>`;
-  $("#paqAdd").hidden = PAQ.items.length >= 3;
+  $("#paqAdd").hidden = PAQ.items.length >= 4;
 }
 $("#fPaq").addEventListener("input", () => marcarPaq(true));
 $("#fPaq").addEventListener("change", () => marcarPaq(true));
@@ -741,13 +741,13 @@ $("#paqs").addEventListener("input", e => {
   const g = row.querySelector("[data-reg]"), desc = (FUND && FUND.descuento) ?? 20; if (g) g.textContent = regular(p,desc) ? `Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}` : "Sin precio fundador";
 });
 $("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); marcarPaq(true); pintarPaq(); });
-$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
+$("#paqAdd").onclick = () => { if (PAQ.items.length>=4) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
 // Trae los paquetes de un escenario de Proyección. Sale elegido el escenario que es el plan
 // (Proyección → Presupuesto vs real); si no hay plan, el que se llame «Bolillo».
 let ESC = [];
 const leerCol = async col => { const r = await fetch("/api/crm/docs/"+col, {cache:"no-store"}); if (!r.ok) throw new Error("No se pudo leer Proyección"); return r.json(); };
 const escAPaq = sc => { let L = (sc.packages||[]).filter(p => p && p.name && +p.price > 0);
-  if (L.length > 3) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,3);
+  if (L.length > 4) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,4);
   const ord = p => +p.classes===1 ? 0 : +p.classes===0 ? 999 : +p.classes;
   return L.sort((a,b) => ord(a)-ord(b)).map(p => { const c = +p.classes||0, tipo = c===1 ? "suelta" : c===0 ? "ilimitada" : "paquete";
     return {id:"", nombre:String(p.name).slice(0,40), tipo, clases:tipo==="suelta"?1:tipo==="ilimitada"?0:c, precio:+p.price, plazos:[], incluye:""}; }); };
