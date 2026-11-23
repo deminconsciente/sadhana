@@ -7,6 +7,8 @@
 //                               Vacío = la landing usa el directorio que trae escrito.
 //                               Trae también `paquetes` (máx. 3) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
+//   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
+//   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
 // Privado (contraseña en el secreto ADMIN_CLAVE):
 //   GET  /admin                 panel para Isa y Diego.
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
@@ -38,6 +40,8 @@ export async function api(request, env) {
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
     if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);
+    if (p === '/api/votos' && request.method === 'POST') return await votar(request, env);
+    if (p === '/api/votos/conteo' && request.method === 'GET') return await conteoVotos(env);
 
     if (p === '/admin' || p.startsWith('/admin/')) {
       const auth = autorizado(request, env);
@@ -238,4 +242,54 @@ async function catalogo(env) {
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
   return json({ clases, fundadores, paquetes, promo }, 200, { 'cache-control': 'public, max-age=20' });
+}
+
+// ---------- Votos por horario (clases nuevas u otro horario) ----------
+let votosLista = false;
+export async function tablaVotos(env) {
+  if (votosLista) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS votos (clase TEXT NOT NULL, tel TEXT NOT NULL, titulo TEXT, nombre TEXT NOT NULL, dias TEXT NOT NULL, horas TEXT NOT NULL,
+     modalidad TEXT, acepta_comunidad INTEGER NOT NULL DEFAULT 0, creado TEXT NOT NULL, actualizado TEXT NOT NULL, PRIMARY KEY (clase, tel))`
+  ).run();
+  votosLista = true;
+}
+
+async function votar(request, env) {
+  const origen = request.headers.get('origin');
+  if (origen) {
+    let host = '';
+    try { host = new URL(origen).host; } catch (e) {}
+    if (host !== new URL(request.url).host && !/(^|\.)sadhanaholistics\.com$/.test(host))
+      return json({ ok: false, error: 'Origen no permitido' }, 403);
+  }
+  let b;
+  try { b = await leerJSON(request); } catch (e) { return json({ ok: false, error: 'JSON inválido' }, e.status || 400); }
+  const clase = String(b.clase || '').trim().slice(0, 60);
+  const nombre = txt(b.nombre, 120);
+  const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
+  const enteros = (v, min, max) => [...new Set((Array.isArray(v) ? v : []).map(Number).filter(n => Number.isInteger(n) && n >= min && n <= max))].sort((x, y) => x - y);
+  const dias = enteros(b.dias, 0, 6), horas = enteros(b.horas, 5, 23);
+  const modalidad = ['Presencial', 'En línea', 'Cualquiera'].includes(b.modalidad) ? b.modalidad : 'Presencial';
+  if (!/^[A-Za-z0-9_.-]{1,60}$/.test(clase)) return json({ ok: false, error: 'Clase inválida' }, 400);
+  if (!nombre || tel.length < 10 || !dias.length || !horas.length) return json({ ok: false, error: 'Faltan datos' }, 400);
+
+  await tablaVotos(env);
+  // Límite suave contra spam: un mismo WhatsApp vota hasta 12 clases.
+  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE tel = ? AND clase <> ?').bind(tel, clase).first();
+  if (n >= 12) return json({ ok: false, error: 'Demasiados votos' }, 429);
+  const ahora = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas,
+       modalidad = excluded.modalidad, acepta_comunidad = excluded.acepta_comunidad, actualizado = excluded.actualizado`
+  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
+  const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE clase = ?').bind(clase).first();
+  return json({ ok: true, interesados: r.n }, 201);
+}
+
+async function conteoVotos(env) {
+  let rows = [];
+  try { ({ results: rows } = await env.DB.prepare('SELECT clase, COUNT(*) AS n FROM votos GROUP BY clase').all()); } catch (e) { rows = []; }
+  return json(Object.fromEntries(rows.map(r => [r.clase, r.n])), 200, { 'cache-control': 'public, max-age=30' });
 }

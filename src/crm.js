@@ -15,6 +15,7 @@
 //   POST /api/crm/alumnos                 {id?, nombre, tel, email, origen, etiquetas, nota}
 //   POST /api/crm/membresias              {alumno_id, plan, inicio, meses|fin, clases, monto, metodo}
 //   POST /api/crm/membresias/:id          {estado?, nota?}
+//   GET  /api/crm/votos                   votos por horario: por clase, personas, conteo por día, hora y día+hora
 // Solo administradores:
 //   GET  /api/crm/equipo · POST /api/crm/equipo · POST /api/crm/equipo/:id
 //   GET  /api/crm/resumen?mes=YYYY-MM     números del mes para Proyección Sadhana (presupuesto vs real)
@@ -23,6 +24,7 @@
 // Importación única (encabezado x-import-token = secreto IMPORT_TOKEN): POST /api/crm/docs-import
 import equipoHTML from './equipo.html';
 import proyeccionHTML from './proyeccion.html';
+import { tablaVotos } from './api.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -100,6 +102,7 @@ export async function crm(request, env) {
       if (!b && M === 'POST') return await guardarAlumno(request, env);
       if (b && M === 'GET') return await fichaAlumno(b, env);
     }
+    if (a === 'votos' && !b && M === 'GET') return await listarVotos(env);
     if (a === 'membresias') {
       if (!b && M === 'POST') return await nuevaMembresia(request, env, yo);
       if (b && M === 'POST') return await cambiarMembresia(b, request, env);
@@ -616,4 +619,29 @@ async function importarDocs(request, env) {
     }
   const r = stmts.length ? await env.DB.batch(stmts) : [];
   return json({ ok: true, recibidos: stmts.length, nuevos: r.reduce((s, x) => s + (x.meta.changes || 0), 0) });
+}
+
+// ---------- Votos por horario ----------
+// Agrupa por clase: cuántas personas, cuántas marcaron cada día, cada hora y cada combinación día+hora.
+async function listarVotos(env) {
+  await tablaVotos(env);
+  const { results } = await env.DB.prepare('SELECT * FROM votos ORDER BY actualizado DESC').all();
+  const porClase = new Map();
+  for (const v of results) {
+    let dias = [], horas = [];
+    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); } catch (e) {}
+    if (!porClase.has(v.clase)) porClase.set(v.clase, { clase: v.clase, titulo: v.titulo || v.clase, personas: [], dias: {}, horas: {}, combos: {}, modalidad: {} });
+    const c = porClase.get(v.clase);
+    c.personas.push({ nombre: v.nombre, tel: v.tel, dias, horas, modalidad: v.modalidad, comunidad: !!v.acepta_comunidad, actualizado: v.actualizado });
+    for (const d of dias) c.dias[d] = (c.dias[d] || 0) + 1;
+    for (const h of horas) c.horas[h] = (c.horas[h] || 0) + 1;
+    for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
+    c.modalidad[v.modalidad || 'Presencial'] = (c.modalidad[v.modalidad || 'Presencial'] || 0) + 1;
+  }
+  const out = [...porClase.values()].map(c => ({
+    ...c,
+    top: Object.entries(c.combos).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([k, n]) => { const [d, h] = k.split('-').map(Number); return { dia: d, h, n }; }),
+  }));
+  out.sort((x, y) => y.personas.length - x.personas.length);
+  return json(out);
 }
