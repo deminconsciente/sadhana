@@ -572,6 +572,9 @@ h2{font-weight:600}
 .sello-btn .mk-sello{width:100%;height:100%;transition:transform 4s cubic-bezier(.45,0,.55,1)}
 .sello-btn:hover{transform:scale(1.04)}
 .sello-btn .cue{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);white-space:nowrap;font-family:var(--f-trendy);font-weight:800;font-size:.72rem;letter-spacing:.16em;text-shadow:0 1px 10px rgba(27,22,51,.6)}
+/* «Reservar clase» se ve como botón: píldora sólida bajo el sello */
+body[data-sello="agenda"] .sello-btn .cue{bottom:-26px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 22px;border-radius:999px;background:var(--primary);background-image:linear-gradient(120deg,#c9875a 0%,#a45a2a 55%,#8f4a25 100%);color:#fff;text-shadow:none;letter-spacing:.08em;font-size:.86rem;box-shadow:0 10px 26px -10px rgba(27,22,51,.75)}
+body[data-sello="agenda"] .sello-btn .cue::after{content:"→";font-size:1.05em}
 body[data-sello="nada"] .sello-btn{cursor:default}body[data-sello="nada"] .sello-btn:hover{transform:none}
 .sello-btn .mk-sello{animation:gira 90s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
 .doors5.pulse .door5{animation:llama .9s ease 2}@keyframes llama{50%{transform:translateY(-6px);box-shadow:0 0 0 6px rgba(255,255,255,.35)}}
@@ -638,6 +641,7 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .hero5 .sello-btn{width:clamp(220px,30vw,320px)}
 .hero5 .sello-btn .cue{bottom:-36px;font-size:.8rem}
+body[data-sello="agenda"] .hero5 .sello-btn .cue{bottom:-30px;font-size:.86rem;text-shadow:none}
 .hero5 .doors5{margin-top:40px}
 @media (max-width:600px){.hero5 .sello-btn{width:62vw}}
 
@@ -753,6 +757,7 @@ body::before{background:var(--top-safe,var(--bg))}:root[data-paleta="magenta"]{-
 :root[data-paleta="magenta"] .btn-p{font-weight:700}
 .hero5 .door5.t,body[data-pagina="una"] .hero5 .door5.t{background:rgba(20,16,20,.45);border-color:#fff}
 .hero5 .sello-btn .cue{text-shadow:0 1px 3px rgba(0,0,0,.7),0 0 14px rgba(0,0,0,.45)}
+body[data-sello="agenda"] .hero5 .sello-btn .cue{text-shadow:none}
 :root[data-paleta="magenta"] .dd.on,:root[data-paleta="magenta"] .dd.on *{color:#2a1424!important;opacity:1}
 
 /* Acentos alternativos sobre la misma base */
@@ -1046,9 +1051,9 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
     <div class="bgph" aria-hidden="true"></div>
     <div class="in">
       <h1 id="h1" class="sr-only">Sadhana, centro holístico</h1>
-      <button class="sello-btn" id="selloBtn" type="button" aria-label="Ir a la agenda"><span class="mk mk-sello" aria-hidden="true"></span><span class="cue" id="selloCue">RESERVA</span></button>
+      <button class="sello-btn" id="selloBtn" type="button" aria-label="Ir a la agenda"><span class="mk mk-sello" aria-hidden="true"></span><span class="cue" id="selloCue">RESERVAR CLASE</span></button>
       <div class="doors5">
-        <a class="door5 c" href="#consultante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg>Vengo a consulta</a>
+        <a class="door5 c" href="#terapias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg>Vengo a consulta</a>
         <a class="door5 t" href="#terapeuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8Z"/></svg>Soy terapeuta</a>
       </div>
     </div>
@@ -2648,7 +2653,7 @@ document.addEventListener("click", e => {
     document.body.dataset.sello = O.sello;
     document.body.dataset.modo = O.modo;
     document.body.dataset.despl = O.despl;
-    $("#selloCue").textContent = {agenda:"RESERVA", eleccion:"ELIGE TU CAMINO", nada:""}[O.sello];
+    $("#selloCue").textContent = {agenda:"RESERVAR CLASE", eleccion:"ELIGE TU CAMINO", nada:""}[O.sello];
     $("#selloBtn").setAttribute("aria-label", {agenda:"Ir a la agenda", eleccion:"Elige: consulta o terapeuta", nada:"Sello Sadhana"}[O.sello]);
     qsa("#optPanel [data-opt]").forEach(g => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", O[g.dataset.opt] === b.dataset.val)));
     try { localStorage.setItem("sadhana.opts4", JSON.stringify(O)); } catch(e){}
