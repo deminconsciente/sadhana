@@ -298,6 +298,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (min-width:760px){.ev.star{grid-column:span 2;grid-template-columns:1.1fr 1fr;grid-template-rows:auto}.ev.star .ev-art{height:auto;min-height:240px}}
 .empty{padding:28px;border:1px dashed var(--line-strong);border-radius:16px;text-align:center;color:var(--ink-2)}
 /* Directorio de clases: carrusel horizontal dentro de la agenda */
+.paq-in{margin-top:40px;padding-top:28px;border-top:1px solid var(--line,rgba(0,0,0,.1));display:grid;gap:18px;scroll-margin-top:calc(var(--toph,80px) + 8px)}.paq-in .dir-head .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .dir-head{display:grid;gap:4px;margin:4px 0 10px}
 .dir-head h3{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
 .dir-head p{margin:0;color:var(--ink-2);font-size:.92rem;max-width:60ch}
@@ -1079,21 +1080,17 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
       <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
       <div id="agView"></div>
-    </section>
-  </div>
-
-  <!-- PAQUETES -->
-  <div data-v="c" class="band paper">
-    <section class="wrap sec" id="paquetes" aria-labelledby="h-pa">
-      <div class="s-head"><p class="eyebrow">Paquetes y mensualidades</p><h2 id="h-pa">Practica con constancia</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
-      <div class="calc">
+      <section class="paq-in" id="paquetes" aria-labelledby="h-pa">
+        <div class="dir-head"><h3 id="h-pa">Paquetes y mensualidades</h3><p>Practica con constancia: elige cuántas clases quieres al mes y reserva con tus créditos.</p><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
+        <div class="calc">
         <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
         <span class="big" id="nOut">12</span>
         <input type="range" id="nClases" min="0" max="2" step="1" value="1" aria-describedby="nTicks">
         <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>12</span><span>∞</span></div>
         <p class="res" id="calcRes"></p>
-      </div>
-      <div class="packs" id="packs"></div>
+        </div>
+        <div class="packs" id="packs"></div>
+      </section>
     </section>
   </div>
 
