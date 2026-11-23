@@ -220,8 +220,13 @@ body.proy nav.tab{display:none}
     <div id="dirVacio" class="r" hidden><p class="hint">El directorio todavía usa lo que viene escrito en la página. Cárgalo aquí una vez para poder editarlo.</p><button class="btn p" id="dirSeed">Cargar el directorio actual</button></div>
     <div class="list" id="listaDir"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Terapias 1:1</h2>
+    <p class="hint" style="margin:0 0 10px">Las sesiones que se ven en «Terapias con Isa y con Diego». <b>Activa</b> sale con botón de agendar; <b>Oculta</b> no se ve. Los cambios se ven en la página en unos segundos.</p>
+    <p class="hint" id="terNota" hidden style="margin:0 0 10px;color:var(--warn);font-weight:600">Estas son las terapias que hoy trae la página. Se guardan en la base al primer cambio.</p>
+    <div class="list" id="listaTer"></div>
+    <div class="row" style="margin-top:12px"><button class="btn p" id="terNueva">+ Nueva terapia</button></div>
     <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
-      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
+      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· clase suelta + 3 mensualidades</small></h2>
       <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
       <div id="paqs" style="display:grid;gap:10px"></div>
       <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Traer de un escenario de Proyección</button></div>
@@ -525,8 +530,9 @@ async function docs(path, body, metodo){
 async function cargarDir(){
   let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
   FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
-  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
+  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,4), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
   planesDesdePaquetes(PAQ.items);
+  cargarTer(l);
   D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
   $("#dirVacio").hidden = D.length>0;
   $("#listaDir").innerHTML = D.map(c=>`<div class="r dir-c" data-cid="${esc(c.id)}">
@@ -631,7 +637,75 @@ $("#listaDir").addEventListener("click", async e => {
   if (es.dataset.est==="activa" && !(c.horarios||[]).length) { toast("Primero ponle un horario (Editar)"); editarClase(c); return; }
   try { await guardarClase({...c, estado:es.dataset.est}); toast(`${c.titulo}: ${EST[es.dataset.est]}`); cargarDir(); } catch(err){ toast(err.message); }
 });
-// ---------- Paquetes de alumno (máx. 3): los mismos de Proyección · sección 3 ----------
+// ---------- Terapias 1:1 (doc _terapias {items}) ----------
+const TERAPEUTA = {isa:"Isa", diego:"Diego"};
+const GLIFOS = {lotus:"Loto", sun:"Sol", spine:"Columna", star:"Estrella", sound:"Sonido", moon:"Luna", tree:"Árbol", wave:"Onda", spiral:"Espiral", eye:"Ojo"};
+let TER = [], terGuardadas = false;
+async function cargarTer(l){
+  const d = (l.find(x=>x.id==="_terapias")||{}).data;
+  terGuardadas = !!(d && Array.isArray(d.items));
+  if (terGuardadas) TER = d.items;
+  else { try { TER = (await (await fetch("/assets/catalogo-base.json",{cache:"no-store"})).json()).terapias || []; } catch(e){ TER = []; } }
+  pintarTer();
+}
+function pintarTer(){
+  $("#terNota").hidden = terGuardadas;
+  const orden = [...TER].sort((a,b)=>(a.ter>b.ter?1:a.ter<b.ter?-1:0)||(+a.orden||99)-(+b.orden||99));
+  $("#listaTer").innerHTML = orden.map(x=>`<div class="r dir-c" data-tid="${esc(x.ter+":"+x.id)}">
+      <div><h2>${esc(x.t)}</h2><span class="meta">Con ${esc(TERAPEUTA[x.ter]||x.ter)} · ${x.precio?money(x.precio):"Con créditos"} · ${x.ciclo>1?x.ciclo+" × ":""}${x.dur} min</span></div>
+      <span class="chip est-${x.estado==="oculta"?"oculta":"activa"}">${x.estado==="oculta"?"Oculta":"Activa"}</span>
+      <div class="row" style="grid-column:1/-1">
+        <div class="seg"><button type="button" data-test="activa" aria-pressed="${x.estado!=="oculta"}">Activa</button><button type="button" data-test="oculta" aria-pressed="${x.estado==="oculta"}">Oculta</button></div>
+        <button class="btn s" data-tedit>Editar</button>
+      </div></div>`).join("") || `<p class="empty">Sin terapias.</p>`;
+}
+async function guardarTer(){ await docs("_terapias", {items:TER}); terGuardadas = true; }
+const terDe = key => TER.find(x => x.ter+":"+x.id === key);
+function editarTer(x){
+  const nueva = !x; x = x || {ter:"isa", id:"", t:"", precio:900, dur:60, d:"", tags:[], g:"lotus", estado:"activa", orden:TER.length+1};
+  $("#dT").textContent = nueva ? "Nueva terapia" : x.t;
+  $("#dB").innerHTML = `<form class="form" id="fTer" autocomplete="off" novalidate style="border:0;padding:0;background:none">
+    <label>Nombre de la terapia<input name="t" required value="${esc(x.t)}" placeholder="Breathwork 1:1"></label>
+    <div class="grid2"><label>Terapeuta<select name="ter">${Object.entries(TERAPEUTA).map(([k,v])=>`<option value="${k}" ${x.ter===k?"selected":""}>${v}</option>`).join("")}</select></label>
+      <label>Estado<select name="estado"><option value="activa" ${x.estado!=="oculta"?"selected":""}>Activa</option><option value="oculta" ${x.estado==="oculta"?"selected":""}>Oculta</option></select></label></div>
+    <div class="grid2"><label>Precio (MXN)<input name="precio" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.precio)}"></label>
+      <label>Duración (minutos)<input name="dur" type="number" min="15" step="5" inputmode="numeric" value="${esc(x.dur)}"></label></div>
+    <label>Descripción<textarea name="d" rows="4" maxlength="400">${esc(x.d)}</textarea></label>
+    <label>Etiquetas <small class="hint">(separadas por coma, máx. 3)</small><input name="tags" value="${esc((x.tags||[]).join(", "))}" placeholder="Estrés, Calma"></label>
+    <details><summary class="hint" style="cursor:pointer">Más opciones (ícono, sesiones por ciclo, orden)</summary>
+      <div class="grid2" style="margin-top:6px"><label>Ícono<select name="g">${Object.entries(GLIFOS).map(([k,v])=>`<option value="${k}" ${x.g===k?"selected":""}>${v}</option>`).join("")}</select></label>
+        <label>Sesiones por ciclo<input name="ciclo" type="number" min="1" max="12" value="${esc(x.ciclo||1)}"></label></div>
+      <label>Orden<input name="orden" type="number" min="1" value="${esc(x.orden||1)}"></label></details>
+    <p class="hint" style="margin:0">Terapia complementaria: no diagnostica ni trata enfermedades.</p>
+    <button class="btn p w" type="submit">Guardar</button>
+    ${nueva?"":`<button type="button" class="btn w" id="delTer" style="color:var(--bad)">Borrar esta terapia</button>`}
+  </form>`;
+  $("#fTer").onsubmit = async e => {
+    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target));
+    if (!(d.t||"").trim()) { toast("Ponle nombre a la terapia"); return; }
+    let id = x.id || d.t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "terapia";
+    if (nueva && TER.some(y=>y.ter===d.ter && y.id===id)) id += "-" + Date.now().toString(36).slice(-3);
+    const nuevo = {...x, ter:d.ter, id, t:d.t.trim(), estado:d.estado, precio:Math.max(0,+d.precio||0), dur:Math.max(15,+d.dur||60), d:d.d.trim(),
+      tags:d.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,3), g:d.g, orden:+d.orden||99};
+    if (+d.ciclo>1) nuevo.ciclo = +d.ciclo; else delete nuevo.ciclo;
+    const antes = TER; TER = nueva ? [...TER, nuevo] : TER.map(y => y===x ? nuevo : y);
+    try { await guardarTer(); toast("Guardado. Ya se ve en la página."); $("#dlg").close(); pintarTer(); } catch(err){ TER = antes; toast(err.message); }
+  };
+  const del = $("#delTer"); if (del) del.onclick = async () => { if (!confirm(`¿Borrar ${x.t}? Si solo quieres esconderla, usa Oculta.`)) return;
+    const antes = TER; TER = TER.filter(y => y!==x);
+    try { await guardarTer(); toast("Borrada"); $("#dlg").close(); pintarTer(); } catch(err){ TER = antes; toast(err.message); } };
+  $("#dlg").showModal();
+}
+$("#terNueva").onclick = () => editarTer(null);
+$("#listaTer").addEventListener("click", async e => {
+  const card = e.target.closest("[data-tid]"); if (!card) return; const x = terDe(card.dataset.tid); if (!x) return;
+  if (e.target.closest("[data-tedit]")) { editarTer(x); return; }
+  const es = e.target.closest("[data-test]"); if (!es || es.dataset.test===(x.estado==="oculta"?"oculta":"activa")) return;
+  const antes = TER; TER = TER.map(y => y===x ? {...y, estado:es.dataset.test} : y);
+  try { await guardarTer(); toast(`${x.t}: ${es.dataset.test==="oculta"?"Oculta":"Activa"}`); pintarTer(); } catch(err){ TER = antes; toast(err.message); }
+});
+
+// ---------- Paquetes de alumno (máx. 4: clase suelta + 3 mensualidades): los mismos de Proyección · sección 3 ----------
 const TIPOS = {suelta:"Clase suelta", paquete:"Paquete de clases", ilimitada:"Membresía ilimitada"};
 // Las altas manuales de membresía (pestaña Alumnos) ofrecen los mismos paquetes.
 function planesDesdePaquetes(items){
@@ -655,7 +729,7 @@ function pintarPaq(){
     <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
     <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
       <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Traer de un escenario de Proyección» o «+ Agregar paquete».</p>`;
-  $("#paqAdd").hidden = PAQ.items.length >= 3;
+  $("#paqAdd").hidden = PAQ.items.length >= 4;
 }
 $("#fPaq").addEventListener("input", () => marcarPaq(true));
 $("#fPaq").addEventListener("change", () => marcarPaq(true));
@@ -667,13 +741,13 @@ $("#paqs").addEventListener("input", e => {
   const g = row.querySelector("[data-reg]"), desc = (FUND && FUND.descuento) ?? 20; if (g) g.textContent = regular(p,desc) ? `Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}` : "Sin precio fundador";
 });
 $("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); marcarPaq(true); pintarPaq(); });
-$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
+$("#paqAdd").onclick = () => { if (PAQ.items.length>=4) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
 // Trae los paquetes de un escenario de Proyección. Sale elegido el escenario que es el plan
 // (Proyección → Presupuesto vs real); si no hay plan, el que se llame «Bolillo».
 let ESC = [];
 const leerCol = async col => { const r = await fetch("/api/crm/docs/"+col, {cache:"no-store"}); if (!r.ok) throw new Error("No se pudo leer Proyección"); return r.json(); };
 const escAPaq = sc => { let L = (sc.packages||[]).filter(p => p && p.name && +p.price > 0);
-  if (L.length > 3) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,3);
+  if (L.length > 4) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,4);
   const ord = p => +p.classes===1 ? 0 : +p.classes===0 ? 999 : +p.classes;
   return L.sort((a,b) => ord(a)-ord(b)).map(p => { const c = +p.classes||0, tipo = c===1 ? "suelta" : c===0 ? "ilimitada" : "paquete";
     return {id:"", nombre:String(p.name).slice(0,40), tipo, clases:tipo==="suelta"?1:tipo==="ilimitada"?0:c, precio:+p.price, plazos:[], incluye:""}; }); };
