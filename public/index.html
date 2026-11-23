@@ -464,7 +464,7 @@ footer .links{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--f-ui)}
   .dock{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;gap:8px;padding:10px var(--gut-r) calc(10px + env(safe-area-inset-bottom,0px)) var(--gut-l);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
   .dock .btn{flex:1;min-height:44px}
 }
-body.lock .dock{display:none}
+body.lock .dock,body.en-hero .dock{display:none}
 
 /* Panel de flujo */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(20,12,24,.55);display:grid;place-items:center;padding:20px;
@@ -572,9 +572,6 @@ h2{font-weight:600}
 .sello-btn .mk-sello{width:100%;height:100%;transition:transform 4s cubic-bezier(.45,0,.55,1)}
 .sello-btn:hover{transform:scale(1.04)}
 .sello-btn .cue{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);white-space:nowrap;font-family:var(--f-trendy);font-weight:800;font-size:.72rem;letter-spacing:.16em;text-shadow:0 1px 10px rgba(27,22,51,.6)}
-/* «Reservar clase» se ve como botón: píldora sólida bajo el sello */
-body[data-sello="agenda"] .sello-btn .cue{bottom:-26px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 22px;border-radius:999px;background:var(--primary);background-image:linear-gradient(120deg,#c9875a 0%,#a45a2a 55%,#8f4a25 100%);color:#fff;text-shadow:none;letter-spacing:.08em;font-size:.86rem;box-shadow:0 10px 26px -10px rgba(27,22,51,.75)}
-body[data-sello="agenda"] .sello-btn .cue::after{content:"→";font-size:1.05em}
 body[data-sello="nada"] .sello-btn{cursor:default}body[data-sello="nada"] .sello-btn:hover{transform:none}
 .sello-btn .mk-sello{animation:gira 90s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
 .doors5.pulse .door5{animation:llama .9s ease 2}@keyframes llama{50%{transform:translateY(-6px);box-shadow:0 0 0 6px rgba(255,255,255,.35)}}
@@ -585,6 +582,8 @@ body[data-sello="nada"] .sello-btn{cursor:default}body[data-sello="nada"] .sello
 .door5 svg{width:20px;height:20px}
 .door5:hover{transform:translateY(-3px);box-shadow:0 14px 34px -14px rgba(27,22,51,.7)}
 .door5.c{background:#fff;color:#3f3184}
+.door5.r{background:linear-gradient(120deg,#c9875a 0%,#a45a2a 55%,#8f4a25 100%);color:#fff}
+.doors5{flex-direction:column;align-items:stretch;width:min(360px,100%)}.doors5>.door5{flex:0 0 auto;justify-content:center}
 .door5.t{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 @media (max-width:440px){.door5{flex:1 1 100%;justify-content:center}}
 
@@ -641,7 +640,6 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .hero5 .sello-btn{width:clamp(220px,30vw,320px)}
 .hero5 .sello-btn .cue{bottom:-36px;font-size:.8rem}
-body[data-sello="agenda"] .hero5 .sello-btn .cue{bottom:-30px;font-size:.86rem;text-shadow:none}
 .hero5 .doors5{margin-top:40px}
 @media (max-width:600px){.hero5 .sello-btn{width:62vw}}
 
@@ -757,7 +755,6 @@ body::before{background:var(--top-safe,var(--bg))}:root[data-paleta="magenta"]{-
 :root[data-paleta="magenta"] .btn-p{font-weight:700}
 .hero5 .door5.t,body[data-pagina="una"] .hero5 .door5.t{background:rgba(20,16,20,.45);border-color:#fff}
 .hero5 .sello-btn .cue{text-shadow:0 1px 3px rgba(0,0,0,.7),0 0 14px rgba(0,0,0,.45)}
-body[data-sello="agenda"] .hero5 .sello-btn .cue{text-shadow:none}
 :root[data-paleta="magenta"] .dd.on,:root[data-paleta="magenta"] .dd.on *{color:#2a1424!important;opacity:1}
 
 /* Acentos alternativos sobre la misma base */
@@ -1051,8 +1048,9 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
     <div class="bgph" aria-hidden="true"></div>
     <div class="in">
       <h1 id="h1" class="sr-only">Sadhana, centro holístico</h1>
-      <button class="sello-btn" id="selloBtn" type="button" aria-label="Ir a la agenda"><span class="mk mk-sello" aria-hidden="true"></span><span class="cue" id="selloCue">RESERVAR CLASE</span></button>
+      <button class="sello-btn" id="selloBtn" type="button" aria-label="Ir a la agenda"><span class="mk mk-sello" aria-hidden="true"></span><span class="cue" id="selloCue"></span></button>
       <div class="doors5">
+        <a class="door5 r" href="#agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Reservar clase</a>
         <a class="door5 c" href="#terapias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg>Vengo a consulta</a>
         <a class="door5 t" href="#terapeuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8Z"/></svg>Soy terapeuta</a>
       </div>
@@ -1105,7 +1103,7 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="s-head"><p class="eyebrow">Sesiones 1:1</p><h2 id="h-te">Terapias con Isa y con Diego</h2></div>
       <div class="tabs" role="tablist" aria-label="Terapeuta">
         <button class="tabp" role="tab" id="tab-isa" aria-selected="true" aria-controls="panel-ter"><span class="avatar" style="background:#93689d">I</span><span><b>Isa</b><small>Reiki, craneosacral, sonido</small></span></button>
-        <button class="tabp" role="tab" id="tab-diego" aria-selected="false" aria-controls="panel-ter"><span class="avatar" style="background:#8f3572">D</span><span><b>Diego</b><small>Cuerpo, respiración, lenguaje</small></span></button>
+        <button class="tabp" role="tab" id="tab-diego" aria-selected="false" aria-controls="panel-ter"><span class="avatar" style="background:#8f3572">D</span><span><b>Diego</b><small>Respiración y desprogramación</small></span></button>
       </div>
       <div id="panel-ter" role="tabpanel"></div>
       <p class="disc">Las terapias de Sadhana son complementarias. No diagnostican ni tratan enfermedades y no sustituyen la atención médica o psicológica.</p>
@@ -1330,12 +1328,8 @@ const TERAPEUTAS = {
   diego: {nombre:"Diego", completo:"Diego · Demin Consciente", ig:"demin.consciente",
     horario:{1:[11,19],2:[11,19],3:[11,19],4:[11,19],5:[11,17],6:[10,14]},
     terapias:[
-      {id:"biodesc", tags:["Emociones", "Cuerpo", "Historia"], t:"Biodescodificación", g:"tree", dur:90, precio:1000, d:"Explora la relación entre lo que vives, lo que sientes y lo que expresa tu cuerpo, para resignificar la historia detrás de lo que te pasa."},
+      {id:"desprog", tags:["Emociones", "Cuerpo", "Linaje"], t:"Desprogramación biológica", g:"tree", dur:90, precio:1000, d:"Explora la relación entre lo que vives, lo que sientes y lo que expresa tu cuerpo, para resignificar la historia detrás de lo que te pasa. Según lo que necesites, la sesión integra hipnosis no clínica, coaching y lectura transgeneracional de tu árbol familiar."},
       {id:"breath1", tags:["Respiración", "Regulación", "Emoción"], t:"Breathwork 1:1", g:"wave", dur:75, precio:900, d:"Respiración consciente guiada para regular tu sistema nervioso y procesar emoción a través del cuerpo."},
-      {id:"hipno", tags:["Hábitos", "Creencias", "Recursos"], t:"Hipnosis no clínica", g:"spiral", dur:90, precio:1000, d:"Un estado de atención enfocada para trabajar hábitos, creencias y recursos internos."},
-      {id:"coach", tags:["Lenguaje", "Decisiones", "Resultados"], t:"Coaching ontológico", g:"eye", dur:60, precio:800, d:"Conversaciones para observar cómo tu lenguaje, tu emoción y tu cuerpo construyen tus resultados."},
-      {id:"pnl", tags:["Patrones", "Lenguaje", "Cambio"], t:"Sesión de PNL", g:"spiral", dur:60, precio:800, d:"Herramientas de lenguaje y percepción para cambiar un patrón concreto."},
-      {id:"transg", tags:["Árbol familiar", "Repeticiones", "Linaje"], t:"Lectura transgeneracional", g:"tree", dur:120, precio:1200, d:"Revisamos tu árbol familiar para reconocer repeticiones, lealtades y fechas que vuelven."},
     ]},
 };
 
@@ -1396,8 +1390,8 @@ const NECESIDADES = [
   {id:"estres", t:"Bajar el estrés", g:"wave", rec:[["ter","isa:reiki"],["clase","sound"],["ter","diego:breath1"]]},
   {id:"cuerpo", t:"Soltar tensión del cuerpo", g:"spine", rec:[["ter","isa:craneo"],["clase","somatic"],["clase","hatha"]]},
   {id:"dormir", t:"Descansar y dormir mejor", g:"moon", rec:[["ter","isa:sonora"],["clase","sound"],["ter","isa:reiki"]]},
-  {id:"claridad", t:"Claridad para decidir", g:"eye", rec:[["ter","isa:tarot"],["ter","diego:coach"],["ter","diego:pnl"]]},
-  {id:"historia", t:"Entender mi historia", g:"tree", rec:[["ter","diego:biodesc"],["ter","diego:transg"],["ter","diego:hipno"]]},
+  {id:"claridad", t:"Claridad para decidir", g:"eye", rec:[["ter","isa:tarot"],["ter","diego:desprog"],["ter","diego:breath1"]]},
+  {id:"historia", t:"Entender mi historia", g:"tree", rec:[["ter","diego:desprog"],["ter","isa:tarot"],["ter","diego:breath1"]]},
   {id:"energia", t:"Limpiar mi energía", g:"star", rec:[["ter","isa:tameana"],["ter","isa:personal"],["clase","breath"]]},
   {id:"moverme", t:"Moverme y fortalecerme", g:"lotus", rec:[["clase","vinyasa"],["clase","hatha"],["pack","doce"]]},
   {id:"formarme", t:"Formarme como terapeuta", g:"sun", rec:[["ruta","residencia"],["taller","reiki1"],["renta","consultorio"]]},
@@ -1558,6 +1552,10 @@ const qsa = q => [...document.querySelectorAll(q)];
     setVista("c", "#agenda"); history.replaceState(null,"","#consultante");
   };
 })();
+
+/* La barra de abajo (Reservar · Terapias) no se muestra mientras se ve la portada con sus 3 opciones */
+(function(){ const h = document.querySelector(".hero5"); if (!h) return; document.body.classList.add("en-hero");
+  try { new IntersectionObserver(([e]) => document.body.classList.toggle("en-hero", e.intersectionRatio > .25), {threshold:[0,.25,.5,1]}).observe(h); } catch(e){ document.body.classList.remove("en-hero"); } })();
 
 /* =====================================================================
    Dos vistas: consultante (c) y terapeuta (t)
@@ -2653,7 +2651,7 @@ document.addEventListener("click", e => {
     document.body.dataset.sello = O.sello;
     document.body.dataset.modo = O.modo;
     document.body.dataset.despl = O.despl;
-    $("#selloCue").textContent = {agenda:"RESERVAR CLASE", eleccion:"ELIGE TU CAMINO", nada:""}[O.sello];
+    $("#selloCue").textContent = {agenda:"", eleccion:"ELIGE TU CAMINO", nada:""}[O.sello];
     $("#selloBtn").setAttribute("aria-label", {agenda:"Ir a la agenda", eleccion:"Elige: consulta o terapeuta", nada:"Sello Sadhana"}[O.sello]);
     qsa("#optPanel [data-opt]").forEach(g => g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", O[g.dataset.opt] === b.dataset.val)));
     try { localStorage.setItem("sadhana.opts4", JSON.stringify(O)); } catch(e){}
