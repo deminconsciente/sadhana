@@ -1712,7 +1712,7 @@ $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data
 let need = "estres";
 function recItem([tipo, id]){
   if (tipo==="clase"){ const x = INST.find(i => i.base===id); if (!x) return ""; return {k:"Clase grupal", t:x.titulo, pills:[[fFecha(x.ini),"","cal"],[fHora(x.ini),"","clock"],[x.guia,"","user"]], p:money(x.precio), g:x.cat==="yoga"?"lotus":x.cat==="resp"?"wave":"sound", attr:`data-book="${x.id}"`, seed:id}; }
-  if (tipo==="ter"){ const [tid,xid]=id.split(":"); const T=TERAPEUTAS[tid], x=T.terapias.find(t=>t.id===xid); return {k:"1:1 con "+T.nombre, t:x.t, pills:[[fDur(x.dur),"","clock"]].concat(x.tags.slice(0,2).map(t=>[t,"line","dot"])), p:money(x.precio), g:x.g, attr:`data-ter="${id}"`, seed:id}; }
+  if (tipo==="ter"){ const [tid,xid]=id.split(":"); const T=TERAPEUTAS[tid], x=T&&T.terapias.find(t=>t.id===xid); if (!x) return ""; return {k:"1:1 con "+T.nombre, t:x.t, pills:[[fDur(x.dur),"","clock"]].concat(x.tags.slice(0,2).map(t=>[t,"line","dot"])), p:money(x.precio), g:x.g, attr:`data-ter="${id}"`, seed:id}; }
   if (tipo==="pack"){ const p=PAQUETES.find(x=>x.id===id); if(!p) return ""; return {k:"Paquete", t:p.t, pills:[[p.unl?"Ilimitadas":p.clases+" clases","","check"],["30 días","","cal"]], p:money(p.precio), g:"lotus", attr:`data-pack="${id}"`, seed:id}; }
   if (tipo==="ruta"){ const r=RUTAS.find(x=>x.id===id); return {k:"Formación", t:r.t, pills:[["6 meses","","cal"],["EC1375","","star"],["Consultorio","","check"]], p:"Llamada gratis", g:"sun", attr:`data-ruta="${id}:llamada"`, seed:id}; }
   if (tipo==="taller"){ const t=TALLERES.find(x=>x.id===id); return {k:"Taller", t:t.t, pills:[[t.linea+" h en línea","","laptop"],[t.prac+" h práctica","","hand"]], p:money(t.precio), g:"star", attr:`data-taller="${id}"`, seed:id}; }
@@ -1736,6 +1736,7 @@ function paintTer(){
   const T = TERAPEUTAS[terActual];
   $("#tab-isa").setAttribute("aria-selected", terActual==="isa");
   $("#tab-diego").setAttribute("aria-selected", terActual==="diego");
+  if (!T.terapias.length){ $("#panel-ter").innerHTML = `<div class="empty">Pronto abrimos agenda con ${esc(T.nombre)}.</div>`; return; }
   $("#panel-ter").innerHTML = `<div class="grid3">${T.terapias.map(x => `<article class="card">
       <div class="art" style="${aura(terActual+x.id)}">${glyph(x.g)}</div>
       <div class="bd">
@@ -2664,6 +2665,15 @@ document.addEventListener("click", e => {
 function paintAll(){ paintAgenda(); paintDir(); paintNeeds(); paintTer(); paintPacks(); paintTalleres(); paintRutas(); paintTL(); paintRoom(); paintRentas(); paintMine(); }
 paintAll();
 
+/* Terapias 1:1 editables en /equipo → Directorio → Terapias. Solo llegan las activas; si no hay nada guardado
+   se queda TERAPEUTAS tal como está escrito arriba. */
+function aplicarTerapias(L){
+  for (const tid of Object.keys(TERAPEUTAS)){
+    const mias = L.filter(x => x && x.ter === tid && x.t && x.id).sort((a,b) => (+a.orden||99)-(+b.orden||99));
+    TERAPEUTAS[tid].terapias = mias.map(x => ({id:String(x.id), t:String(x.t), precio:+x.precio||0, dur:+x.dur||60, d:String(x.d||""),
+      tags:Array.isArray(x.tags) ? x.tags.slice(0,4) : [], g:x.g || "lotus", ...(+x.ciclo>1 ? {ciclo:+x.ciclo} : {}), ...(x.credito ? {credito:x.credito} : {})}));
+  }
+}
 /* Directorio editable: lo que el equipo guarda en /equipo → Directorio reemplaza CATALOGO y los horarios
    semanales (CLASES). Si la API no responde o viene vacía, se queda lo escrito arriba. */
 (async () => {
@@ -2671,7 +2681,8 @@ paintAll();
     const r = await fetch("/api/catalogo"); if (!r.ok) return;
     const j = await r.json(); if (!j) return;
     if (j.promo) Object.assign(PROMO, j.promo);
-    if (!Array.isArray(j.clases) || !j.clases.length){ if (j.promo) paintAll(); return; }
+    const conTer = Array.isArray(j.terapias) && j.terapias.length; if (conTer) aplicarTerapias(j.terapias);
+    if (!Array.isArray(j.clases) || !j.clases.length){ if (j.promo || conTer) paintAll(); return; }
     const famCat = f => CATS[f] ? f : "yoga";
     const cat = j.clases.map(c => ({...c, clases:(c.estado==="activa" ? (c.horarios||[]) : []).map((h,i) => h.id || `${c.id}-${i+1}`)}));
     const cls = [];

@@ -228,7 +228,7 @@ async function catalogo(env) {
   } catch (e) {
     rows = []; // la tabla aún no existe: la landing usa su directorio escrito
   }
-  let fundadores = null, paquetes = null, promo = null;
+  let fundadores = null, paquetes = null, promo = null, terapias = null;
   const clases = [];
   for (const r of rows) {
     let d;
@@ -237,11 +237,13 @@ async function catalogo(env) {
     // Paquetes de alumno: solo salen si el equipo activó «Mostrar en la página».
     // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
     if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 3); if (d.promo) promo = d.promo; continue; }
+    // Terapias 1:1: solo salen las activas.
+    if (r.id === '_terapias') { if (Array.isArray(d.items)) terapias = d.items.filter(x => x && x.estado !== 'oculta'); continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;
     clases.push({ ...d, id: r.id });
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
-  return json({ clases, fundadores, paquetes, promo }, 200, { 'cache-control': 'public, max-age=20' });
+  return json({ clases, fundadores, paquetes, promo, terapias }, 200, { 'cache-control': 'public, max-age=20' });
 }
 
 // ---------- Votos por horario (clases nuevas u otro horario) ----------
