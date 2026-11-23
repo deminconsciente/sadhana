@@ -3,7 +3,8 @@
 // Público:
 //   GET  /api/confirmar?f=FOLIO&t=TOKEN     datos mínimos de la reserva para la página /confirmar/
 //   POST /api/confirmar {f, t, r:"si"|"no"}  el cliente confirma o avisa que no podrá ir
-// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE):
+// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE; se entra en /entrar
+// y queda una cookie de 90 días, ver src/sesion.js; Basic Auth sigue valiendo):
 //   GET  /equipo                          panel (src/equipo.html)
 //   GET  /api/crm/yo                      quién entró y con qué rol
 //   GET  /api/crm/reservas?filtro=hoy|proximas|pendientes|todas
@@ -25,6 +26,7 @@
 import equipoHTML from './equipo.html';
 import proyeccionHTML from './proyeccion.html';
 import { tablaVotos } from './api.js';
+import { deSesion, validar, sinSesion, renovar } from './sesion.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -78,19 +80,19 @@ export async function crm(request, env) {
     }
 
     if (p === '/equipo' && M === 'GET')
-      return new Response(equipoHTML, {
+      return await renovar(new Response(equipoHTML, {
         headers: {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'no-store',
           'x-robots-tag': 'noindex',
           'x-frame-options': 'DENY',
         },
-      });
+      }), env, yo);
     if (M === 'POST' && !mismoOrigen(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
 
     const r = p.slice('/api/crm/'.length).split('/').map(decodeURIComponent);
     const [a, b, c] = r;
-    if (a === 'yo') return json(yo);
+    if (a === 'yo') return json({ usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol });
     if (a === 'reservas') {
       if (!b && M === 'GET') return await listarReservas(url, env);
       if (!b && M === 'POST') return await altaManual(request, env, yo);
@@ -147,28 +149,23 @@ function mismoOrigen(request) {
 // ---------- Acceso ----------
 
 async function quien(request, env) {
+  // 1) Cookie de sesión (formulario /entrar, se guarda 90 días).
+  const ses = await deSesion(request, env);
+  if (ses) return ses;
+  // 2) Acceso anterior por Basic Auth (sigue funcionando para no romper nada).
   const h = request.headers.get('authorization') || '';
-  let usuario = '', pass = '';
   if (h.startsWith('Basic ')) {
+    let usuario = '', pass = '';
     try {
       const raw = new TextDecoder().decode(Uint8Array.from(atob(h.slice(6)), ch => ch.charCodeAt(0)));
       const i = raw.indexOf(':');
       usuario = raw.slice(0, i).trim().toLowerCase();
       pass = raw.slice(i + 1);
     } catch (e) {}
+    const yo = await validar(env, usuario, pass);
+    if (yo) return { usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol };
   }
-  if (pass) {
-    if (env.ADMIN_CLAVE && iguales(pass, env.ADMIN_CLAVE))
-      return { usuario: usuario || 'admin', nombre: usuario ? usuario[0].toUpperCase() + usuario.slice(1) : 'Administración', rol: 'admin' };
-    if (usuario) {
-      const m = await env.DB.prepare('SELECT * FROM equipo WHERE usuario = ? AND activo = 1').bind(usuario).first();
-      if (m && (await verificaClave(pass, m.clave_hash))) return { usuario: m.usuario, nombre: m.nombre, rol: m.rol };
-    }
-  }
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana equipo", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {

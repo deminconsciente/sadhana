@@ -14,6 +14,7 @@
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
 //   POST /admin/api/reservas/:folio  {estado?, nota?}
 import panelHTML from './admin.html';
+import { deSesion, sinSesion } from './sesion.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -44,7 +45,7 @@ export async function api(request, env) {
     if (p === '/api/votos/conteo' && request.method === 'GET') return await conteoVotos(env);
 
     if (p === '/admin' || p.startsWith('/admin/')) {
-      const auth = autorizado(request, env);
+      const auth = await autorizado(request, env);
       if (auth) return auth;
       if (p === '/admin' && request.method === 'GET')
         return new Response(panelHTML, {
@@ -155,19 +156,18 @@ async function estados(url, env) {
   return json(Object.fromEntries(results.map(r => [r.folio, r.estado])));
 }
 
-function autorizado(request, env) {
-  const clave = env.ADMIN_CLAVE;
-  if (!clave) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+async function autorizado(request, env) {
+  if (!env.ADMIN_CLAVE) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+  const ses = await deSesion(request, env); // cookie de /entrar (90 días)
+  if (ses && ses.rol === 'admin') return null;
   const h = request.headers.get('authorization') || '';
   let pass = '';
   if (h.startsWith('Basic ')) {
     try { pass = atob(h.slice(6)).split(':').slice(1).join(':'); } catch (e) {}
   }
-  if (pass && iguales(pass, clave)) return null;
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana admin", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  if (pass && iguales(pass, env.ADMIN_CLAVE)) return null;
+  if (ses) return new Response('Solo administración', { status: 403 });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {
