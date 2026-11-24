@@ -254,6 +254,7 @@ export async function tablaVotos(env) {
     `CREATE TABLE IF NOT EXISTS votos (clase TEXT NOT NULL, tel TEXT NOT NULL, titulo TEXT, nombre TEXT NOT NULL, dias TEXT NOT NULL, horas TEXT NOT NULL,
      modalidad TEXT, acepta_comunidad INTEGER NOT NULL DEFAULT 0, creado TEXT NOT NULL, actualizado TEXT NOT NULL, PRIMARY KEY (clase, tel))`
   ).run();
+  try { await env.DB.prepare('ALTER TABLE votos ADD COLUMN slots TEXT').run(); } catch (e) {} // «día-hora» exactos; ya existe en bases nuevas
   votosLista = true;
 }
 
@@ -271,7 +272,10 @@ async function votar(request, env) {
   const nombre = txt(b.nombre, 120);
   const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
   const enteros = (v, min, max) => [...new Set((Array.isArray(v) ? v : []).map(Number).filter(n => Number.isInteger(n) && n >= min && n <= max))].sort((x, y) => x - y);
-  const dias = enteros(b.dias, 0, 6), horas = enteros(b.horas, 5, 23);
+  // slots: ["1-19","6-9"] = día-hora exactos que la persona pulsó. Si vienen, de ahí salen dias y horas.
+  const slots = [...new Set((Array.isArray(b.slots) ? b.slots : []).map(String).filter(k => /^[0-6]-([5-9]|1\d|2[0-3])$/.test(k)))].slice(0, 40);
+  const dias = slots.length ? enteros(slots.map(k => k.split('-')[0]), 0, 6) : enteros(b.dias, 0, 6);
+  const horas = slots.length ? enteros(slots.map(k => k.split('-')[1]), 5, 23) : enteros(b.horas, 5, 23);
   const modalidad = ['Presencial', 'En línea', 'Cualquiera'].includes(b.modalidad) ? b.modalidad : 'Presencial';
   if (!/^[A-Za-z0-9_.-]{1,60}$/.test(clase)) return json({ ok: false, error: 'Clase inválida' }, 400);
   if (!nombre || tel.length < 10 || !dias.length || !horas.length) return json({ ok: false, error: 'Faltan datos' }, 400);
@@ -282,10 +286,10 @@ async function votar(request, env) {
   if (n >= 12) return json({ ok: false, error: 'Demasiados votos' }, 429);
   const ahora = new Date().toISOString();
   await env.DB.prepare(
-    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?)
-     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas,
+    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, slots, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas, slots = excluded.slots,
        modalidad = excluded.modalidad, acepta_comunidad = excluded.acepta_comunidad, actualizado = excluded.actualizado`
-  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
+  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), slots.length ? JSON.stringify(slots) : null, modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE clase = ?').bind(clase).first();
   return json({ ok: true, interesados: r.n }, 201);
 }

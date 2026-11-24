@@ -304,6 +304,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dir-head{display:grid;gap:4px;margin:4px 0 10px}
 .dir-head h3{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
 .dir-head p{margin:0;color:var(--ink-2);font-size:.92rem;max-width:60ch}
+.dir-tabs{margin:0 0 12px}.dir-tabs button small{opacity:.7;margin-left:4px;font-weight:500}
 .dir{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px 2px 12px}
 .dir::-webkit-scrollbar{display:none}
 .dc{flex:0 0 min(78%,250px);scroll-snap-align:start;display:grid;grid-template-rows:auto 1fr;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
@@ -497,6 +498,8 @@ textarea.inp{min-height:90px;resize:vertical}
 .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
 .slot{font-family:var(--f-ui);font-size:.9rem;font-variant-numeric:tabular-nums;padding:10px 6px;border-radius:12px;border:1px solid var(--line-strong);background:transparent;color:var(--ink);cursor:pointer}
 .slot[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:transparent}
+.vslots{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}.vslots .slot{display:grid;gap:1px;padding:10px 6px}.vslots .slot small{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.75}.vslots .slot b{font-weight:600}.vmod{margin-top:14px;display:flex;flex-wrap:wrap}.vmod button{flex:1 1 auto}
+.vc-op{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:14px 16px;border-radius:16px;border:1px solid var(--line-strong);background:var(--glass)}.vc-op:hover,.vc-op:focus-visible{border-color:var(--primary)}
 .slot:disabled{opacity:.3;text-decoration:line-through;cursor:not-allowed}
 .opt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px 16px;border-radius:14px;border:1px solid var(--line-strong);cursor:pointer}
 .opt:has(input:checked){border-color:var(--accent);background:var(--surface-2)}
@@ -1088,9 +1091,10 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="gratis-ban" id="gratisBan" hidden><span class="gb-t"><b>Tu primera clase es gratis</b><small>Elige clase y horario, y reserva solo con tu nombre y WhatsApp. Sin pago.</small></span><button type="button" class="btn btn-p btn-s" id="gratisGo">Regístrate a tu primera clase gratis</button></div>
       <div class="dir-head"><h3>Elige tu clase</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto. Al reservar eliges el día y la hora.</p></div>
       <div class="hoy" id="hoyLinea" hidden></div>
+      <div class="seg dir-tabs" id="dirTabs" role="tablist" aria-label="Clases" hidden></div>
       <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
       <p class="fund" id="dirFund"></p>
-      <div class="voto-ban" id="votoBan"><div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿Qué clase abrimos después?</b></div><button type="button" class="btn btn-p" data-votar="">Votar horarios</button></div>
+      <div class="voto-ban" id="votoBan"><div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿No hay disponibilidad en tu horario de preferencia?</b></div><button type="button" class="btn btn-p" data-votar="">Vota tu horario</button></div>
       <div hidden><!-- vista por día: se quitó para no duplicar el directorio (las fechas se eligen al reservar) -->
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
       <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
@@ -1280,7 +1284,6 @@ const CLASES = [
 const EVENTOS = [
   {id:"om-2026-11-22", fecha:[2026,11,22], h:10, m:0, dur:120, titulo:"El Poder del OM", guia:"Isa y Diego", cat:"evento", cupo:30, precio:100,
    desc:"Meditación con soundbath y breathwork. Presencial; en línea, próximamente.", modos:["Presencial"], destacado:true, url:"https://sadhanaholistics.com/om/", aporte:{max:1000, paso:50, atajos:[100,200,300,500]}},
-  {id:"circulo-2026-11-29", fecha:[2026,11,29], h:17, m:0, dur:120, titulo:"Círculo de mujeres", guia:"Isa", cat:"evento", cupo:16, precio:250},
 ];
 const CATS = {yoga:"Yoga", mov:"Movimiento", resp:"Respiración", mente:"Mente", sonido:"Sonido", evento:"Eventos"};
 
@@ -1697,6 +1700,7 @@ function resumenSemana(zs){
   const cap = t => t.charAt(0).toUpperCase()+t.slice(1);
   const pos = d => Math.min(...d.map(x=>(x+6)%7)); return [...g].sort((a,b)=>pos(a[1])-pos(b[1])||a[0]-b[0]).map(([k,d]) => `${[1,2,3,4,5,6,0].filter(x=>d.includes(x)).map(x=>cap(DIAS[x])).join(" · ")} ${fHora(new Date(2000,0,1,Math.floor(k/60),k%60))}`).join("  |  ");
 }
+let dirTab = "activas"; // «Disponibles» (activas + eventos) | «Próximamente»
 function paintDir(){
   const gb = $("#gratisBan"); if (gb) gb.hidden = !gratisDisponible();
   const el = $("#dirClases"); if (!el) return;
@@ -1715,8 +1719,7 @@ function paintDir(){
       <div class="dc-bd"><div class="dc-ti">${esc(x.titulo)}</div><div class="dc-g">Con ${esc(x.guia||"Sadhana")} · ${fDur(x.dur)}</div>
         ${x.desc?`<p class="dc-r">${esc(x.desc)}</p>`:""}
         <div class="dc-ft"><small>${x.aporte?`Aportación desde ${money(x.precio)}`:money(x.precio)}</small><button class="btn btn-p btn-s" data-book="${x.id}">Reservar</button></div></div></article>`;
-  const nAct = orden.filter(c => c.estado==="activa").length;
-  el.innerHTML = orden.map((c, i) => (i===nAct ? evs.map(evCard).join("") : "") + (() => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
+  const tarjeta = c => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
     const zs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean);
     const hs = resumenSemana(zs);
     return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam})" aria-label="${esc(c.titulo)}">
@@ -1725,17 +1728,24 @@ function paintDir(){
         <p class="dc-r">${esc(c.regula)}</p>
         ${!pronto&&zs.length?`<div class="dc-wk" aria-hidden="true">${[1,2,3,4,5,6,0].map(d=>`<i class="${zs.some(z=>z.dia===d)?"on":""}">${["D","L","M","M","J","V","S"][d]}</i>`).join("")}</div>`:""}
         ${pronto ? `<div class="voto-meta"><div class="vm-bar"><i style="width:${Math.min(100,(VOTOS[c.id]||0)/VOTO_META*100)}%"></i></div><small>${VOTOS[c.id]?`${VOTOS[c.id]} de ${VOTO_META} interesados para abrir`:`Abre cuando se junten ${VOTO_META} interesados`}</small></div>` : ""}
-        <div class="dc-ft">${pronto ? `<small>Tú eliges el horario</small><button type="button" class="btn btn-p btn-s" data-votar="${c.id}">Vota tu horario</button>`
-          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; })()).join("") + (nAct===orden.length ? evs.map(evCard).join("") : "");
+        <div class="dc-ft">${pronto ? `<small>Pulsa y elige tu horario</small><button type="button" class="btn btn-p btn-s" data-votar="${c.id}">Vota tu horario</button>`
+          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; };
+  const act = orden.filter(c => c.estado==="activa"), pro = orden.filter(c => c.estado!=="activa");
+  if (!pro.length) dirTab = "activas"; else if (!act.length && !evs.length) dirTab = "pronto";
+  const tb = $("#dirTabs"); if (tb){
+    tb.hidden = !pro.length || (!act.length && !evs.length);
+    tb.innerHTML = [["activas","Disponibles",act.length+evs.length],["pronto","Próximamente",pro.length]].map(([k,t,n]) => `<button type="button" role="tab" data-dtab="${k}" aria-pressed="${dirTab===k}" aria-selected="${dirTab===k}">${t}<small>${n}</small></button>`).join("");
+  }
+  el.innerHTML = dirTab==="pronto" ? pro.map(tarjeta).join("") : act.map(tarjeta).join("") + evs.map(evCard).join("");
   const vb = $("#votoBan"); if (vb){
     const pr = CATALOGO.filter(c => c.estado !== "activa").sort((a,b) => (VOTOS[b.id]||0)-(VOTOS[a.id]||0)).slice(0,3);
-    vb.innerHTML = `<div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿Qué clase abrimos después?</b><small>Marca qué días y a qué hora puedes. Con ${VOTO_META} interesados abrimos la clase y te avisamos por WhatsApp.</small></div>
-      <ol class="vb-pasos"><li><i>1</i>Elige la clase</li><li><i>2</i>Marca días y horas</li><li><i>3</i>Te avisamos</li></ol>
+    vb.innerHTML = `<div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿No hay disponibilidad en tu horario de preferencia?</b><small>Pulsa el horario que sí te sirve. Con ${VOTO_META} interesados abrimos la clase y te avisamos por WhatsApp.</small></div>
       ${pr.length ? `<div class="vb-top">${pr.map(c => `<button type="button" class="vb-c" data-votar="${c.id}" style="--cat:var(--c-${c.fam})"><span class="vb-t">${glyph(FAM_G[c.fam],'class="gl"')}<b>${esc(c.titulo)}</b><small>${VOTOS[c.id]||0}/${VOTO_META}</small></span><span class="vm-bar"><i style="width:${Math.max(4,Math.min(100,(VOTOS[c.id]||0)/VOTO_META*100))}%"></i></span></button>`).join("")}</div>` : ""}
-      <button type="button" class="btn btn-p vb-go" data-votar="">Votar horarios en 1 minuto</button>`;
+      <button type="button" class="btn btn-p vb-go" data-votar="">Elegir mi horario</button>`;
   }
   const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
 }
+$("#dirTabs").addEventListener("click", e => { const b = e.target.closest("[data-dtab]"); if (!b) return; dirTab = b.dataset.dtab; paintDir(); const d = $("#dirClases"); if (d) d.scrollLeft = 0; });
 $("#gratisGo").addEventListener("click", () => { const d = $("#dirClases"); if (d) d.scrollIntoView({behavior:"smooth", block:"start"}); });
 $("#catChips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; fCat = b.dataset.c; paintAgenda(); });
 $("#agStrip").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (!b) return;
@@ -2544,7 +2554,12 @@ let prevCount = ST.tickets.length;
    Enlace directo: /?votar  o  /?votar=<id de clase>  (también /votar/)
    ===================================================================== */
 const VOTO_META = 8; // interesados para abrir una clase (lo mismo que dice la tarjeta «Próximamente»)
-const VOTO_HORAS = [["Mañana",[7,8,9,10,11]],["Mediodía",[12,13,14]],["Tarde y noche",[17,18,19,20,21]]];
+/* Horarios que proponemos para votar (día 0 = domingo, hora de inicio). Se ocultan los que empalman con una clase ya abierta. */
+const VOTO_PROP = [[1,7],[1,19],[2,7],[2,19],[3,7],[3,19],[4,7],[4,19],[5,7],[5,19],[6,9],[6,11],[0,10]];
+function votoSlots(){
+  const libre = ([d,h]) => !CLASES.some(c => c.dia===d && c.h*60+c.m < (h+1)*60 && h*60 < c.h*60+c.m+(c.dur||60));
+  return VOTO_PROP.filter(libre).sort((a,b) => ((a[0]+6)%7)-((b[0]+6)%7) || a[1]-b[1]);
+}
 let VOTOS = {}; // {claseId: personas}
 async function cargarVotos(){
   try { const r = await fetch("/api/votos/conteo", {cache:"no-store"}); if (!r.ok) return; VOTOS = await r.json() || {}; paintDir(); } catch(e){}
@@ -2554,36 +2569,35 @@ function flujoVoto(claseId){
   const fija = claseId && CATALOGO.some(c => c.id === claseId);
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?1:0)-(b.estado==="activa"?1:0));
   const claseDe = o => CATALOGO.find(c => c.id === o.clase);
-  const diasTxt = o => [1,2,3,4,5,6,0].filter(d => o.dias.includes(d)).map(d => DIAS_L[d]).join(", ");
-  const horasTxt = o => [...o.horas].sort((a,b)=>a-b).map(hLbl).join(", ");
+  const cap = t => t.charAt(0).toUpperCase()+t.slice(1);
+  const slotTxt = k => { const [d,h] = k.split("-").map(Number); return `${cap(DIAS[d])} ${hLbl(h)}`; };
+  const slotsOrd = o => [...o.slots].sort((a,b) => { const [d1,h1] = a.split("-").map(Number), [d2,h2] = b.split("-").map(Number); return ((d1+6)%7)-((d2+6)%7) || h1-h2; });
+  const horariosTxt = o => slotsOrd(o).map(slotTxt).join(" · ");
   const pasosBase = [
-    {nombre:"La clase", si: () => !fija,
-      pintar(el, o, err){
-        el.innerHTML = `<p class="muted" style="margin:0">Elige la clase que te gustaría tomar. Si ya existe, vota por otro horario.</p><div class="opts">
-          ${orden.map(c => `<label class="opt"><input type="radio" name="vc" value="${c.id}" ${o.clase===c.id?"checked":""}><span><b>${esc(c.titulo)}</b><small>${c.estado==="activa"?"Ya abierta · vota por otro horario":"Próximamente"}${VOTOS[c.id]?` · ${VOTOS[c.id]} ${VOTOS[c.id]>1?"interesados":"interesado"}`:""}</small></span><span></span></label>`).join("")}</div>
-          ${err&&!o.clase?`<span class="err">Elige una clase.</span>`:""}`;
-        el.querySelectorAll("input[name=vc]").forEach(r => r.onchange = e => { o.clase = e.target.value; });
+    {nombre:"La clase", si: () => !fija, propioBoton:true,
+      pintar(el, o){
+        el.innerHTML = `<p class="muted" style="margin:0">¿Qué clase quieres? Pulsa una.</p><div class="opts">
+          ${orden.map(c => `<button type="button" class="opt vc-op" data-c="${c.id}"><span><b>${esc(c.titulo)}</b><small>${c.estado==="activa"?"Ya abierta · pide otro horario":"Próximamente"}${VOTOS[c.id]?` · ${VOTOS[c.id]} ${VOTOS[c.id]>1?"interesados":"interesado"}`:""}</small></span><span></span></button>`).join("")}</div>`;
+        el.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { o.clase = b.dataset.c; siguiente(); });
       },
       valido: o => !!o.clase},
-    {nombre:"Días y horas",
+    {nombre:"Tus horarios",
       pintar(el, o, err){
-        const c = claseDe(o);
-        el.innerHTML = `${c?`<dl class="sum"><div><span>Clase</span><span>${esc(c.titulo)}</span></div></dl>`:""}
-          <div><span class="lbl">¿Qué días podrías? <small class="muted">Marca todos los que te sirvan</small></span><div class="chips wrap" id="vDias">${[1,2,3,4,5,6,0].map(d => `<button type="button" class="chip" data-d="${d}" aria-pressed="${o.dias.includes(d)}">${DIAS_L[d]}</button>`).join("")}</div>${err&&!o.dias.length?`<span class="err">Marca al menos un día.</span>`:""}</div>
-          <div><span class="lbl">¿A qué hora? <small class="muted">Puedes marcar varias</small></span>
-            ${VOTO_HORAS.map(([t,hs]) => `<p class="small muted" style="margin:6px 0 4px">${t}</p><div class="slots">${hs.map(h => `<button type="button" class="slot" data-h="${h}" aria-pressed="${o.horas.includes(h)}">${hLbl(h)}</button>`).join("")}</div>`).join("")}
-            ${err&&!o.horas.length?`<span class="err">Marca al menos una hora.</span>`:""}</div>
-          <div><span class="lbl">¿Cómo la tomarías?</span><div class="opts">${[["Presencial","En Sadhana, Satélite Acueducto"],["En línea","En vivo por Zoom"],["Cualquiera","Me sirven las dos"]].map(([v,s]) => `<label class="opt"><input type="radio" name="vm" value="${v}" ${o.modalidad===v?"checked":""}><span><b>${v}</b><small>${s}</small></span><span></span></label>`).join("")}</div></div>`;
-        el.querySelector("#vDias").onclick = e => { const b = e.target.closest("[data-d]"); if (!b) return; const d = +b.dataset.d; o.dias = o.dias.includes(d) ? o.dias.filter(x=>x!==d) : o.dias.concat(d); b.setAttribute("aria-pressed", o.dias.includes(d)); };
-        el.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { const h = +b.dataset.h; o.horas = o.horas.includes(h) ? o.horas.filter(x=>x!==h) : o.horas.concat(h); b.setAttribute("aria-pressed", o.horas.includes(h)); });
-        el.querySelectorAll("input[name=vm]").forEach(r => r.onchange = e => { o.modalidad = e.target.value; });
+        const c = claseDe(o), L = votoSlots();
+        el.innerHTML = `<p style="margin:0;font-size:1.05rem"><b>${c?esc(c.titulo)+": ":""}¿cuándo sí puedes?</b></p>
+          <p class="muted small" style="margin:0">Pulsa los horarios que te sirvan. Puedes marcar varios.</p>
+          <div class="slots vslots" id="vSlots">${L.map(([d,h]) => `<button type="button" class="slot" data-s="${d}-${h}" aria-pressed="${o.slots.includes(d+"-"+h)}"><small>${cap(DIAS[d])}</small><b>${hLbl(h)}</b></button>`).join("")}</div>
+          ${err&&!o.slots.length?`<span class="err">Pulsa al menos un horario.</span>`:""}
+          <div class="seg vmod" id="vMod" role="group" aria-label="Modalidad">${["Presencial","En línea","Cualquiera"].map(v => `<button type="button" data-m="${v}" aria-pressed="${o.modalidad===v}">${v}</button>`).join("")}</div>`;
+        el.querySelector("#vSlots").onclick = e => { const b = e.target.closest("[data-s]"); if (!b) return; const k = b.dataset.s; o.slots = o.slots.includes(k) ? o.slots.filter(x=>x!==k) : o.slots.concat(k); b.setAttribute("aria-pressed", o.slots.includes(k)); };
+        el.querySelector("#vMod").onclick = e => { const b = e.target.closest("[data-m]"); if (!b) return; o.modalidad = b.dataset.m; el.querySelectorAll("#vMod button").forEach(x => x.setAttribute("aria-pressed", x===b)); };
       },
-      valido: o => o.dias.length > 0 && o.horas.length > 0},
+      valido: o => o.slots.length > 0},
     {nombre:"Tus datos", propioBoton:true,
       pintar(el, o, err){
         o.datos ||= {...ST.datos};
         const c = claseDe(o);
-        el.innerHTML = `<dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Días</span><span>${esc(diasTxt(o))}</span></div><div><span>Horas</span><span>${esc(horasTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
+        el.innerHTML = `<dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Horarios</span><span>${esc(horariosTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
           <div class="field"><label class="lbl" for="vNom">Tu nombre</label><input class="inp" id="vNom" autocomplete="name" value="${esc(o.datos.nombre)}"></div>
           <div class="field"><label class="lbl" for="vTel">WhatsApp</label><input class="inp" id="vTel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" value="${esc(o.datos.tel)}"></div>
           <label class="opt" style="grid-template-columns:auto 1fr"><input type="checkbox" id="vCom" ${o.datos.comunidad?"checked":""}><span><b>Quiero unirme a la comunidad</b><small>Avisos de clases nuevas y eventos por WhatsApp.</small></span></label>
@@ -2601,7 +2615,7 @@ function flujoVoto(claseId){
           if (o.datos.tel.replace(/\D/g,"").length < 10){ er.textContent = "Escribe tu WhatsApp de 10 dígitos para avisarte."; er.hidden = false; return; }
           btn.disabled = true; btn.textContent = "Enviando…";
           try {
-            const r = await fetch("/api/votos", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({clase:o.clase, titulo:c?c.titulo:"", dias:o.dias, horas:o.horas, modalidad:o.modalidad, nombre:o.datos.nombre, tel:o.datos.tel, comunidad:!!o.datos.comunidad})});
+            const r = await fetch("/api/votos", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({clase:o.clase, titulo:c?c.titulo:"", slots:o.slots, modalidad:o.modalidad, nombre:o.datos.nombre, tel:o.datos.tel, comunidad:!!o.datos.comunidad})});
             const j = await r.json().catch(()=>({}));
             if (!r.ok) throw new Error(j.error || "HTTP " + r.status);
             o.interesados = j.interesados || 0; if (o.interesados) VOTOS[o.clase] = o.interesados;
@@ -2616,7 +2630,7 @@ function flujoVoto(claseId){
         const url = location.origin + "/?votar=" + encodeURIComponent(o.clase);
         const inv = `Estoy votando para que abran ${c?c.titulo:"una clase"} en Sadhana. Vota tu horario aquí: ${url}`;
         el.innerHTML = `<p style="font-size:1.06rem">Gracias, ${esc(o.datos.nombre.trim().split(" ")[0])}. Tu voto ya cuenta.</p>
-          <dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Días</span><span>${esc(diasTxt(o))}</span></div><div><span>Horas</span><span>${esc(horasTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
+          <dl class="sum"><div><span>Clase</span><span>${esc(c?c.titulo:"")}</span></div><div><span>Horarios</span><span>${esc(horariosTxt(o))}</span></div><div><span>Modalidad</span><span>${esc(o.modalidad)}</span></div></dl>
           ${n ? `<div class="voto-meta"><div class="vm-bar"><i style="width:${Math.min(100, n/VOTO_META*100)}%"></i></div><p class="small" style="margin:6px 0 0">${n} ${n>1?"personas quieren":"persona quiere"} esta clase. ${falta ? `Con ${falta} ${falta>1?"más":"más"} la abrimos en el horario más votado.` : "Ya hay suficientes: estamos armando el horario."}</p></div>` : ""}
           <p class="note">Cuando abra, te escribimos a tu WhatsApp con el horario y tu lugar.</p>
           <a class="btn btn-p" href="https://wa.me/?text=${encodeURIComponent(inv)}" target="_blank" rel="noopener" style="width:100%">Invita a alguien a votar</a>
@@ -2627,7 +2641,7 @@ function flujoVoto(claseId){
         el.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => { cerrar(); document.getElementById(b.dataset.goto).scrollIntoView(); });
       }}];
   abrir({tipo:"Vota tu horario", titulo: fija ? (CATALOGO.find(c=>c.id===claseId)||{}).titulo : "Nueva clase u horario", pasosBase,
-    orden:{clase: fija ? claseId : "", dias:[], horas:[], modalidad:"Presencial"}});
+    orden:{clase: fija ? claseId : "", slots:[], modalidad:"Presencial"}});
 }
 function paintMine(bump){
   $("#mineCount").textContent = ST.tickets.length;
