@@ -298,6 +298,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (min-width:760px){.ev.star{grid-column:span 2;grid-template-columns:1.1fr 1fr;grid-template-rows:auto}.ev.star .ev-art{height:auto;min-height:240px}}
 .empty{padding:28px;border:1px dashed var(--line-strong);border-radius:16px;text-align:center;color:var(--ink-2)}
 /* Directorio de clases: carrusel horizontal dentro de la agenda */
+.hoy{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;font-family:var(--f-ui);font-size:.92rem}.hoy b{color:var(--primary)}
+.hoy-i{all:unset;cursor:pointer;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:600}.hoy-i span{font-weight:400;color:var(--ink-2)}.hoy-i:hover{border-color:var(--primary)}.hoy-i:focus-visible{outline:2px solid var(--primary)}
 .paq-in{margin-top:40px;padding-top:28px;border-top:1px solid var(--line,rgba(0,0,0,.1));display:grid;gap:18px;scroll-margin-top:calc(var(--toph,80px) + 8px)}.paq-in .dir-head .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .dir-head{display:grid;gap:4px;margin:4px 0 10px}
 .dir-head h3{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
@@ -1085,6 +1087,7 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
       <div class="s-head"><p class="eyebrow">Agenda</p><h2 id="h-ag">Clases y eventos</h2></div>
       <div class="gratis-ban" id="gratisBan" hidden><span class="gb-t"><b>Tu primera clase es gratis</b><small>Elige clase y horario, y reserva solo con tu nombre y WhatsApp. Sin pago.</small></span><button type="button" class="btn btn-p btn-s" id="gratisGo">Regístrate a tu primera clase gratis</button></div>
       <div class="dir-head"><h3>Elige tu clase</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto. Al reservar eliges el día y la hora.</p></div>
+      <div class="hoy" id="hoyLinea" hidden></div>
       <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
       <p class="fund" id="dirFund"></p>
       <div class="voto-ban" id="votoBan"><div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿Qué clase abrimos después?</b></div><button type="button" class="btn btn-p" data-votar="">Votar horarios</button></div>
@@ -1699,6 +1702,13 @@ function paintDir(){
   const el = $("#dirClases"); if (!el) return;
   const prox = id => { const c = CATALOGO.find(x=>x.id===id); const L = (INST||[]).filter(x => (c.clases||[]).includes(x.base)); return L[0]; };
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
+  const hl = $("#hoyLinea"); if (hl){
+    const hoyK = ymd(NOW), manK = ymd(addDays(startOfDay(NOW),1));
+    let L = (INST||[]).filter(x => ymd(x.ini) === hoyK), et = "Hoy";
+    if (!L.length){ L = (INST||[]).filter(x => ymd(x.ini) === manK); et = "Mañana"; }
+    hl.hidden = !L.length;
+    hl.innerHTML = L.length ? `<b>${et}:</b> ${L.map(x => `<button type="button" class="hoy-i" data-book="${x.id}">${esc(x.titulo)} <span>${fHora(x.ini)}</span></button>`).join("")}` : "";
+  }
   const evs = (INST||[]).filter(x => !x.base).slice(0, 3);
   const evCard = x => `<article class="dc ev-dc" style="--cat:var(--c-evento)" aria-label="${esc(x.titulo)}">
       <div class="dc-art" style="${aura(x.id)}">${glyph(CAT_G.evento)}<span class="ev-cat">Evento</span><span class="dc-tag">${fFecha(x.ini)} · ${fHora(x.ini)}</span></div>
