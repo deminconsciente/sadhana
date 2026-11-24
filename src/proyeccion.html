@@ -489,6 +489,38 @@ details.why .hint{margin:8px 0}
 .tl-r:hover{background:var(--surface-2)}
 .tl-d{font-size:.8rem;color:var(--ink-2)}.tl-t{font-size:.9rem}.tl-t small{display:block;color:var(--ink-3);font-size:.75rem}.tl-p{font-weight:700}
 .gantt svg{min-width:0}
+/* cronograma limpio: lista, hoja de detalle y plan de acción */
+.cm-sel{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cm-sel select{flex:1 1 150px;min-width:0;max-width:300px}
+.lh{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;padding:10px 12px;background:var(--surface-2)}
+.lh b{font-size:.98rem}.lh .num{font-size:.78rem;color:var(--ink-2)}.lh .bar{grid-column:1/-1;background:var(--line-2)}
+.lr{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 10px 9px calc(10px + var(--d,0)*16px);border-top:1px solid var(--line)}
+.lr.done .lt b{text-decoration:line-through;opacity:.55}
+.lt{border:0;background:none;text-align:left;font:inherit;color:var(--ink);cursor:pointer;padding:0;display:flex;flex-direction:column;gap:1px;min-width:0}
+.lt b{font-size:.93rem;font-weight:650;overflow:hidden;text-overflow:ellipsis}.lt small{font-size:.74rem;color:var(--ink-3)}.lt small.neg{color:var(--bad)}
+.lx{border:1px solid var(--line-2);background:none;border-radius:999px;padding:3px 10px;font:inherit;font-size:.76rem;color:var(--ink-2);cursor:pointer;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.lx i{font-style:normal;color:var(--wine)}
+.lp{width:30px;font-size:.68rem;font-weight:700;color:var(--wine);text-align:center}
+.cm-views button[data-more]{padding:6px 11px}
+.ovs{position:fixed;inset:0;background:rgba(20,10,16,.5);z-index:900;display:flex;align-items:flex-end;justify-content:center}
+@media (min-width:700px){.ovs{align-items:center}}
+.sheet{background:var(--surface);color:var(--ink);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+@media (min-width:700px){.sheet{border-radius:22px}}
+.sh-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sh-t{font-size:1.15rem!important;font-weight:700;width:100%}
+.sh-main{display:flex;flex-direction:column;gap:10px}
+.sh-r{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.sh-r .f span{font-size:.74rem;color:var(--ink-3)}
+.sh-st button{padding:8px 6px}
+.sh-plan{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line-2);padding-top:10px}
+.sh-plan h3{margin:0;font-size:1rem}
+.stp2{display:grid;grid-template-columns:30px minmax(0,1fr) 132px 28px 28px;gap:6px;align-items:center}
+.stp2 input{padding:6px 8px;font-size:.88rem;min-width:0}
+.stp2.done input[data-f="title"]{text-decoration:line-through;opacity:.6}
+@media (max-width:520px){.stp2{grid-template-columns:30px minmax(0,1fr) 28px 28px}.stp2 input[type=date]{grid-column:2/-1;grid-row:2}}
+.sh-plan .qa{border:1px dashed var(--line-2)!important;border-radius:10px!important}
+.sh-act{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.gx{font-style:normal;color:var(--wine);margin-right:4px;cursor:pointer}
 
 /* cronograma: hito → subhitos → subactividades */
 .cm-cards{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px}
@@ -919,6 +951,7 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
       <div class="scen-tools">
         <button class="btn" id="copy">Copiar código de escenarios</button>
         <button class="btn needw" id="load">Cargar código pegado</button>
+        <button class="btn needw" id="setDef">Dejar este escenario como predeterminado</button>
         <button class="btn ghost needw" id="reset">Volver a los escenarios iniciales</button>
       </div>
       <textarea id="code" aria-label="Código de escenarios" placeholder="Pega aquí un código de escenarios"></textarea>
@@ -971,7 +1004,7 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
   <div class="mod cm" id="m-cronograma" hidden>
     <section class="card">
       <h2 style="font-size:1.08rem">Cronograma</h2>
-      <p class="hint" style="margin:4px 0 10px">Hito → subhitos → subactividades, hasta semanales. El avance de cada nivel se calcula de lo que tiene colgado. Lo cerrado se oculta. Toca el estatus para cambiarlo.</p>
+      <p class="hint" style="margin:4px 0 10px">Toca una actividad para ver y armar su plan de acción.</p>
       <div class="cm-cards" id="cmCards"></div>
       <div id="cmEdit"></div>
     </section>
@@ -1143,6 +1176,7 @@ function slotsFrom(s){ // pasa la agenda vieja por bloques a horarios
   (s.eventDays||[]).forEach((d,j)=>{if(+d)out.push({d:j,h:10,t:-1,k:"e"})});
   const qs=(s.teachers||[]).map(t=>n(t.perWeek));return assign(s,out,qs.some(x=>x>0)?qs:null)}
 function defaults(){
+  {const sv=(cache.meta||[]).find(x=>x.id==="defecto");if(sv&&sv.sc){const c=clone(sv.sc);c.id="e1";c.order=1;delete c.bk;return[c]}}
   const on=(s,names)=>s.sources.forEach(x=>{if(names.some(k=>x.name.startsWith(k)))x.on=true});
   const a=baseScen();a.id="e1";a.order=1;a.name="Conservador";a.att=4;a.therapyPct=5;a.eventPct=15;a.eventExt=2;a.slots=assign(a,STD());
   const b=baseScen();b.id="e2";b.order=2;b.name="Base";on(b,["Terapeutas residentes","Talleres de Demin"]);b.slots=assign(b,STD());
@@ -1453,9 +1487,10 @@ function renderEditors(){
 let bkDone=false;
 function autoBackup(){if(bkDone||!db||!canWrite||!loaded[COL])return;bkDone=true;
   (cache[COL]||[]).filter(x=>!x.bk&&((x.slots||[]).length||(x.slotsReal||[]).length||(x.packages||[]).length)).forEach(x=>{const id="bk"+x.id;if(cache[COL].some(y=>y.id===id))return;
-    const c=clone(x);c.id=id;c.bk=true;c.name="Respaldo · "+x.name;c.order=n(x.order)+100;put(COL,c,0)})}
+    const c=clone(x);c.id=id;c.bk=true;c.name="Respaldo · "+x.name;c.order=n(x.order)+100;put(COL,c,0)});
+  const dk=Math.floor(Date.now()/864e5),slot=dk%3;(cache[COL]||[]).filter(x=>!x.bk&&(x.slots||[]).length).forEach(x=>{const id="bkd"+slot+x.id,ex=cache[COL].find(y=>y.id===id);if(ex&&ex.bkDay===dk)return;const c=clone(x);c.id=id;c.bk=true;c.bkDay=dk;c.name="Respaldo diario · "+x.name;c.order=n(x.order)+200;put(COL,c,0)})}
 function renderBk(){const el=$("#bkList");if(!el)return;const B=(cache[COL]||[]).filter(x=>x.bk);
-  el.innerHTML=B.length?`<h3 class="h3">Respaldos automáticos</h3><p class="hint">Copia de cada escenario tal como estaba antes de la actualización del 18 de noviembre. Restaurar crea un escenario nuevo con esa copia.</p>`+B.map(x=>`<div class="scen-tools"><span class="nm">${esc(x.name)}</span><button class="btn needw" data-bkr="${esc(x.id)}">Restaurar como escenario</button></div>`).join(""):""}
+  el.innerHTML=B.length?`<h3 class="h3">Respaldos automáticos</h3><p class="hint">Copias automáticas de los últimos 3 días y del 18 de noviembre. Restaurar crea un escenario nuevo con esa copia.</p>`+B.map(x=>`<div class="scen-tools"><span class="nm">${esc(x.name)}</span><button class="btn needw" data-bkr="${esc(x.id)}">Restaurar como escenario</button></div>`).join(""):""}
 function renderTabs(){autoBackup();renderBk();const L=list();
   $("#tabs").innerHTML=L.map((s,i)=>`<button class="tab" role="tab" aria-selected="${s.id===(cur()||{}).id}" data-tab="${s.id}"><span class="dot" style="background:${SC[i%SC.length]}"></span>${esc(s.name)}</button>`).join("");
   $("#dup").disabled=L.length>=MAX;$("#del").disabled=L.length<=1}
@@ -1947,6 +1982,7 @@ function replaceScenarios(arr){cache[COL].slice().forEach(s=>remove(COL,s.id));a
 let resArm=0;
 $("#reset").onclick=()=>{if(Date.now()-resArm>4000){resArm=Date.now();$("#reset").textContent="Toca otra vez: se pierden los cambios";setTimeout(()=>$("#reset").textContent="Volver a los escenarios iniciales",4000);return}
   resArm=0;$("#reset").textContent="Volver a los escenarios iniciales";replaceScenarios(defaults());toast("Escenarios restablecidos")};
+$("#setDef").onclick=()=>{const s=curRaw();if(!s)return;const m=clone(s);delete m.bk;put("meta",{id:"defecto",sc:m},0);toast("Listo: «"+s.name+"» queda como el escenario predeterminado.")};
 $("#scenSeed").onclick=()=>{if((cache[COL]||[]).length){toast("Ya hay escenarios guardados: no se cargan los iniciales para no sobrescribirlos.");return}if(!confirm("Esto crea los 5 escenarios de fábrica y sobrescribe lo que haya con esos nombres. ¿Seguro?"))return;replaceScenarios(defaults());toast("Escenarios cargados")};
 $("#copy").onclick=()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({v:4,list:list()}))));$("#code").value=code;
   const fb=()=>{$("#code").select();toast("Selecciona y copia el código")};try{navigator.clipboard.writeText(code).then(()=>toast("Código copiado"),fb)}catch(e){fb()}};
@@ -2078,7 +2114,7 @@ function itemCard(t){const p=prog(t),late=t.due&&t.due<todayKey&&t.status!=="hec
   </div></details>`}
 let openItem=null;
 // cronograma: árbol hito → subhitos → subactividades (task.parent = id del padre; los hitos son milestone sin padre)
-let cmTodayX=0,cmH="all",cmO="all",cmV="crono",cmD=false,cmFocus=null,cmFocusRow=null,cmDetail=null;
+let cmTodayX=0,cmH="all",cmO="all",cmV="crono",cmD=false,cmFocus=null,cmFocusRow=null,cmDetail=null,cmX=new Set(),cmMore=false,cmMoreOpen=false;
 const CM_NEXT={pendiente:"encurso",encurso:"hecho",hecho:"pendiente",bloqueado:"encurso"};
 const cmpT=(a,b)=>(a.due||"9").localeCompare(b.due||"9")||String(a.created||"").localeCompare(String(b.created||""));
 const isRoot=t=>!(t.parent&&t.parent!==t.id&&byId(t.parent));
@@ -2094,22 +2130,19 @@ let dupSeq=0;
 function dupNode(id,parent,root,d=0){const t=byId(id);if(!t||d>8)return null;
   const o=clone(t);delete o.id;Object.assign(o,{parent,title:root?(t.title||"Sin título")+" (copia)":t.title,status:"pendiente",progress:0,created:Date.now()+(dupSeq++)});
   const nid=newTask(o);kidsOf(id).sort(cmpT).forEach(k=>dupNode(k.id,nid,false,d+1));return nid}
-function cmRows(id,d,own,seen,out){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});cmRows(k.id,d+1,own,seen,out)})}
-function cmGroups(own){const G=[];
-  if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];cmRows(h.id,0,own,new Set([h.id]),rows);G.push({h,rows})});
-  if(cmH==="all"||cmH==="none"){const rows=[],seen=new Set();orphanRoots().forEach(o=>{if(!cmShow(o,own))return;seen.add(o.id);rows.push({t:o,d:0});cmRows(o.id,1,own,seen,rows)});if(rows.length)G.push({h:null,rows})}
+function cmRows(id,d,own,seen,out,full){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});if(full||cmX.has(k.id))cmRows(k.id,d+1,own,seen,out,full)})}
+function cmGroups(own,full){const G=[];
+  if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];cmRows(h.id,0,own,new Set([h.id]),rows,full);G.push({h,rows})});
+  if(cmH==="all"||cmH==="none"){const rows=[],seen=new Set();orphanRoots().forEach(o=>{if(!cmShow(o,own))return;seen.add(o.id);rows.push({t:o,d:0});cmRows(o.id,1,own,seen,rows,full)});if(rows.length)G.push({h:null,rows})}
   return G}
 const isLeaf=t=>!t.milestone&&!kidsOf(t.id).length;
-function actRow(t,d,showH,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),T=topsL();
-  const pill=hasK?`<span class="pill st-${st}" title="Se calcula de sus subactividades">${stLabel(st)} · ${p}%</span>`:`<button type="button" class="pill st-${st}" data-cyc title="Toca para cambiar el estatus">${stLabel(st)}</button>`;
-  return`<div class="ar${st==="hecho"?" done":""}${hasK?" par":""}${showH?" sh":""}" data-task="${t.id}" style="--d:${d}">
-  ${hasK?'<span class="ck dis" aria-hidden="true"></span>':`<button type="button" class="ck" data-ck aria-pressed="${st==="hecho"}" aria-label="Marcar hecha">✓</button>`}
-  <div class="tw"><input type="text" class="ar-t" data-f="title" value="${esc(t.title)}" placeholder="Subactividad" aria-label="Actividad">${crumb?`<small class="crumb">${esc(crumb)}</small>`:""}</div>
-  <div class="meta">${pill}
-  <div class="sub"><input type="text" list="ownList" data-f="owner" value="${esc(t.owner)}" placeholder="Responsable" aria-label="Responsable">
-  <input type="date" data-f="due" value="${esc(t.due)}" aria-label="Fecha límite"${lateT(t)?' style="border-color:var(--bad)"':""}>
-  ${showH?`<select data-f="parent" aria-label="Hito"><option value="">Sin hito</option>${T.map(h=>`<option value="${h.id}" ${h.id===t.parent?"selected":""}>◆ ${esc(h.title)}</option>`).join("")}</select>`:""}</div></div>
-  <button type="button" class="ib needw" data-sub title="Agregar subactividad" aria-label="Agregar subactividad">+</button><button type="button" class="ib" data-open="${t.id}" title="Detalle" aria-label="Detalle">⋯</button></div>`}
+// fila limpia: círculo para cerrar, nombre, responsable y fecha; al tocar se abre su plan de acción
+function lrow(t,d,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),lv=hasK?leavesOf(t.id):[],dn=lv.filter(x=>x.status==="hecho").length,open=cmX.has(t.id);
+  const meta=[t.owner,t.due?fmtD(t.due):""].filter(Boolean).map(esc).join(" · ")||"sin responsable ni fecha";
+  return`<div class="lr${st==="hecho"?" done":""}" data-task="${t.id}" style="--d:${d}">`+
+    (hasK?`<span class="lp" title="Avance">${p}%</span>`:`<button type="button" class="ck" data-ck aria-pressed="${st==="hecho"}" aria-label="Marcar hecha">✓</button>`)+
+    `<button type="button" class="lt" data-open="${t.id}"><b>${esc(t.title||"Sin título")}</b>${crumb?`<small>${esc(crumb)}</small>`:""}<small${lateT(t)?' class="neg"':""}>${meta}</small></button>`+
+    (hasK?`<button type="button" class="lx" data-x="${t.id}" aria-expanded="${open}">${dn}/${lv.length}<i>${open?"▾":"▸"}</i></button>`:`<button type="button" class="lx" data-open="${t.id}" aria-label="Agregar plan">plan<i>＋</i></button>`)+`</div>`}
 const ymd=x=>x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
 const wkMon=d=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()-((x.getDay()+6)%7));return ymd(x)};
 const addD=(d,k)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+k);return ymd(x)};
@@ -2119,8 +2152,8 @@ function spanOf(t,d=0){const ds=[],ss=[];if(t.due){ds.push(t.due);ss.push(t.star
   return ds.length?[ss.sort()[0],ds.sort().slice(-1)[0]]:null}
 function vTabla(G){
   return G.map(g=>{const id=g.h?g.h.id:"none",lv=g.h?leavesOf(g.h.id):g.rows.filter(r=>isLeaf(r.t)).map(r=>r.t),d=lv.filter(x=>x.status==="hecho").length,p=g.h?prog(g.h):(lv.length?Math.round(d/lv.length*100):0);
-    return`<div class="cm-g"><button type="button" class="cm-gh" data-hsel="${id}"><b>${g.h?"◆ "+esc(g.h.title||"Hito sin nombre"):"Sin hito"}</b><span class="num">${d}/${lv.length} · ${p}%${g.h&&g.h.due?" · "+fmtD(g.h.due):""}</span><span class="bar${p>=100?" ok":""}"><i style="width:${p}%"></i></span></button>
-    ${g.rows.map(r=>actRow(r.t,r.d,!g.h&&r.d===0)).join("")}
+    return`<div class="cm-g"><div class="lh"><b>${g.h?"◆ "+esc(g.h.title||"Hito sin nombre"):"Sin hito"}</b><span class="num">${d}/${lv.length} · ${p}%${g.h&&g.h.due?" · "+fmtD(g.h.due):""}</span>${g.h?`<button type="button" class="ib" data-open="${g.h.id}" aria-label="Editar hito" title="Editar hito">✎</button>`:""}<span class="bar${p>=100?" ok":""}"><i style="width:${p}%"></i></span></div>
+    ${g.rows.map(r=>lrow(r.t,r.d)).join("")}
     <input type="text" class="qa needw" data-qa="${id}" placeholder="+ Agregar ${g.h?"actividad":"tarea"} (escribe y Enter)" aria-label="Agregar actividad"></div>`}).join("")||`<div class="card empty">Nada abierto con este filtro.</div>`}
 function vTablero(G){
   const items=G.flatMap(g=>g.rows.map(r=>r.t)).filter(isLeaf);
@@ -2130,7 +2163,7 @@ function vTablero(G){
 function vSemanas(G){
   const L=G.flatMap(g=>g.rows.map(r=>r.t)).filter(isLeaf),thisM=wkMon(todayKey),W={},late=[],nod=[];
   L.forEach(t=>{if(!t.due){nod.push(t);return}const m=wkMon(t.due);if(m<thisM){if(t.status!=="hecho")late.push(t)}else(W[m]=W[m]||[]).push(t)});
-  const row=t=>actRow(t,0,false,pathOf(t).join(" › "));
+  const row=t=>lrow(t,0,pathOf(t).join(" › "));
   const grp=(cls,title,sub,items)=>`<div class="cm-g"><div class="wk-h ${cls}"><b>${title}</b><span class="num">${sub}</span></div>${items.sort(cmpT).map(row).join("")}</div>`;
   let h="";
   if(late.length)h+=grp("late","Atrasadas",`${late.length} por completar`,late);
@@ -2160,77 +2193,117 @@ function vCrono(G){
     g+=`<g data-open="${t.id}" style="cursor:pointer"><rect x="0" y="${y}" width="${Wd}" height="${RH}" fill="transparent"/><rect x="${a}" y="${y+6}" width="${b-a}" height="14" rx="5" fill="var(--surface)" stroke="${col}" stroke-opacity=".6"/><rect x="${a}" y="${y+6}" width="${(b-a)*p/100}" height="14" rx="5" fill="${col}" ${hasK&&!r.h?'opacity=".75"':""}/>
       ${r.h?`<path d="M${b} ${y+5} l7 8 -7 8 -7 -8z" fill="${col}" stroke="var(--surface)" stroke-width="1.5"/>`:""}<title>${esc(t.title)}: ${p}% · ${esc(stLabel(effSt(t)))} · ${esc(r.sp[1])}</title></g>`});
   const tx=X(todayKey)+PW/14;cmTodayX=tx;g+=`<line x1="${tx}" x2="${tx}" y1="0" y2="${Ht}" stroke="var(--wine)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
-  return`<section class="card"><div class="gw"><div class="gl-lab">${R.map(r=>`<div class="gl-r${r.h?" h":""}" style="--d:${r.d}" data-open="${r.t.id}" title="${esc(r.t.title)}">${r.h?"◆ ":""}${esc(r.t.title||"Sin título")}</div>`).join("")}</div><div class="gl-sc" id="gSc"><svg width="${Wd}" height="${Ht+4}" role="img" aria-label="Cronograma semana por semana">${g}</svg></div></div>
+  return`<section class="card"><div class="gw"><div class="gl-lab">${R.map(r=>`<div class="gl-r${r.h?" h":""}" style="--d:${r.d}" data-open="${r.t.id}" title="${esc(r.t.title)}">${r.h?"◆ ":(kidsOf(r.t.id).length?`<i class="gx" data-x="${r.t.id}">${cmX.has(r.t.id)?"▾":"▸"}</i>`:"")}${esc(r.t.title||"Sin título")}</div>`).join("")}</div><div class="gl-sc" id="gSc"><svg width="${Wd}" height="${Ht+4}" role="img" aria-label="Cronograma semana por semana">${g}</svg></div></div>
     <p class="hint" style="margin-top:8px">Cada columna es una semana (lunes a domingo); la línea punteada es hoy.${sinF?` ${sinF} actividad${sinF===1?"":"es"} sin fecha límite no aparece${sinF===1?"":"n"}: ponles fecha en la Tabla.`:""}</p></section>`}
+function sheetHTML(t){
+  const hasK=kidsOf(t.id).length>0,kids=kidsOf(t.id).sort(cmpT),pp=pathOf(t),par=t.parent&&byId(t.parent),q=qOf(t),ty=t.type||"tarea",root=t.milestone&&isRoot(t);
+  const bad=new Set([t.id,...descIds(t.id)]);
+  return`<div class="ovs"><div class="sheet" role="dialog" aria-modal="true" aria-label="Detalle">
+  <div class="sh-top">${par?`<button type="button" class="lnk" data-open="${par.id}">‹ ${esc(par.title||"Atrás")}</button>`:`<span class="crumb">${root?"Hito":"Actividad"}</span>`}<button type="button" class="ib" data-dclose aria-label="Cerrar">✕</button></div>
+  <div class="sh-main" data-task="${t.id}">
+    <input class="sh-t" type="text" data-f="title" value="${esc(t.title)}" placeholder="Nombre" aria-label="Nombre">
+    <div class="sh-r"><label class="f"><span>Responsable</span><input type="text" list="ownList" data-f="owner" value="${esc(t.owner)}" placeholder="Isa, Diego…"></label><label class="f"><span>Empieza</span><input type="date" data-f="start" value="${esc(t.start)}"></label><label class="f"><span>Termina</span><input type="date" data-f="due" value="${esc(t.due)}"></label></div>
+    ${hasK?`<p class="hint" style="margin:0">Avance <b class="num">${prog(t)}%</b>, se calcula de su plan.</p>`:`<div class="seg3 sh-st" role="group" aria-label="Estatus">${ST.filter(x=>x[0]!=="bloqueado").map(([k,l])=>`<button type="button" data-stset="${k}" aria-pressed="${(t.status||"pendiente")===k}"><b>${l}</b></button>`).join("")}</div>`}
+  </div>
+  <div class="sh-plan"><h3>Plan de acción</h3>
+    ${kids.map(k=>`<div class="stp2${k.status==="hecho"&&!kidsOf(k.id).length?" done":""}" data-task="${k.id}">${kidsOf(k.id).length?`<span class="lp">${prog(k)}%</span>`:`<button type="button" class="ck" data-ck aria-pressed="${effSt(k)==="hecho"}" aria-label="Marcar hecho">✓</button>`}<input type="text" data-f="title" value="${esc(k.title)}" placeholder="Paso" aria-label="Paso"><input type="date" data-f="due" value="${esc(k.due)}" aria-label="Fecha"><button type="button" class="ib" data-open="${k.id}" title="Abrir su plan" aria-label="Abrir su plan">›</button><button type="button" class="ib needw" data-sdel="${k.id}" aria-label="Quitar paso">×</button></div>`).join("")||`<p class="hint" style="margin:0">Aún no tiene pasos. Agrega el primero o divídelo por semanas.</p>`}
+    <input type="text" class="qa needw" data-qa="${t.id}" placeholder="+ Agregar paso (escribe y Enter)" aria-label="Agregar paso">
+    ${hasK?"":`<button type="button" class="btn sm needw" data-weeks="${t.id}">Dividir por semanas</button><small class="slx">Pon «Empieza» y «Termina» y se crea un paso por cada semana.</small>`}
+  </div>
+  <details class="why" ${cmMoreOpen?"open":""} data-moreopen><summary>Más opciones</summary><div class="iss-b" data-task="${t.id}">
+    <label class="f wide">Pertenece a<select data-f="parent"><option value="">— Nivel superior —</option>${cache.tasks.filter(x=>!bad.has(x.id)).map(x=>[pathOf(x).concat(x.title||"Sin título").join(" › "),x.id]).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,i])=>`<option value="${i}" ${i===t.parent?"selected":""}>${esc(l)}</option>`).join("")}</select></label>
+    <label class="tog wide"><input type="checkbox" data-f="milestone" ${t.milestone?"checked":""}> Es un hito (nivel superior del cronograma)</label>
+    <label class="f">Categoría<input type="text" list="catList" data-f="area" value="${esc(t.area)}" placeholder="Legal, clases…"></label>
+    <label class="f">Tipo<select data-f="type">${TY.map(x=>`<option value="${x[0]}" ${x[0]===ty?"selected":""}>${x[1]}</option>`).join("")}</select></label>
+    <div class="f wide"><span>Prioridad</span><div class="qpick">${QD.map(x=>`<button type="button" class="${x[0]}" data-q="${x[0]}" aria-pressed="${q===x[0]}"><b>${x[1]}</b><small>${x[2]}</small></button>`).join("")}</div></div>
+    <label class="f wide">Contramedida<textarea data-f="countermeasure" placeholder="Qué hacemos para resolverlo, o para que no pase">${esc(t.countermeasure)}</textarea></label>
+    <label class="f wide">Notas<textarea data-f="notes" placeholder="Notas">${esc(t.notes)}</textarea></label>
+  </div></details>
+  <div class="sh-act"><button type="button" class="btn sm needw" data-${root?"hdup":"tdup"}="${t.id}">Duplicar con lo que tiene</button><button type="button" class="btn sm ghost needw" data-tdel="${t.id}">Borrar</button></div>
+  </div></div>`}
+// plantilla: un hito de lanzamiento con las actividades de cada clase (fechas editables)
+function seedLanzamiento(){const L="2027-01-11",d=k=>addD(L,k);
+  const root=newTask({title:"Lanzamiento enero",milestone:true,start:todayKey,due:L});
+  const clase=(nm,own)=>{const h=newTask({title:nm,parent:root,start:todayKey,due:L,owner:own||""});
+    const A=(title,k,steps)=>{const a=newTask({title,parent:h,start:todayKey,due:d(k),owner:own||""});(steps||[]).forEach(([s,j])=>newTask({title:s,parent:a,start:todayKey,due:d(j),owner:own||""}))};
+    A("Contrato con el maestro",-35,[["Revisar el contrato con abogado",-42],["Firmar contrato e imagen",-35]]);
+    A("Estrategia comercial",-35,[["Definir paquetes y precio fundador",-42],["Abrir la lista «Avísame cuando abra»",-35]]);
+    A("Estrategia de contenido",-28,[["Plan de videos por semana",-35],["Calendario de publicaciones",-28]]);
+    A("Videos para publicar",-14,[["Video de presentación (15 a 30 s)",-28],["Video de cómo se maneja la clase",-21],["Video del maestro",-14]]);
+    A("Fotos del maestro y de la clase",-21);
+    A("Publicidad en físico",-14,[["Diseñar flyers",-28],["Imprimir",-21],["Repartir en la zona",-14]]);
+    A("Publicidad en línea",-7);
+    A("Clase muestra gratis en Parque Río La Silla",-7);
+    A("Clase grabada profesional",-3);
+    A("Clases presenciales: horario y sala de Zoom",0)};
+  clase("Lanzamiento Hatha yoga (Miranda)");clase("Lanzamiento Consciencia corporal","Diego");
+  cmH=root;cmV="crono";cmD=false;cmX=new Set();renderTasks();toast("Cargué el hito con las actividades de las dos clases. Ajusta responsables y fechas.")}
 function renderTasks(){
   const all=cache.tasks,T=topsL().filter(h=>cmD||effSt(h)!=="hecho"),O=orphanRoots().filter(o=>cmD||effSt(o)!=="hecho");
   if(cmH!=="all"&&cmH!=="none"&&!T.some(h=>h.id===cmH))cmH="all";
-  const card=(id,title,sub,p,late,done)=>`<button type="button" class="hc" data-hsel="${id}" aria-pressed="${cmH===id}"><span class="hc-t">${esc(title)}</span><span class="bar${done?" ok":""}"><i style="width:${p}%"></i></span><small${late?' class="neg"':""}>${sub}</small></button>`;
-  $("#cmCards").innerHTML=card("all","Todos",`${T.length} hito${T.length===1?"":"s"}`,T.length?Math.round(sum(T.map(prog))/T.length):0,false,false)
-    +T.map(h=>{const lv=leavesOf(h.id),d=lv.filter(x=>x.status==="hecho").length,p=prog(h),lt=h.due&&h.due<todayKey&&p<100;
-      return card(h.id,"◆ "+(h.title||"Hito sin nombre"),`${p}% · ${lv.length?d+" de "+lv.length+" hechas":"sin actividades"}${h.due?" · "+(lt?"vencido ":"")+fmtD(h.due):""}`,p,lt,p>=100)}).join("")
-    +(O.length?card("none","Sin hito",`${O.length} por asignar`,0,false,false):"")
-    +`<button type="button" class="hc add needw" data-hadd>+ Hito</button>`;
-  const h=T.find(x=>x.id===cmH);
-  $("#cmEdit").innerHTML=h?`<div class="cm-edit" data-task="${h.id}"><label class="f wide">Nombre del hito<input type="text" data-f="title" value="${esc(h.title)}" placeholder="Lanzamiento"></label>
-    <label class="f">Inicio<input type="date" data-f="start" value="${esc(h.start)}"></label><label class="f">Fecha del hito<input type="date" data-f="due" value="${esc(h.due)}"></label>
-    <label class="f wide">Es subhito de<select data-hup><option value="">— Ninguno: es un hito principal —</option>${(bad=>topsL().filter(x=>!bad.has(x.id)).map(x=>`<option value="${x.id}">◆ ${esc(x.title)}</option>`).join(""))(new Set([h.id,...descIds(h.id)]))}</select></label>
-    <div class="wide row"><small class="hint">Avance: <b class="num">${prog(h)}%</b> (promedio de lo que tiene colgado)</small><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm needw" data-hdup="${h.id}">Duplicar con sus actividades</button><button type="button" class="btn sm ghost needw" data-hdel="${h.id}">Borrar hito</button></span></div></div>`:"";
-  const G0=cmGroups("all"),owners=[...new Set(G0.flatMap(g=>g.rows.map(r=>(r.t.owner||"").trim())).filter(Boolean))].sort();
+  const G0=cmGroups("all",true),owners=[...new Set(G0.flatMap(g=>g.rows.map(r=>(r.t.owner||"").trim())).filter(Boolean))].sort();
   if(cmO!=="all"&&!owners.includes(cmO))cmO="all";
-  $("#cmOwners").innerHTML=(owners.length?[["all","Responsable: todos"],...owners.map(o=>[o,o])].map(f=>`<button aria-pressed="${cmO===f[0]}" data-oq="${esc(f[0])}">${esc(f[1])}</button>`).join(""):"")+`<button aria-pressed="${cmD}" data-done>${cmD?"Ocultar cerradas":"Mostrar cerradas"}</button>`;
+  const hasSeed=topsL().some(h=>/^lanzamiento enero$/i.test((h.title||"").trim()));
+  $("#cmCards").innerHTML=`<div class="cm-sel"><select data-hf aria-label="Hito"><option value="all">Todos los hitos</option>${T.map(h=>`<option value="${h.id}" ${cmH===h.id?"selected":""}>◆ ${esc(h.title||"Hito sin nombre")} · ${prog(h)}%</option>`).join("")}${O.length?`<option value="none" ${cmH==="none"?"selected":""}>Sin hito (${O.length})</option>`:""}</select>${owners.length?`<select data-of aria-label="Responsable"><option value="all">Todos</option>${owners.map(o=>`<option ${cmO===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`:""}<button type="button" class="btn sm needw" data-hadd>+ Hito</button></div>`;
+  $("#cmEdit").innerHTML="";
+  $("#cmOwners").innerHTML=`<button aria-pressed="${cmD}" data-done>${cmD?"Ocultar cerradas":"Mostrar cerradas"}</button>`+(hasSeed?"":`<button class="needw" data-seed>+ Plantilla: Lanzamiento enero</button>`);
   $("#ownList").innerHTML=[...new Set(["Diego","Isa","Diane",...all.map(t=>(t.owner||"").trim()).filter(Boolean)])].map(o=>`<option value="${esc(o)}">`).join("");
   $("#catList").innerHTML=[...new Set(CATS.concat(all.map(t=>(t.area||"").trim()).filter(Boolean)))].map(c=>`<option value="${esc(c)}">`).join("");
-  $("#cmViews").innerHTML=[["crono","Cronograma"],["tabla","Tabla"],["semanas","Plan semanal"],["tablero","Tablero"],["matriz","Matriz"]].map(v=>`<button type="button" role="tab" aria-pressed="${cmV===v[0]}" data-view="${v[0]}">${v[1]}</button>`).join("");
-  const dt=cmDetail&&byId(cmDetail);
-  $("#cmDetail").innerHTML=dt?`<div class="card detail"><div class="row"><b>Detalle</b><button type="button" class="btn sm" data-dclose>Cerrar</button></div><div class="ilist">${itemCard(dt)}</div></div>`:"";
+  const V=[["crono","Gantt"],["tabla","Lista"],["semanas","Semana"]],M2=[["tablero","Tablero"],["matriz","Matriz"]],more=cmMore||M2.some(v=>v[0]===cmV);
+  $("#cmViews").innerHTML=V.concat(more?M2:[]).map(v=>`<button type="button" role="tab" aria-pressed="${cmV===v[0]}" data-view="${v[0]}">${v[1]}</button>`).join("")+(more?"":`<button type="button" data-more aria-label="Más vistas">⋯</button>`);
+  const dt=cmDetail&&byId(cmDetail),sh0=document.querySelector("#cmDetail .sheet"),st0=sh0?sh0.scrollTop:0;
+  $("#cmDetail").innerHTML=dt?sheetHTML(dt):"";
+  if(dt){const s1=document.querySelector("#cmDetail .sheet");if(s1)s1.scrollTop=st0}
   const body=$("#cmBody");
-  if(!all.length||(!T.length&&!O.length&&cmV!=="matriz")){body.innerHTML=`<div class="card empty">${all.length?"Todo está cerrado. 🎉 Toca «Mostrar cerradas» para verlo.":"Aún no hay hitos. Crea el primero, por ejemplo «Lanzamiento», y cuélgale sus actividades."}<br><br><button class="btn primary needw" data-hadd>+ Crear hito</button></div>`;return}
-  const G=cmGroups(cmO),keep=document.getElementById("gSc");const sc=keep?keep.scrollLeft:null;
+  if(!all.length||(!T.length&&!O.length&&cmV!=="matriz")){body.innerHTML=`<div class="card empty">${all.length?"Todo está cerrado. Toca «Mostrar cerradas» para verlo.":"Aún no hay hitos. Crea el primero, por ejemplo «Lanzamiento», y cuélgale sus actividades."}<br><br><button class="btn primary needw" data-hadd>+ Crear hito</button></div>`;return}
+  const G=cmGroups(cmO,cmV==="semanas"||cmV==="tablero"),keep=document.getElementById("gSc");const sc=keep?keep.scrollLeft:null;
   body.innerHTML=cmV==="tabla"?vTabla(G):cmV==="tablero"?vTablero(G):cmV==="semanas"?vSemanas(G):cmV==="matriz"?vMatriz():vCrono(G);
   if(cmV==="crono"){const e=document.getElementById("gSc");if(e){e.scrollLeft=sc!=null?sc:Math.max(0,cmTodayX-70)}}
-  if(cmFocus){const q=body.querySelector(`[data-qa="${cmFocus}"]`);cmFocus=null;if(q)q.focus()}
-  if(cmFocusRow){const q=body.querySelector(`[data-task="${cmFocusRow}"] .ar-t`);cmFocusRow=null;if(q){q.scrollIntoView({block:"center"});q.focus()}}
+  if(cmFocus){const q=document.querySelector(`[data-qa="${cmFocus}"]`);cmFocus=null;if(q)q.focus()}
 }
-function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")location.hash="#cronograma";renderTasks();const el=$("#cmDetail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}
+function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")location.hash="#cronograma";renderTasks()}
 {const M=$("#m-cronograma");
   const later=()=>{clearTimeout(lightT);lightT=setTimeout(()=>{const a=document.activeElement;if(a&&a.blur&&a.type!=="text")a.blur();renderTasks()},250)};
+  M.addEventListener("toggle",e=>{if(e.target.dataset&&e.target.dataset.moreopen!==undefined)cmMoreOpen=e.target.open},true);
   M.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
+    if(e.target.classList&&e.target.classList.contains("ovs")){cmDetail=null;renderTasks();return}
+    if(b=g("[data-x]")){const id=b.dataset.x;if(cmX.has(id))cmX.delete(id);else cmX.add(id);renderTasks();return}
     if(b=g("[data-open]")){openIssue(b.dataset.open);return}
     if(b=g("[data-view]")){cmV=b.dataset.view;renderTasks();return}
-    if(b=g("[data-oq]")){cmO=b.dataset.oq;renderTasks();return}
+    if(b=g("[data-more]")){cmMore=true;renderTasks();return}
     if(b=g("[data-done]")){cmD=!cmD;renderTasks();return}
     if(b=g("[data-dclose]")){cmDetail=null;renderTasks();return}
-    if(b=g("[data-hsel]")){cmH=(cmH===b.dataset.hsel&&cmH!=="all")?"all":b.dataset.hsel;renderTasks();return}
     if(!canWrite)return;
-    if(b=g("[data-hadd]")){const id=newTask({title:"Nuevo hito",milestone:true});cmH=id;cmV="tabla";cmD=false;renderTasks();const i=$("#cmEdit input");if(i){i.focus();i.select()}return}
+    if(b=g("[data-seed]")){seedLanzamiento();return}
+    if(b=g("[data-hadd]")){const id=newTask({title:"Nuevo hito",milestone:true});cmH=id;cmV="tabla";cmD=false;cmDetail=id;renderTasks();const i=document.querySelector("#cmDetail .sh-t");if(i){i.focus();i.select()}return}
     if(b=g("[data-npend]")||g("[data-nrisk]")){const id=newTask({title:"Nuevo "+(b.dataset.nrisk!==undefined?"riesgo":"pendiente"),type:b.dataset.nrisk!==undefined?"riesgo":"tarea"});openIssue(id);return}
-    if(b=g("[data-sub]")){const id=b.closest("[data-task]").dataset.task;cmFocusRow=newTask({title:"",parent:id});cmO="all";cmV="tabla";renderTasks();return}
     if(b=g("[data-ck]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,x.status==="hecho"?"pendiente":"hecho"),0);renderTasks();return}
-    if(b=g("[data-cyc]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,CM_NEXT[x.status||"pendiente"]),0);renderTasks();return}
+    if(b=g("[data-stset]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,b.dataset.stset),0);renderTasks();return}
     if(b=g("[data-mv]")){upd(b.dataset.mv,x=>setSt(x,b.dataset.to),0);renderTasks();return}
-    if(b=g("[data-hdup]")||g("[data-tdup]")){const id=b.dataset.hdup||b.dataset.tdup,t=byId(id);if(!t)return;const nid=dupNode(id,t.parent||"",true);cmD=false;
-      if(t.milestone&&isRoot(t)){cmH=nid;cmV="tabla";cmDetail=null;renderTasks();const i=$("#cmEdit input");if(i){i.focus();i.select()}}
-      else{cmDetail=null;cmV="tabla";cmO="all";cmFocusRow=nid;renderTasks()}
-      toast("Duplicado con todo lo que tiene colgado. Cámbiale el nombre y las fechas.");return}
-    if(b=g("[data-hdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.hdel,h=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=h&&h.parent||""},0));remove("tasks",id);cmH="all";renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez: lo que tiene colgado queda sin hito";setTimeout(()=>{b.textContent="Borrar hito";delete b.dataset.arm},4000)}return}
+    if(b=g("[data-weeks]")){const id=b.dataset.weeks,t=byId(id);if(!t)return;if(!t.due){toast("Ponle fecha en «Termina» y se divide por semanas.");return}
+      if(kidsOf(id).length){toast("Ya tiene pasos.");return}
+      const base=t.start&&t.start>todayKey?t.start:(todayKey<=t.due?todayKey:t.due);let m=wkMon(base),i=1;
+      while(m<=t.due&&i<=26){newTask({title:"Semana "+i+" · "+wkLabel(m),parent:id,start:i===1?base:m,due:addD(m,6)>t.due?t.due:addD(m,6),owner:t.owner});m=addD(m,7);i++}
+      cmX.add(id);renderTasks();toast("Creé un paso por semana.");return}
+    if(b=g("[data-sdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.sdel,t=byId(id);if(t){kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t.parent||""},0));remove("tasks",id)}renderTasks()}else{b.dataset.arm=Date.now();b.textContent="¿Quitar?";setTimeout(()=>{b.textContent="×";delete b.dataset.arm},4000)}return}
+    if(b=g("[data-hdup]")||g("[data-tdup]")){const id=b.dataset.hdup||b.dataset.tdup,t=byId(id);if(!t)return;const nid=dupNode(id,t.parent||"",true);cmD=false;cmDetail=nid;if(t.milestone&&isRoot(t))cmH=nid;cmV="tabla";if(t.parent)cmX.add(t.parent);renderTasks();
+      toast("Duplicado con todo lo que tiene. Cámbiale el nombre y las fechas.");return}
     if(b=g("[data-q]")){const r=b.closest("[data-task]"),d=QD.find(z=>z[0]===b.dataset.q);upd(r.dataset.task,x=>{x.urgent=d[3];x.important=d[4]},0);renderTasks();return}
-    if(b=g("[data-tdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.tdel,t=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t&&t.parent||""},0));remove("tasks",id);cmDetail=null;renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez para borrar";setTimeout(()=>{b.textContent="Borrar";delete b.dataset.arm},4000)}return}});
-  M.addEventListener("input",e=>{const el=e.target;if(!canWrite)return;
-    if(el.dataset.hup!==undefined){const h=cmH,v=el.value;upd(h,x=>{x.parent=v;if(v)x.milestone=false},0);if(v)cmH=v;renderTasks();return}
+    if(b=g("[data-tdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.tdel,t=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t&&t.parent||""},0));remove("tasks",id);if(cmH===id)cmH="all";cmDetail=t&&t.parent&&byId(t.parent)?t.parent:null;renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez: sus pasos suben un nivel";setTimeout(()=>{b.textContent="Borrar";delete b.dataset.arm},4000)}return}});
+  M.addEventListener("input",e=>{const el=e.target;
+    if(el.dataset.hf!==undefined){cmH=el.value;renderTasks();return}
+    if(el.dataset.of!==undefined){cmO=el.value;renderTasks();return}
+    if(!canWrite)return;
     const r=el.closest("[data-task]"),f=el.dataset.f;if(!r||!f)return;const t=byId(r.dataset.task);if(!t)return;
     const x=clone(t),tp=el.type;x[f]=tp==="checkbox"?el.checked:tp==="range"?n(el.value):el.value;
     if(f==="parent"&&x.parent&&(x.parent===x.id||descIds(x.id).has(x.parent)))return;
     if(f==="parent"&&x.parent)x.milestone=false;
     if(f==="milestone"&&x.milestone)x.parent="";
-    if(f==="progress"){if(x.progress>=100)x.status="hecho";else if(x.progress>0&&(x.status||"pendiente")==="pendiente")x.status="encurso";else if(x.status==="hecho")x.status="encurso";
-      r.querySelectorAll("[data-pv],[data-pv2]").forEach(q=>q.textContent=x.progress+"%");const pi=r.querySelector(".iss-p i");if(pi)pi.style.width=x.progress+"%"}
     if(f==="status"&&x.status==="hecho")x.progress=100;
     put("tasks",x);
-    if(f==="title"&&r.classList.contains("cm-edit")){const c=document.querySelector(`[data-hsel="${r.dataset.task}"] .hc-t`);if(c)c.textContent="◆ "+(el.value||"Hito sin nombre")}
-    if(tp!=="text"&&tp!=="range"&&el.tagName!=="TEXTAREA")later()});
-  M.addEventListener("change",e=>{if(e.target.type==="range")later()});
-  M.addEventListener("keydown",e=>{const q=e.target.closest&&e.target.closest("[data-qa]");if(q&&e.key==="Enter"&&q.value.trim()&&canWrite){const id=q.dataset.qa;newTask({title:q.value.trim(),parent:id==="none"?"":id});cmFocus=id;renderTasks()}});
+    if(tp!=="text"&&el.tagName!=="TEXTAREA")later()});
+  M.addEventListener("keydown",e=>{const q=e.target.closest&&e.target.closest("[data-qa]");if(q&&e.key==="Enter"&&q.value.trim()&&canWrite){const id=q.dataset.qa;newTask({title:q.value.trim(),parent:id==="none"?"":id});if(id!=="none")cmX.add(id);cmFocus=id;renderTasks()}
+    if(e.key==="Escape"&&cmDetail){cmDetail=null;renderTasks()}});
   M.addEventListener("dragstart",e=>{const k=e.target.closest&&e.target.closest("[data-card]");if(k&&canWrite)e.dataTransfer.setData("text/plain",k.dataset.card)});
   M.addEventListener("dragover",e=>{const c=e.target.closest&&e.target.closest("[data-col]");if(c){e.preventDefault();c.classList.add("over")}});
   M.addEventListener("dragleave",e=>{const c=e.target.closest&&e.target.closest("[data-col]");if(c)c.classList.remove("over")});
