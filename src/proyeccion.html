@@ -2094,10 +2094,10 @@ let dupSeq=0;
 function dupNode(id,parent,root,d=0){const t=byId(id);if(!t||d>8)return null;
   const o=clone(t);delete o.id;Object.assign(o,{parent,title:root?(t.title||"Sin título")+" (copia)":t.title,status:"pendiente",progress:0,created:Date.now()+(dupSeq++)});
   const nid=newTask(o);kidsOf(id).sort(cmpT).forEach(k=>dupNode(k.id,nid,false,d+1));return nid}
-function rowsOf(id,d,own,seen,out){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});rowsOf(k.id,d+1,own,seen,out)})}
+function cmRows(id,d,own,seen,out){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});cmRows(k.id,d+1,own,seen,out)})}
 function cmGroups(own){const G=[];
-  if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];rowsOf(h.id,0,own,new Set([h.id]),rows);G.push({h,rows})});
-  if(cmH==="all"||cmH==="none"){const rows=[],seen=new Set();orphanRoots().forEach(o=>{if(!cmShow(o,own))return;seen.add(o.id);rows.push({t:o,d:0});rowsOf(o.id,1,own,seen,rows)});if(rows.length)G.push({h:null,rows})}
+  if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];cmRows(h.id,0,own,new Set([h.id]),rows);G.push({h,rows})});
+  if(cmH==="all"||cmH==="none"){const rows=[],seen=new Set();orphanRoots().forEach(o=>{if(!cmShow(o,own))return;seen.add(o.id);rows.push({t:o,d:0});cmRows(o.id,1,own,seen,rows)});if(rows.length)G.push({h:null,rows})}
   return G}
 const isLeaf=t=>!t.milestone&&!kidsOf(t.id).length;
 function actRow(t,d,showH,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),T=topsL();
