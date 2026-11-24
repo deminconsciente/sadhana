@@ -2160,6 +2160,10 @@ function cmNums(){const m={},seen=new Set();const walk=(t,p)=>{if(seen.has(t.id)
 const nn=id=>NUM[id]||"";
 const depsOf=t=>Array.isArray(t.deps)?t.deps.filter(id=>byId(id)):[];
 const waitOf=t=>depsOf(t).map(byId).filter(d=>effSt(d)!=="hecho");
+/* Si una actividad termina más tarde, recorre las que dependen de ella (conserva su duración). */
+function cascade(id,due,seen=new Set()){let m=0;if(seen.has(id))return 0;seen.add(id);
+  dependents(id).forEach(d=>{const st=d.start||d.due;if(!st||st>due)return;const k=Math.round((new Date(due+"T12:00:00")-new Date(st+"T12:00:00"))/864e5);if(k<=0)return;
+    const nd={};upd(d.id,x=>{if(x.start)x.start=addD(x.start,k);if(x.due)x.due=addD(x.due,k);nd.due=x.due},0);m++;if(nd.due)m+=cascade(d.id,nd.due,seen)});return m}
 const dependents=id=>cache.tasks.filter(x=>depsOf(x).includes(id));
 const reaches=(from,to,seen=new Set())=>{if(from===to)return true;if(seen.has(from))return false;seen.add(from);return dependents(from).some(x=>reaches(x.id,to,seen))};
 const sibsOf=t=>(t.parent&&byId(t.parent)?kidsOf(t.parent):t.milestone?topsL():orphanRoots()).slice().sort(cmpT);
@@ -2368,6 +2372,7 @@ function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")
     if(f==="milestone"&&x.milestone)x.parent="";
     if(f==="status"&&x.status==="hecho")x.progress=100;
     put("tasks",x);
+    if(f==="due"&&x.due){const m=cascade(x.id,x.due);if(m){toast("Recorrí "+m+(m===1?" fecha":" fechas")+" que dependen de esta.");renderTasks()}}
     if(tp!=="text"&&el.tagName!=="TEXTAREA")later()});
   M.addEventListener("keydown",e=>{const q=e.target.closest&&e.target.closest("[data-qa]");if(q&&e.key==="Enter"&&q.value.trim()&&canWrite){const id=q.dataset.qa;newTask({title:q.value.trim(),parent:id==="none"?"":id});if(id!=="none")cmX.add(id);cmFocus=id;renderTasks()}
     if(e.key==="Escape"&&cmDetail){cmDetail=null;renderTasks()}});
