@@ -298,6 +298,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (min-width:760px){.ev.star{grid-column:span 2;grid-template-columns:1.1fr 1fr;grid-template-rows:auto}.ev.star .ev-art{height:auto;min-height:240px}}
 .empty{padding:28px;border:1px dashed var(--line-strong);border-radius:16px;text-align:center;color:var(--ink-2)}
 /* Directorio de clases: carrusel horizontal dentro de la agenda */
+.hoy{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;font-family:var(--f-ui);font-size:.92rem}.hoy b{color:var(--primary)}
+.hoy-i{all:unset;cursor:pointer;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:600}.hoy-i span{font-weight:400;color:var(--ink-2)}.hoy-i:hover{border-color:var(--primary)}.hoy-i:focus-visible{outline:2px solid var(--primary)}
+.paq-in{margin-top:40px;padding-top:28px;border-top:1px solid var(--line,rgba(0,0,0,.1));display:grid;gap:18px;scroll-margin-top:calc(var(--toph,80px) + 8px)}.paq-in .dir-head .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .dir-head{display:grid;gap:4px;margin:4px 0 10px}
 .dir-head h3{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
 .dir-head p{margin:0;color:var(--ink-2);font-size:.92rem;max-width:60ch}
@@ -685,7 +688,18 @@ body[data-modo="enlaces"] .cross{display:inline-flex}
 .gratis-ban{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:22px;
   background:linear-gradient(100deg,color-mix(in srgb,#c9875a 22%,var(--surface)),color-mix(in srgb,#a45a2a 14%,var(--surface)));border:1px solid color-mix(in srgb,#a45a2a 40%,transparent)}
 .gratis-ban[hidden]{display:none}
-.voto-ban{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 14px;padding:14px 16px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--glass)}
+.voto-ban{display:grid;gap:14px;margin:18px 0 22px;padding:20px;border-radius:24px;border:1px solid var(--line-strong);background:linear-gradient(135deg,rgba(201,135,90,.20),rgba(143,74,37,.10) 55%,rgba(160,70,90,.12));box-shadow:0 10px 30px rgba(80,40,20,.10)}
+.voto-ban .vb-hd{display:grid;gap:4px}.voto-ban .vb-eye{margin:0;font-family:var(--f-ui);font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--primary)}
+.voto-ban .vb-hd b{font-family:var(--f-display);font-weight:400;font-size:clamp(1.3rem,3vw,1.7rem);line-height:1.15}.voto-ban .vb-hd small{font-family:var(--f-ui);font-size:.9rem;color:var(--ink-2);max-width:56ch}
+.vb-pasos{list-style:none;margin:0;padding:0;display:flex;gap:8px;flex-wrap:wrap;font-family:var(--f-ui);font-size:.82rem;font-weight:600}
+.vb-pasos li{display:flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--glass);border:1px solid var(--line)}
+.vb-pasos i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:.75rem}
+.vb-top{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.vb-c{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:8px;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);transition:transform .15s}
+.vb-c:hover{transform:translateY(-2px)}.vb-c:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.vb-c .vb-t{display:flex;align-items:center;gap:8px;font-family:var(--f-ui)}.vb-c .vb-t b{flex:1;font-size:.95rem}.vb-c .vb-t small{font-size:.78rem;color:var(--ink-2)}
+.vb-c .gl{width:20px;height:20px;color:var(--cat,var(--primary))}.vb-c .vm-bar{display:block}
+.vb-go{justify-self:start}@media (max-width:560px){.vb-go{justify-self:stretch;justify-content:center}}
 .voto-ban .gb-t{display:grid;gap:2px;flex:1 1 220px}.voto-ban b{font-family:var(--f-ui)}.voto-ban small{font-family:var(--f-ui);font-size:.8rem;color:var(--ink-2)}
 .voto-meta{display:grid;gap:4px}.voto-meta small{font-family:var(--f-ui);font-size:.74rem;color:var(--ink-2)}
 .vm-bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden}.vm-bar i{display:block;height:100%;min-width:6px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--c-sonido,var(--accent)))}
@@ -1072,28 +1086,27 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
     <section class="wrap sec" id="agenda" aria-labelledby="h-ag">
       <div class="s-head"><p class="eyebrow">Agenda</p><h2 id="h-ag">Clases y eventos</h2></div>
       <div class="gratis-ban" id="gratisBan" hidden><span class="gb-t"><b>Tu primera clase es gratis</b><small>Elige clase y horario, y reserva solo con tu nombre y WhatsApp. Sin pago.</small></span><button type="button" class="btn btn-p btn-s" id="gratisGo">Regístrate a tu primera clase gratis</button></div>
-      <div class="dir-head"><h3>Directorio de clases</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto.</p></div>
+      <div class="dir-head"><h3>Elige tu clase</h3><p>Todo lo que enseñamos sirve para regular tu sistema nervioso. Cada clase lo hace por un camino distinto. Al reservar eliges el día y la hora.</p></div>
+      <div class="hoy" id="hoyLinea" hidden></div>
       <div class="dir" id="dirClases" aria-label="Directorio de clases"></div>
       <p class="fund" id="dirFund"></p>
-      <div class="voto-ban"><span class="gb-t"><b>¿Quieres otra clase u otro horario?</b><small>Vota en 1 minuto. Abrimos donde se junte más gente y te avisamos por WhatsApp.</small></span><button type="button" class="btn btn-g btn-s" data-votar="">Votar horarios</button></div>
+      <div class="voto-ban" id="votoBan"><div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿Qué clase abrimos después?</b></div><button type="button" class="btn btn-p" data-votar="">Votar horarios</button></div>
+      <div hidden><!-- vista por día: se quitó para no duplicar el directorio (las fechas se eligen al reservar) -->
       <div class="chips" id="catChips" role="group" aria-label="Tipo de práctica"></div>
       <div class="ag-strip" id="agStrip" aria-label="Días con clase"></div>
       <div id="agView"></div>
-    </section>
-  </div>
-
-  <!-- PAQUETES -->
-  <div data-v="c" class="band paper">
-    <section class="wrap sec" id="paquetes" aria-labelledby="h-pa">
-      <div class="s-head"><p class="eyebrow">Paquetes y mensualidades</p><h2 id="h-pa">Practica con constancia</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
-      <div class="calc">
+      </div>
+      <section class="paq-in" id="paquetes" aria-labelledby="h-pa">
+        <div class="dir-head"><h3 id="h-pa">Paquetes y mensualidades</h3><p>Practica con constancia: elige cuántas clases quieres al mes y reserva con tus créditos.</p><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Se activa al pagar</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>30 días</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Reserva con créditos</span></div></div>
+        <div class="calc">
         <label for="nClases">¿Cuántas clases quieres tomar al mes?</label>
         <span class="big" id="nOut">12</span>
         <input type="range" id="nClases" min="0" max="2" step="1" value="1" aria-describedby="nTicks">
         <div class="ticks" id="nTicks" aria-hidden="true"><span>1</span><span>12</span><span>∞</span></div>
         <p class="res" id="calcRes"></p>
-      </div>
-      <div class="packs" id="packs"></div>
+        </div>
+        <div class="packs" id="packs"></div>
+      </section>
     </section>
   </div>
 
@@ -1335,10 +1348,11 @@ const TERAPEUTAS = {
 
 /* Paquetes de respaldo: la página pública solo muestra estos 3. Si en /equipo → Directorio → Paquetes
    está activo "Mostrar en la página pública", se usan los de ahí (ver aplicarPaquetes). */
-const PAQUETES = [
-  {id:"suelta", t:"Clase individual", precio:300, clases:1, creditos:{clases:1}, inc:["1 clase de la agenda"]},
-  {id:"doce", t:"Paquete de 12 clases", precio:1500, clases:12, creditos:{clases:12}, inc:["12 clases en 30 días"]},
-  {id:"ilimitada", t:"Ilimitada", precio:1600, clases:20, unl:true, tipo:"ilimitada", creditos:{clases:30}, inc:["Todas las clases de la agenda","30 días"]},
+const PAQUETES = [   // respaldo si /api/catalogo no trae paquetes (mismos que en /equipo, 23 nov)
+  {id:"clase-suelta", t:"Clase suelta", tipo:"suelta", precio:300, clases:1, creditos:{clases:1}, inc:["1 clase de la agenda"]},
+  {id:"4-clases-al-mes", t:"4 clases al mes", precio:700, clases:4, creditos:{clases:4}, inc:["4 clases en 30 días"]},
+  {id:"12-clases-al-mes", t:"12 clases al mes", precio:1600, clases:12, creditos:{clases:12}, inc:["12 clases en 30 días"]},
+  {id:"clases-ilimitadas-por-mes", t:"Clases ilimitadas por mes", precio:2000, clases:20, unl:true, tipo:"ilimitada", creditos:{clases:30}, inc:["Todas las clases de la agenda","30 días"]},
 ];
 
 const ESCUELAS = {
@@ -1393,7 +1407,7 @@ const NECESIDADES = [
   {id:"claridad", t:"Claridad para decidir", g:"eye", rec:[["ter","isa:tarot"],["ter","diego:desprog"],["ter","diego:breath1"]]},
   {id:"historia", t:"Entender mi historia", g:"tree", rec:[["ter","diego:desprog"],["ter","isa:tarot"],["ter","diego:breath1"]]},
   {id:"energia", t:"Limpiar mi energía", g:"star", rec:[["ter","isa:tameana"],["ter","isa:personal"],["clase","breath"]]},
-  {id:"moverme", t:"Moverme y fortalecerme", g:"lotus", rec:[["clase","vinyasa"],["clase","hatha"],["pack","doce"]]},
+  {id:"moverme", t:"Moverme y fortalecerme", g:"lotus", rec:[["clase","vinyasa"],["clase","hatha"],["pack","12-clases-al-mes"]]},
   {id:"formarme", t:"Formarme como terapeuta", g:"sun", rec:[["ruta","residencia"],["taller","reiki1"],["renta","consultorio"]]},
 ];
 
@@ -1688,7 +1702,21 @@ function paintDir(){
   const el = $("#dirClases"); if (!el) return;
   const prox = id => { const c = CATALOGO.find(x=>x.id===id); const L = (INST||[]).filter(x => (c.clases||[]).includes(x.base)); return L[0]; };
   const orden = [...CATALOGO].sort((a,b) => (a.estado==="activa"?0:1)-(b.estado==="activa"?0:1));
-  el.innerHTML = orden.map(c => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
+  const hl = $("#hoyLinea"); if (hl){
+    const hoyK = ymd(NOW), manK = ymd(addDays(startOfDay(NOW),1));
+    let L = (INST||[]).filter(x => ymd(x.ini) === hoyK), et = "Hoy";
+    if (!L.length){ L = (INST||[]).filter(x => ymd(x.ini) === manK); et = "Mañana"; }
+    hl.hidden = !L.length;
+    hl.innerHTML = L.length ? `<b>${et}:</b> ${L.map(x => `<button type="button" class="hoy-i" data-book="${x.id}">${esc(x.titulo)} <span>${fHora(x.ini)}</span></button>`).join("")}` : "";
+  }
+  const evs = (INST||[]).filter(x => !x.base).slice(0, 3);
+  const evCard = x => `<article class="dc ev-dc" style="--cat:var(--c-evento)" aria-label="${esc(x.titulo)}">
+      <div class="dc-art" style="${aura(x.id)}">${glyph(CAT_G.evento)}<span class="ev-cat">Evento</span><span class="dc-tag">${fFecha(x.ini)} · ${fHora(x.ini)}</span></div>
+      <div class="dc-bd"><div class="dc-ti">${esc(x.titulo)}</div><div class="dc-g">Con ${esc(x.guia||"Sadhana")} · ${fDur(x.dur)}</div>
+        ${x.desc?`<p class="dc-r">${esc(x.desc)}</p>`:""}
+        <div class="dc-ft"><small>${x.aporte?`Aportación desde ${money(x.precio)}`:money(x.precio)}</small><button class="btn btn-p btn-s" data-book="${x.id}">Reservar</button></div></div></article>`;
+  const nAct = orden.filter(c => c.estado==="activa").length;
+  el.innerHTML = orden.map((c, i) => (i===nAct ? evs.map(evCard).join("") : "") + (() => { const nx = c.estado==="activa" ? prox(c.id) : null, pronto = c.estado!=="activa";
     const zs = (c.clases||[]).map(id => CLASES.find(z=>z.id===id)).filter(Boolean);
     const hs = resumenSemana(zs);
     return `<article class="dc ${pronto?"pronto":""}" style="--cat:var(--c-${c.fam})" aria-label="${esc(c.titulo)}">
@@ -1698,7 +1726,14 @@ function paintDir(){
         ${!pronto&&zs.length?`<div class="dc-wk" aria-hidden="true">${[1,2,3,4,5,6,0].map(d=>`<i class="${zs.some(z=>z.dia===d)?"on":""}">${["D","L","M","M","J","V","S"][d]}</i>`).join("")}</div>`:""}
         ${pronto ? `<div class="voto-meta"><div class="vm-bar"><i style="width:${Math.min(100,(VOTOS[c.id]||0)/VOTO_META*100)}%"></i></div><small>${VOTOS[c.id]?`${VOTOS[c.id]} de ${VOTO_META} interesados para abrir`:`Abre cuando se junten ${VOTO_META} interesados`}</small></div>` : ""}
         <div class="dc-ft">${pronto ? `<small>Tú eliges el horario</small><button type="button" class="btn btn-p btn-s" data-votar="${c.id}">Vota tu horario</button>`
-          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; }).join("");
+          : nx ? `<small>Próxima: ${fFecha(nx.ini)}</small><button class="btn btn-p btn-s" data-book="${nx.id}">${esClaseReg(nx)&&gratisDisponible()?"Reservar gratis":"Reservar"}</button>` : `<small>Pronto con horario</small>`}</div></div></article>`; })()).join("") + (nAct===orden.length ? evs.map(evCard).join("") : "");
+  const vb = $("#votoBan"); if (vb){
+    const pr = CATALOGO.filter(c => c.estado !== "activa").sort((a,b) => (VOTOS[b.id]||0)-(VOTOS[a.id]||0)).slice(0,3);
+    vb.innerHTML = `<div class="vb-hd"><p class="vb-eye">Tú decides</p><b>¿Qué clase abrimos después?</b><small>Marca qué días y a qué hora puedes. Con ${VOTO_META} interesados abrimos la clase y te avisamos por WhatsApp.</small></div>
+      <ol class="vb-pasos"><li><i>1</i>Elige la clase</li><li><i>2</i>Marca días y horas</li><li><i>3</i>Te avisamos</li></ol>
+      ${pr.length ? `<div class="vb-top">${pr.map(c => `<button type="button" class="vb-c" data-votar="${c.id}" style="--cat:var(--c-${c.fam})"><span class="vb-t">${glyph(FAM_G[c.fam],'class="gl"')}<b>${esc(c.titulo)}</b><small>${VOTOS[c.id]||0}/${VOTO_META}</small></span><span class="vm-bar"><i style="width:${Math.max(4,Math.min(100,(VOTOS[c.id]||0)/VOTO_META*100))}%"></i></span></button>`).join("")}</div>` : ""}
+      <button type="button" class="btn btn-p vb-go" data-votar="">Votar horarios en 1 minuto</button>`;
+  }
   const f = $("#dirFund"); if (f) f.innerHTML = `<b>Precio fundador:</b> los primeros ${FUNDADORES.cupo} miembros pagan ${FUNDADORES.descuento}% menos que el precio regular, de por vida mientras su membresía siga activa${FUNDADORES.tomados!=null?` · quedan <b>${Math.max(0,FUNDADORES.cupo-FUNDADORES.tomados)}</b> lugares`:""}.`;
 }
 $("#gratisGo").addEventListener("click", () => { const d = $("#dirClases"); if (d) d.scrollIntoView({behavior:"smooth", block:"start"}); });
@@ -2269,7 +2304,10 @@ function flujoClase(id, modoIni, aporteIni){
   const conCredito = (ST.creditos.clases||0) > 0 && !x.aporte;
   const puedeGratis = esClaseReg(x) && gratisDisponible();
   // Otras fechas de la misma clase, para cambiar de día sin salir del flujo
-  const alts = x.base ? INST.filter(i => i.base === x.base && (!CONFIG.cupoReal || i.cupo - ocupados(i) > 0)).slice(0, 6) : [x];
+  // (todas las fechas y horarios de la misma clase: una clase con varios horarios es una sola serie)
+  const serieDe = i => i.serie || i.base;
+  const alts = x.base ? INST.filter(i => serieDe(i) === serieDe(x) && (!CONFIG.cupoReal || i.cupo - ocupados(i) > 0)) : [x];
+  const altDias = () => { const g = []; for (const a of alts){ const k = ymd(a.ini); let d = g.find(z => z.k === k); if (!d) g.push(d = {k, l:[]}); d.l.push(a); } return g; };
   // Paquetes que se pueden comprar en el mismo paso: esta clase cuenta como la primera
   const packs = x.aporte ? [] : PAQUETES.filter(p => !esSuelta(p));
   const packDe = o => /^pk:/.test(o.pagoCon || "") ? packs.find(p => "pk:"+p.id === o.pagoCon) : null;
@@ -2281,7 +2319,9 @@ function flujoClase(id, modoIni, aporteIni){
         o.pagoCon ||= puedeGratis ? "gratis" : conCredito ? "credito" : "pago";
         const opPack = p => { const ahorro = p.clases*PU() - p.precio, tch = tachadoPack(p);
           return `<label class="opt"><input type="radio" name="pc" value="pk:${p.id}" ${o.pagoCon==="pk:"+p.id?"checked":""}><span><b>${esc(p.t)}</b><small>${p.unl?"Esta clase y todas las que quieras por 30 días":`Esta clase y ${p.clases-1} más en 30 días · ${money(Math.round(p.precio/p.clases))} cada una`}${!p.unl&&ahorro>0?` · ahorras ${money(ahorro)}`:""}</small></span><span class="p">${tch?`<s class="orig">${money(tch)}</s> `:""}${money(precioPack(p))}</span></label>`; };
-        el.innerHTML = `${alts.length > 1 ? `<div><span class="lbl">Elige el día</span><div class="chips wrap" id="rAlts">${alts.map(a => `<button type="button" class="chip daychip" data-alt="${a.id}" aria-pressed="${a.id===x.id}"><small>${DIAS[a.ini.getDay()]} · ${fHora(a.ini)}</small><b>${a.ini.getDate()} ${MESES[a.ini.getMonth()]}</b></button>`).join("")}</div></div>` : ""}
+        el.innerHTML = `${alts.length > 1 ? (() => { const g = altDias(), hoy = g.find(d => d.k === ymd(x.ini)) || g[0];
+            return `<div id="rAlts"><span class="lbl">Elige el día</span><div class="chips wrap">${g.map(d => { const a = d.k === hoy.k ? x : d.l[0]; return `<button type="button" class="chip daychip" data-alt="${a.id}" aria-pressed="${d.k===hoy.k}"><small>${DIAS[a.ini.getDay()]}${d.l.length>1?` · ${d.l.length} horarios`:` · ${fHora(a.ini)}`}</small><b>${a.ini.getDate()} ${MESES[a.ini.getMonth()]}</b></button>`; }).join("")}</div>
+            ${hoy.l.length > 1 ? `<span class="lbl" style="margin-top:12px">Elige la hora</span><div class="chips wrap">${hoy.l.map(a => `<button type="button" class="chip" data-alt="${a.id}" aria-pressed="${a.id===x.id}">${fHora(a.ini)}</button>`).join("")}</div>` : ""}</div>`; })() : ""}
           <dl class="sum">
           <div><span>Cuándo</span><span>${fFechaL(x.ini)} · ${fHora(x.ini)}</span></div>
           <div><span>Duración</span><span>${fDur(x.dur)}</span></div>
@@ -2689,7 +2729,7 @@ function aplicarTerapias(L){
     const cls = [];
     for (const c of j.clases) if (c.estado==="activa") (c.horarios||[]).forEach((h,i) => {
       if (h.dia==null || h.h==null) return;
-      cls.push({id:h.id || `${c.id}-${i+1}`, dia:+h.dia, h:+h.h, m:+h.m||0, dur:+h.dur||60, titulo:c.titulo, guia:c.guia, cat:famCat(c.fam), cupo:+h.cupo||12, precio:+h.precio||300});
+      cls.push({id:h.id || `${c.id}-${i+1}`, serie:c.id, dia:+h.dia, h:+h.h, m:+h.m||0, dur:+h.dur||60, titulo:c.titulo, guia:c.guia, cat:famCat(c.fam), cupo:+h.cupo||12, precio:+h.precio||300});
     });
     CATALOGO.splice(0, CATALOGO.length, ...cat);
     CLASES.splice(0, CLASES.length, ...cls);
