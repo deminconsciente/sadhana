@@ -543,7 +543,8 @@ details.why .hint{margin:8px 0}
 .cm .detail{margin-bottom:10px}.cm .detail .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .ro .ck,.ro .pill[data-cyc],.ro .bd-k .mv{pointer-events:none}.ro .qa,.ro .ib[data-sub]{display:none}
 @media(min-width:760px){
-  .ar{grid-template-columns:30px minmax(0,1fr) 128px 130px 138px 150px 28px 28px;gap:8px}
+  .ar{grid-template-columns:30px minmax(0,1fr) 128px 130px 138px 28px 28px;gap:8px}
+  .ar.sh{grid-template-columns:30px minmax(0,1fr) 128px 130px 138px 150px 28px 28px}
   .ar .meta,.ar .sub{display:contents}.ar .ph{display:block}
   .bd{grid-auto-columns:minmax(0,1fr)}
   .hc{flex-basis:200px}
@@ -2073,7 +2074,7 @@ function itemCard(t){const p=prog(t),late=t.due&&t.due<todayKey&&t.status!=="hec
     <label class="tog wide"><input type="checkbox" data-f="milestone" ${t.milestone?"checked":""}> Es un hito (nivel superior del cronograma)</label>
     <label class="f wide">Contramedida<textarea data-f="countermeasure" placeholder="Qué hacemos para resolverlo, o para que no pase">${esc(t.countermeasure)}</textarea></label>
     <label class="f wide">Notas<textarea data-f="notes" placeholder="Notas">${esc(t.notes)}</textarea></label>
-    <div class="wide iss-act"><button type="button" class="btn sm ghost needw" data-tdel="${t.id}">Borrar</button></div>
+    <div class="wide iss-act" style="gap:8px"><button type="button" class="btn sm needw" data-tdup="${t.id}">Duplicar con lo que tiene colgado</button><button type="button" class="btn sm ghost needw" data-tdel="${t.id}">Borrar</button></div>
   </div></details>`}
 let openItem=null;
 // cronograma: árbol hito → subhitos → subactividades (task.parent = id del padre; los hitos son milestone sin padre)
@@ -2089,6 +2090,10 @@ const cmShow=(k,own)=>(cmD||effSt(k)!=="hecho")&&(own==="all"||ownMatch(k,own));
 function upd(id,fn,delay){const t=byId(id);if(!t||!canWrite)return null;const x=clone(t);fn(x);put("tasks",x,delay);return x}
 function setSt(x,st){x.status=st;if(st==="hecho")x.progress=100;else if(st==="pendiente")x.progress=0;else if(st==="encurso"&&(n(x.progress)<=0||n(x.progress)>=100))x.progress=50}
 function newTask(o){const id="t"+uid();put("tasks",Object.assign({id,type:"tarea",title:"",owner:"",area:"",start:todayKey,due:"",status:"pendiente",progress:0,urgent:false,important:true,milestone:false,countermeasure:"",notes:"",created:Date.now()},o),0);return id}
+let dupSeq=0;
+function dupNode(id,parent,root,d=0){const t=byId(id);if(!t||d>8)return null;
+  const o=clone(t);delete o.id;Object.assign(o,{parent,title:root?(t.title||"Sin título")+" (copia)":t.title,status:"pendiente",progress:0,created:Date.now()+(dupSeq++)});
+  const nid=newTask(o);kidsOf(id).sort(cmpT).forEach(k=>dupNode(k.id,nid,false,d+1));return nid}
 function rowsOf(id,d,own,seen,out){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});rowsOf(k.id,d+1,own,seen,out)})}
 function cmGroups(own){const G=[];
   if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];rowsOf(h.id,0,own,new Set([h.id]),rows);G.push({h,rows})});
@@ -2097,13 +2102,13 @@ function cmGroups(own){const G=[];
 const isLeaf=t=>!t.milestone&&!kidsOf(t.id).length;
 function actRow(t,d,showH,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),T=topsL();
   const pill=hasK?`<span class="pill st-${st}" title="Se calcula de sus subactividades">${stLabel(st)} · ${p}%</span>`:`<button type="button" class="pill st-${st}" data-cyc title="Toca para cambiar el estatus">${stLabel(st)}</button>`;
-  return`<div class="ar${st==="hecho"?" done":""}${hasK?" par":""}" data-task="${t.id}" style="--d:${d}">
+  return`<div class="ar${st==="hecho"?" done":""}${hasK?" par":""}${showH?" sh":""}" data-task="${t.id}" style="--d:${d}">
   ${hasK?'<span class="ck dis" aria-hidden="true"></span>':`<button type="button" class="ck" data-ck aria-pressed="${st==="hecho"}" aria-label="Marcar hecha">✓</button>`}
   <div class="tw"><input type="text" class="ar-t" data-f="title" value="${esc(t.title)}" placeholder="Subactividad" aria-label="Actividad">${crumb?`<small class="crumb">${esc(crumb)}</small>`:""}</div>
   <div class="meta">${pill}
   <div class="sub"><input type="text" list="ownList" data-f="owner" value="${esc(t.owner)}" placeholder="Responsable" aria-label="Responsable">
   <input type="date" data-f="due" value="${esc(t.due)}" aria-label="Fecha límite"${lateT(t)?' style="border-color:var(--bad)"':""}>
-  ${showH?`<select data-f="parent" aria-label="Hito"><option value="">Sin hito</option>${T.map(h=>`<option value="${h.id}" ${h.id===t.parent?"selected":""}>◆ ${esc(h.title)}</option>`).join("")}</select>`:'<span class="ph"></span>'}</div></div>
+  ${showH?`<select data-f="parent" aria-label="Hito"><option value="">Sin hito</option>${T.map(h=>`<option value="${h.id}" ${h.id===t.parent?"selected":""}>◆ ${esc(h.title)}</option>`).join("")}</select>`:""}</div></div>
   <button type="button" class="ib needw" data-sub title="Agregar subactividad" aria-label="Agregar subactividad">+</button><button type="button" class="ib" data-open="${t.id}" title="Detalle" aria-label="Detalle">⋯</button></div>`}
 const ymd=x=>x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
 const wkMon=d=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()-((x.getDay()+6)%7));return ymd(x)};
@@ -2115,7 +2120,7 @@ function spanOf(t,d=0){const ds=[],ss=[];if(t.due){ds.push(t.due);ss.push(t.star
 function vTabla(G){
   return G.map(g=>{const id=g.h?g.h.id:"none",lv=g.h?leavesOf(g.h.id):g.rows.filter(r=>isLeaf(r.t)).map(r=>r.t),d=lv.filter(x=>x.status==="hecho").length,p=g.h?prog(g.h):(lv.length?Math.round(d/lv.length*100):0);
     return`<div class="cm-g"><button type="button" class="cm-gh" data-hsel="${id}"><b>${g.h?"◆ "+esc(g.h.title||"Hito sin nombre"):"Sin hito"}</b><span class="num">${d}/${lv.length} · ${p}%${g.h&&g.h.due?" · "+fmtD(g.h.due):""}</span><span class="bar${p>=100?" ok":""}"><i style="width:${p}%"></i></span></button>
-    ${g.rows.map(r=>actRow(r.t,r.d,r.d===0&&(cmH==="all"||cmH==="none"))).join("")}
+    ${g.rows.map(r=>actRow(r.t,r.d,!g.h&&r.d===0)).join("")}
     <input type="text" class="qa needw" data-qa="${id}" placeholder="+ Agregar ${g.h?"actividad":"tarea"} (escribe y Enter)" aria-label="Agregar actividad"></div>`}).join("")||`<div class="card empty">Nada abierto con este filtro.</div>`}
 function vTablero(G){
   const items=G.flatMap(g=>g.rows.map(r=>r.t)).filter(isLeaf);
@@ -2170,7 +2175,7 @@ function renderTasks(){
   $("#cmEdit").innerHTML=h?`<div class="cm-edit" data-task="${h.id}"><label class="f wide">Nombre del hito<input type="text" data-f="title" value="${esc(h.title)}" placeholder="Lanzamiento"></label>
     <label class="f">Inicio<input type="date" data-f="start" value="${esc(h.start)}"></label><label class="f">Fecha del hito<input type="date" data-f="due" value="${esc(h.due)}"></label>
     <label class="f wide">Es subhito de<select data-hup><option value="">— Ninguno: es un hito principal —</option>${(bad=>topsL().filter(x=>!bad.has(x.id)).map(x=>`<option value="${x.id}">◆ ${esc(x.title)}</option>`).join(""))(new Set([h.id,...descIds(h.id)]))}</select></label>
-    <div class="wide row"><small class="hint">Avance: <b class="num">${prog(h)}%</b> (promedio de lo que tiene colgado)</small><button type="button" class="btn sm ghost needw" data-hdel="${h.id}">Borrar hito</button></div></div>`:"";
+    <div class="wide row"><small class="hint">Avance: <b class="num">${prog(h)}%</b> (promedio de lo que tiene colgado)</small><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm needw" data-hdup="${h.id}">Duplicar con sus actividades</button><button type="button" class="btn sm ghost needw" data-hdel="${h.id}">Borrar hito</button></span></div></div>`:"";
   const G0=cmGroups("all"),owners=[...new Set(G0.flatMap(g=>g.rows.map(r=>(r.t.owner||"").trim())).filter(Boolean))].sort();
   if(cmO!=="all"&&!owners.includes(cmO))cmO="all";
   $("#cmOwners").innerHTML=(owners.length?[["all","Responsable: todos"],...owners.map(o=>[o,o])].map(f=>`<button aria-pressed="${cmO===f[0]}" data-oq="${esc(f[0])}">${esc(f[1])}</button>`).join(""):"")+`<button aria-pressed="${cmD}" data-done>${cmD?"Ocultar cerradas":"Mostrar cerradas"}</button>`;
@@ -2187,7 +2192,7 @@ function renderTasks(){
   if(cmFocus){const q=body.querySelector(`[data-qa="${cmFocus}"]`);cmFocus=null;if(q)q.focus()}
   if(cmFocusRow){const q=body.querySelector(`[data-task="${cmFocusRow}"] .ar-t`);cmFocusRow=null;if(q){q.scrollIntoView({block:"center"});q.focus()}}
 }
-function openIssue(id){cmDetail=id;if(location.hash!=="#cronograma")location.hash="#cronograma";renderTasks();const el=$("#cmDetail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}
+function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")location.hash="#cronograma";renderTasks();const el=$("#cmDetail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}
 {const M=$("#m-cronograma");
   const later=()=>{clearTimeout(lightT);lightT=setTimeout(()=>{const a=document.activeElement;if(a&&a.blur&&a.type!=="text")a.blur();renderTasks()},250)};
   M.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
@@ -2204,6 +2209,10 @@ function openIssue(id){cmDetail=id;if(location.hash!=="#cronograma")location.has
     if(b=g("[data-ck]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,x.status==="hecho"?"pendiente":"hecho"),0);renderTasks();return}
     if(b=g("[data-cyc]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,CM_NEXT[x.status||"pendiente"]),0);renderTasks();return}
     if(b=g("[data-mv]")){upd(b.dataset.mv,x=>setSt(x,b.dataset.to),0);renderTasks();return}
+    if(b=g("[data-hdup]")||g("[data-tdup]")){const id=b.dataset.hdup||b.dataset.tdup,t=byId(id);if(!t)return;const nid=dupNode(id,t.parent||"",true);cmD=false;
+      if(t.milestone&&isRoot(t)){cmH=nid;cmV="tabla";cmDetail=null;renderTasks();const i=$("#cmEdit input");if(i){i.focus();i.select()}}
+      else{cmDetail=null;cmV="tabla";cmO="all";cmFocusRow=nid;renderTasks()}
+      toast("Duplicado con todo lo que tiene colgado. Cámbiale el nombre y las fechas.");return}
     if(b=g("[data-hdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.hdel,h=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=h&&h.parent||""},0));remove("tasks",id);cmH="all";renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez: lo que tiene colgado queda sin hito";setTimeout(()=>{b.textContent="Borrar hito";delete b.dataset.arm},4000)}return}
     if(b=g("[data-q]")){const r=b.closest("[data-task]"),d=QD.find(z=>z[0]===b.dataset.q);upd(r.dataset.task,x=>{x.urgent=d[3];x.important=d[4]},0);renderTasks();return}
     if(b=g("[data-tdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.tdel,t=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t&&t.parent||""},0));remove("tasks",id);cmDetail=null;renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez para borrar";setTimeout(()=>{b.textContent="Borrar";delete b.dataset.arm},4000)}return}});
