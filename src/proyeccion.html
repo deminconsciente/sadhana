@@ -521,6 +521,30 @@ details.why .hint{margin:8px 0}
 .sh-plan .qa{border:1px dashed var(--line-2)!important;border-radius:10px!important}
 .sh-act{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
 .gx{font-style:normal;color:var(--wine);margin-right:4px;cursor:pointer}
+/* estilo tablero (inspirado en monday.com) */
+.cm-g{border-left:5px solid var(--gc,var(--wine))}
+.lh{background:var(--surface)!important;border-bottom:1px solid var(--line)}
+.lh b{color:var(--gc,var(--wine));font-size:1.02rem}
+.lcols{display:none}
+.lr{grid-template-columns:minmax(0,1fr) auto auto!important;grid-template-areas:"t t x" "o s d";row-gap:6px}
+.lr .lt{grid-area:t}.lr .lo{grid-area:o}.lr .sp{grid-area:s}.lr .ld{grid-area:d}.lr .lx{grid-area:x}
+.lr{grid-template-columns:34px minmax(0,1fr) auto auto!important;grid-template-areas:"o t t x" ". s d d"}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-size:.72rem;font-weight:700}
+.av.none{background:none;border:1.5px dashed var(--line-2);color:var(--ink-3);font-weight:400}
+.sp{border:0;border-radius:8px;padding:6px 10px;font:inherit;font-size:.78rem;font-weight:700;color:#fff;text-align:center;white-space:nowrap;min-width:92px}
+button.sp{cursor:pointer}
+.lr .sp{justify-self:start}
+@media (min-width:700px){.lr .sp{justify-self:center;width:112px}}
+.sp.st-pendiente{background:#9aa0a6}.sp.st-encurso{background:#f0a028}.sp.st-hecho{background:#2fa56b}.sp.st-bloqueado{background:#d64550}
+.ld{font-size:.8rem;color:var(--ink-2);text-align:right;white-space:nowrap}.ld.neg{color:var(--bad);font-weight:700}
+.lr.done .lt b{opacity:.55}
+@media (min-width:700px){
+  .lcols,.lr{grid-template-columns:minmax(0,1fr) 56px 120px 76px 84px!important}
+  .lcols{display:grid;gap:8px;padding:6px 10px 6px 14px;font-size:.72rem;color:var(--ink-3);border-top:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+  .lr{grid-template-areas:"t o s d x";align-items:center}
+  .lr .ld{text-align:center}.lr .lo{display:flex;justify-content:center}
+  .lcols span:nth-child(2),.lcols span:nth-child(3),.lcols span:nth-child(4){text-align:center}
+}
 
 /* cronograma: hito → subhitos → subactividades */
 .cm-cards{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px}
@@ -2138,11 +2162,14 @@ function cmGroups(own,full){const G=[];
 const isLeaf=t=>!t.milestone&&!kidsOf(t.id).length;
 // fila limpia: círculo para cerrar, nombre, responsable y fecha; al tocar se abre su plan de acción
 function lrow(t,d,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),lv=hasK?leavesOf(t.id):[],dn=lv.filter(x=>x.status==="hecho").length,open=cmX.has(t.id);
-  const meta=[t.owner,t.due?fmtD(t.due):""].filter(Boolean).map(esc).join(" · ")||"sin responsable ni fecha";
   return`<div class="lr${st==="hecho"?" done":""}" data-task="${t.id}" style="--d:${d}">`+
-    (hasK?`<span class="lp" title="Avance">${p}%</span>`:`<button type="button" class="ck" data-ck aria-pressed="${st==="hecho"}" aria-label="Marcar hecha">✓</button>`)+
-    `<button type="button" class="lt" data-open="${t.id}"><b>${esc(t.title||"Sin título")}</b>${crumb?`<small>${esc(crumb)}</small>`:""}<small${lateT(t)?' class="neg"':""}>${meta}</small></button>`+
+    `<button type="button" class="lt" data-open="${t.id}"><b>${esc(t.title||"Sin título")}</b>${crumb?`<small>${esc(crumb)}</small>`:""}</button>`+
+    `<span class="lo">${avatar(t.owner)}</span>`+
+    (hasK?`<span class="sp st-${st}" title="Se calcula de su plan">${stLabel(st)} · ${p}%</span>`:`<button type="button" class="sp st-${st}" data-cyc title="Toca para cambiar el estatus">${stLabel(st)}</button>`)+
+    `<span class="ld${lateT(t)?" neg":""}">${t.due?fmtD(t.due):"—"}</span>`+
     (hasK?`<button type="button" class="lx" data-x="${t.id}" aria-expanded="${open}">${dn}/${lv.length}<i>${open?"▾":"▸"}</i></button>`:`<button type="button" class="lx" data-open="${t.id}" aria-label="Agregar plan">plan<i>＋</i></button>`)+`</div>`}
+const GCOL=["#a64b6e","#c9875a","#3f8f8f","#5b6fc9","#6b9a4f","#8a5a9e"];
+const avatar=o=>{o=(o||"").trim();if(!o)return`<i class="av none" title="Sin responsable">+</i>`;let h=0;for(const c of o)h=(h*31+c.charCodeAt(0))%GCOL.length;return`<i class="av" style="background:${GCOL[h]}" title="${esc(o)}">${esc(ini(o))}</i>`};
 const ymd=x=>x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
 const wkMon=d=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()-((x.getDay()+6)%7));return ymd(x)};
 const addD=(d,k)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+k);return ymd(x)};
@@ -2151,9 +2178,10 @@ function spanOf(t,d=0){const ds=[],ss=[];if(t.due){ds.push(t.due);ss.push(t.star
   if(d<8)kidsOf(t.id).forEach(k=>{const r=spanOf(k,d+1);if(r){ss.push(r[0]);ds.push(r[1])}});
   return ds.length?[ss.sort()[0],ds.sort().slice(-1)[0]]:null}
 function vTabla(G){
-  return G.map(g=>{const id=g.h?g.h.id:"none",lv=g.h?leavesOf(g.h.id):g.rows.filter(r=>isLeaf(r.t)).map(r=>r.t),d=lv.filter(x=>x.status==="hecho").length,p=g.h?prog(g.h):(lv.length?Math.round(d/lv.length*100):0);
-    return`<div class="cm-g"><div class="lh"><b>${g.h?"◆ "+esc(g.h.title||"Hito sin nombre"):"Sin hito"}</b><span class="num">${d}/${lv.length} · ${p}%${g.h&&g.h.due?" · "+fmtD(g.h.due):""}</span>${g.h?`<button type="button" class="ib" data-open="${g.h.id}" aria-label="Editar hito" title="Editar hito">✎</button>`:""}<span class="bar${p>=100?" ok":""}"><i style="width:${p}%"></i></span></div>
-    ${g.rows.map(r=>lrow(r.t,r.d)).join("")}
+  const cols=`<div class="lcols"><span>Actividad</span><span>Persona</span><span>Estatus</span><span>Fecha</span><span></span></div>`;
+  return G.map((g,gi)=>{const id=g.h?g.h.id:"none",lv=g.h?leavesOf(g.h.id):g.rows.filter(r=>isLeaf(r.t)).map(r=>r.t),d=lv.filter(x=>x.status==="hecho").length,p=g.h?prog(g.h):(lv.length?Math.round(d/lv.length*100):0);
+    return`<div class="cm-g" style="--gc:${GCOL[gi%GCOL.length]}"><div class="lh"><b>${g.h?esc(g.h.title||"Hito sin nombre"):"Sin hito"}</b><span class="num">${d}/${lv.length} hechas · ${p}%${g.h&&g.h.due?" · "+fmtD(g.h.due):""}</span>${g.h?`<button type="button" class="ib" data-open="${g.h.id}" aria-label="Editar hito" title="Editar hito">✎</button>`:""}<span class="bar${p>=100?" ok":""}"><i style="width:${p}%"></i></span></div>
+    ${cols}${g.rows.map(r=>lrow(r.t,r.d)).join("")}
     <input type="text" class="qa needw" data-qa="${id}" placeholder="+ Agregar ${g.h?"actividad":"tarea"} (escribe y Enter)" aria-label="Agregar actividad"></div>`}).join("")||`<div class="card empty">Nada abierto con este filtro.</div>`}
 function vTablero(G){
   const items=G.flatMap(g=>g.rows.map(r=>r.t)).filter(isLeaf);
@@ -2278,6 +2306,7 @@ function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")
     if(b=g("[data-hadd]")){const id=newTask({title:"Nuevo hito",milestone:true});cmH=id;cmV="tabla";cmD=false;cmDetail=id;renderTasks();const i=document.querySelector("#cmDetail .sh-t");if(i){i.focus();i.select()}return}
     if(b=g("[data-npend]")||g("[data-nrisk]")){const id=newTask({title:"Nuevo "+(b.dataset.nrisk!==undefined?"riesgo":"pendiente"),type:b.dataset.nrisk!==undefined?"riesgo":"tarea"});openIssue(id);return}
     if(b=g("[data-ck]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,x.status==="hecho"?"pendiente":"hecho"),0);renderTasks();return}
+    if(b=g("[data-cyc]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,CM_NEXT[x.status||"pendiente"]),0);renderTasks();return}
     if(b=g("[data-stset]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,b.dataset.stset),0);renderTasks();return}
     if(b=g("[data-mv]")){upd(b.dataset.mv,x=>setSt(x,b.dataset.to),0);renderTasks();return}
     if(b=g("[data-weeks]")){const id=b.dataset.weeks,t=byId(id);if(!t)return;if(!t.due){toast("Ponle fecha en «Termina» y se divide por semanas.");return}
