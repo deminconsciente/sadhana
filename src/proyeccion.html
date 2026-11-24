@@ -520,7 +520,17 @@ details.why .hint{margin:8px 0}
 @media (max-width:520px){.stp2{grid-template-columns:30px minmax(0,1fr) 28px 28px}.stp2 input[type=date]{grid-column:2/-1;grid-row:2}}
 .sh-plan .qa{border:1px dashed var(--line-2)!important;border-radius:10px!important}
 .sh-act{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
-.gx{font-style:normal;color:var(--wine);margin-right:4px;cursor:pointer}
+ .gx{font-style:normal;color:var(--wine);margin-right:4px;cursor:pointer}
+/* numeración y dependencias */
+.nn{font-style:normal;color:var(--ink-3);font-weight:600;margin-right:6px;font-size:.78rem}
+.dep{color:var(--ink-2)}.dep.wait{color:#b46a00;font-weight:700}.dep.warn{color:var(--bad)}
+.sh-dep{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line-2);padding-top:10px}
+.sh-dep h3{margin:0;font-size:1rem}
+.chips2{display:flex;flex-wrap:wrap;gap:6px}
+.chip2{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;padding:4px 6px 4px 10px;font-size:.82rem}
+.chip2 button{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px}
+.mvb{display:flex;gap:4px;margin-left:auto;margin-right:8px}
+
 /* estilo tablero (inspirado en monday.com) */
 .cm-g{border-left:5px solid var(--gc,var(--wine))}
 .lh{background:var(--surface)!important;border-bottom:1px solid var(--line)}
@@ -2140,7 +2150,24 @@ let openItem=null;
 // cronograma: árbol hito → subhitos → subactividades (task.parent = id del padre; los hitos son milestone sin padre)
 let cmTodayX=0,cmH="all",cmO="all",cmV="crono",cmD=false,cmFocus=null,cmFocusRow=null,cmDetail=null,cmX=new Set(),cmMore=false,cmMoreOpen=false;
 const CM_NEXT={pendiente:"encurso",encurso:"hecho",hecho:"pendiente",bloqueado:"encurso"};
-const cmpT=(a,b)=>(a.due||"9").localeCompare(b.due||"9")||String(a.created||"").localeCompare(String(b.created||""));
+const ordv=t=>n(t.ord!=null?t.ord:t.created);
+const cmpT=(a,b)=>ordv(a)-ordv(b)||String(a.id).localeCompare(String(b.id));
+const cmpD=(a,b)=>(a.due||"9").localeCompare(b.due||"9")||cmpT(a,b);
+// numeración tipo 1, 1.1, 1.1.1 (sigue el orden manual); dependencias: t.deps = ids que deben cerrarse antes
+let NUM={};
+function cmNums(){const m={},seen=new Set();const walk=(t,p)=>{if(seen.has(t.id))return;seen.add(t.id);m[t.id]=p;kidsOf(t.id).sort(cmpT).forEach((k,j)=>walk(k,p+"."+(j+1)))};
+  let i=1;topsL().forEach(h=>walk(h,String(i++)));let j=1;orphanRoots().forEach(o=>walk(o,"S"+j++));return m}
+const nn=id=>NUM[id]||"";
+const depsOf=t=>Array.isArray(t.deps)?t.deps.filter(id=>byId(id)):[];
+const waitOf=t=>depsOf(t).map(byId).filter(d=>effSt(d)!=="hecho");
+/* Si una actividad termina más tarde, recorre las que dependen de ella (conserva su duración). */
+function cascade(id,due,seen=new Set()){let m=0;if(seen.has(id))return 0;seen.add(id);
+  dependents(id).forEach(d=>{const st=d.start||d.due;if(!st||st>due)return;const k=Math.round((new Date(due+"T12:00:00")-new Date(st+"T12:00:00"))/864e5);if(k<=0)return;
+    const nd={};upd(d.id,x=>{if(x.start)x.start=addD(x.start,k);if(x.due)x.due=addD(x.due,k);nd.due=x.due},0);m++;if(nd.due)m+=cascade(d.id,nd.due,seen)});return m}
+const dependents=id=>cache.tasks.filter(x=>depsOf(x).includes(id));
+const reaches=(from,to,seen=new Set())=>{if(from===to)return true;if(seen.has(from))return false;seen.add(from);return dependents(from).some(x=>reaches(x.id,to,seen))};
+const sibsOf=t=>(t.parent&&byId(t.parent)?kidsOf(t.parent):t.milestone?topsL():orphanRoots()).slice().sort(cmpT);
+const ancIds=t=>{const o=[];let c=t,g=0;while(c&&c.parent&&g++<10){o.push(c.parent);c=byId(c.parent)}return o};
 const isRoot=t=>!(t.parent&&t.parent!==t.id&&byId(t.parent));
 const topsL=()=>cache.tasks.filter(t=>t.milestone&&isRoot(t)).sort(cmpT);
 const orphanRoots=()=>cache.tasks.filter(t=>!t.milestone&&isRoot(t)&&(t.type||"tarea")==="tarea").sort(cmpT);
@@ -2150,10 +2177,11 @@ const cmShow=(k,own)=>(cmD||effSt(k)!=="hecho")&&(own==="all"||ownMatch(k,own));
 function upd(id,fn,delay){const t=byId(id);if(!t||!canWrite)return null;const x=clone(t);fn(x);put("tasks",x,delay);return x}
 function setSt(x,st){x.status=st;if(st==="hecho")x.progress=100;else if(st==="pendiente")x.progress=0;else if(st==="encurso"&&(n(x.progress)<=0||n(x.progress)>=100))x.progress=50}
 function newTask(o){const id="t"+uid();put("tasks",Object.assign({id,type:"tarea",title:"",owner:"",area:"",start:todayKey,due:"",status:"pendiente",progress:0,urgent:false,important:true,milestone:false,countermeasure:"",notes:"",created:Date.now()},o),0);return id}
-let dupSeq=0;
+let dupSeq=0,dupMap={};
 function dupNode(id,parent,root,d=0){const t=byId(id);if(!t||d>8)return null;
   const o=clone(t);delete o.id;Object.assign(o,{parent,title:root?(t.title||"Sin título")+" (copia)":t.title,status:"pendiente",progress:0,created:Date.now()+(dupSeq++)});
-  const nid=newTask(o);kidsOf(id).sort(cmpT).forEach(k=>dupNode(k.id,nid,false,d+1));return nid}
+  if(root)o.ord=ordv(t)+0.5;
+  const nid=newTask(o);dupMap[id]=nid;kidsOf(id).sort(cmpT).forEach(k=>dupNode(k.id,nid,false,d+1));return nid}
 function cmRows(id,d,own,seen,out,full){kidsOf(id).sort(cmpT).forEach(k=>{if(seen.has(k.id)||!cmShow(k,own))return;seen.add(k.id);out.push({t:k,d});if(full||cmX.has(k.id))cmRows(k.id,d+1,own,seen,out,full)})}
 function cmGroups(own,full){const G=[];
   if(cmH!=="none")topsL().filter(h=>(cmH==="all"||h.id===cmH)&&cmShow(h,own)).forEach(h=>{const rows=[];cmRows(h.id,0,own,new Set([h.id]),rows,full);G.push({h,rows})});
@@ -2162,8 +2190,10 @@ function cmGroups(own,full){const G=[];
 const isLeaf=t=>!t.milestone&&!kidsOf(t.id).length;
 // fila limpia: círculo para cerrar, nombre, responsable y fecha; al tocar se abre su plan de acción
 function lrow(t,d,crumb){const hasK=kidsOf(t.id).length>0,st=effSt(t),p=prog(t),lv=hasK?leavesOf(t.id):[],dn=lv.filter(x=>x.status==="hecho").length,open=cmX.has(t.id);
+  const ds=depsOf(t),w=waitOf(t),cf=ds.map(byId).filter(x=>x.due&&t.due&&t.due<x.due);
+  const dl=ds.length?`<small class="dep${w.length?" wait":""}${cf.length?" warn":""}">⛓ ${w.length?"espera a ":"después de "}${ds.map(d=>esc(nn(d)||"•")).join(", ")}${cf.length?" · ⚠ termina antes que "+cf.map(x=>esc(nn(x.id))).join(", "):""}</small>`:"";
   return`<div class="lr${st==="hecho"?" done":""}" data-task="${t.id}" style="--d:${d}">`+
-    `<button type="button" class="lt" data-open="${t.id}"><b>${esc(t.title||"Sin título")}</b>${crumb?`<small>${esc(crumb)}</small>`:""}</button>`+
+    `<button type="button" class="lt" data-open="${t.id}"><b><i class="nn">${nn(t.id)}</i>${esc(t.title||"Sin título")}</b>${crumb?`<small>${esc(crumb)}</small>`:""}${dl}</button>`+
     `<span class="lo">${avatar(t.owner)}</span>`+
     (hasK?`<span class="sp st-${st}" title="Se calcula de su plan">${stLabel(st)} · ${p}%</span>`:`<button type="button" class="sp st-${st}" data-cyc title="Toca para cambiar el estatus">${stLabel(st)}</button>`)+
     `<span class="ld${lateT(t)?" neg":""}">${t.due?fmtD(t.due):"—"}</span>`+
@@ -2192,7 +2222,7 @@ function vSemanas(G){
   const L=G.flatMap(g=>g.rows.map(r=>r.t)).filter(isLeaf),thisM=wkMon(todayKey),W={},late=[],nod=[];
   L.forEach(t=>{if(!t.due){nod.push(t);return}const m=wkMon(t.due);if(m<thisM){if(t.status!=="hecho")late.push(t)}else(W[m]=W[m]||[]).push(t)});
   const row=t=>lrow(t,0,pathOf(t).join(" › "));
-  const grp=(cls,title,sub,items)=>`<div class="cm-g"><div class="wk-h ${cls}"><b>${title}</b><span class="num">${sub}</span></div>${items.sort(cmpT).map(row).join("")}</div>`;
+  const grp=(cls,title,sub,items)=>`<div class="cm-g"><div class="wk-h ${cls}"><b>${title}</b><span class="num">${sub}</span></div>${items.sort(cmpD).map(row).join("")}</div>`;
   let h="";
   if(late.length)h+=grp("late","Atrasadas",`${late.length} por completar`,late);
   Object.keys(W).sort().forEach(m=>{const it=W[m],d=it.filter(x=>x.status==="hecho").length,diff=Math.round((new Date(m)-new Date(thisM))/6048e5);
@@ -2217,17 +2247,18 @@ function vCrono(G){
   for(let i=0;i<nW;i++){const m=addD(s0,i*7),x=i*PW,[,mm,dd]=m.split("-");
     if(m===thisM)g+=`<rect x="${x}" y="0" width="${PW}" height="${Ht}" fill="var(--surface-2)"/>`;
     g+=`<line x1="${x}" x2="${x}" y1="${+dd<=7||i===0?0:14}" y2="${Ht}" stroke="var(--line)"/>${+dd<=7||i===0?`<text x="${x+4}" y="11" font-size="10" font-weight="700" fill="var(--ink-2)">${MES[+mm-1]}</text>`:""}<text x="${x+4}" y="25" font-size="10" fill="var(--ink-3)">${+dd}</text>`}
-  R.forEach((r,i)=>{const t=r.t,y=HH+i*RH,a=X(r.sp[0]),b=Math.max(X(r.sp[1],1),a+8),p=prog(t),col=effSt(t)==="hecho"?"var(--good)":t.status==="bloqueado"||lateT(t)?"var(--bad)":"var(--wine)",hasK=kidsOf(t.id).length>0;
+  const pos={};R.forEach((r,i)=>{const t=r.t,y=HH+i*RH,a=X(r.sp[0]),b=Math.max(X(r.sp[1],1),a+8),p=prog(t),col=effSt(t)==="hecho"?"var(--good)":t.status==="bloqueado"||lateT(t)?"var(--bad)":"var(--wine)",hasK=kidsOf(t.id).length>0;pos[t.id]={a,b,y};
     g+=`<g data-open="${t.id}" style="cursor:pointer"><rect x="0" y="${y}" width="${Wd}" height="${RH}" fill="transparent"/><rect x="${a}" y="${y+6}" width="${b-a}" height="14" rx="5" fill="var(--surface)" stroke="${col}" stroke-opacity=".6"/><rect x="${a}" y="${y+6}" width="${(b-a)*p/100}" height="14" rx="5" fill="${col}" ${hasK&&!r.h?'opacity=".75"':""}/>
       ${r.h?`<path d="M${b} ${y+5} l7 8 -7 8 -7 -8z" fill="${col}" stroke="var(--surface)" stroke-width="1.5"/>`:""}<title>${esc(t.title)}: ${p}% · ${esc(stLabel(effSt(t)))} · ${esc(r.sp[1])}</title></g>`});
+  R.forEach(r=>{depsOf(r.t).forEach(d=>{const p=pos[d],q=pos[r.t.id];if(!p||!q)return;const x1=p.b,y1=p.y+13,x2=q.a,y2=q.y+13,xm=x1+6;g+=`<path d="M${x1} ${y1} H${xm} V${y2} H${x2}" fill="none" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="3 2"/><path d="M${x2} ${y2} l-5 -3 v6z" fill="var(--ink-3)"/>`})});
   const tx=X(todayKey)+PW/14;cmTodayX=tx;g+=`<line x1="${tx}" x2="${tx}" y1="0" y2="${Ht}" stroke="var(--wine)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
-  return`<section class="card"><div class="gw"><div class="gl-lab">${R.map(r=>`<div class="gl-r${r.h?" h":""}" style="--d:${r.d}" data-open="${r.t.id}" title="${esc(r.t.title)}">${r.h?"◆ ":(kidsOf(r.t.id).length?`<i class="gx" data-x="${r.t.id}">${cmX.has(r.t.id)?"▾":"▸"}</i>`:"")}${esc(r.t.title||"Sin título")}</div>`).join("")}</div><div class="gl-sc" id="gSc"><svg width="${Wd}" height="${Ht+4}" role="img" aria-label="Cronograma semana por semana">${g}</svg></div></div>
+  return`<section class="card"><div class="gw"><div class="gl-lab">${R.map(r=>`<div class="gl-r${r.h?" h":""}" style="--d:${r.d}" data-open="${r.t.id}" title="${esc(r.t.title)}">${r.h?"◆ ":(kidsOf(r.t.id).length?`<i class="gx" data-x="${r.t.id}">${cmX.has(r.t.id)?"▾":"▸"}</i>`:"")}<span class="nn">${nn(r.t.id)}</span>${esc(r.t.title||"Sin título")}</div>`).join("")}</div><div class="gl-sc" id="gSc"><svg width="${Wd}" height="${Ht+4}" role="img" aria-label="Cronograma semana por semana">${g}</svg></div></div>
     <p class="hint" style="margin-top:8px">Cada columna es una semana (lunes a domingo); la línea punteada es hoy.${sinF?` ${sinF} actividad${sinF===1?"":"es"} sin fecha límite no aparece${sinF===1?"":"n"}: ponles fecha en la Tabla.`:""}</p></section>`}
 function sheetHTML(t){
   const hasK=kidsOf(t.id).length>0,kids=kidsOf(t.id).sort(cmpT),pp=pathOf(t),par=t.parent&&byId(t.parent),q=qOf(t),ty=t.type||"tarea",root=t.milestone&&isRoot(t);
   const bad=new Set([t.id,...descIds(t.id)]);
   return`<div class="ovs"><div class="sheet" role="dialog" aria-modal="true" aria-label="Detalle">
-  <div class="sh-top">${par?`<button type="button" class="lnk" data-open="${par.id}">‹ ${esc(par.title||"Atrás")}</button>`:`<span class="crumb">${root?"Hito":"Actividad"}</span>`}<button type="button" class="ib" data-dclose aria-label="Cerrar">✕</button></div>
+  <div class="sh-top">${par?`<button type="button" class="lnk" data-open="${par.id}">‹ ${esc(nn(par.id))} ${esc(par.title||"Atrás")}</button> <i class="nn">${nn(t.id)}</i>`:`<span class="crumb">${root?"Hito":"Actividad"} <i class="nn">${nn(t.id)}</i></span>`}<span class="mvb"><button type="button" class="ib needw" data-ordup="${t.id}" title="Subir" aria-label="Subir">▲</button><button type="button" class="ib needw" data-orddn="${t.id}" title="Bajar" aria-label="Bajar">▼</button></span><button type="button" class="ib" data-dclose aria-label="Cerrar">✕</button></div>
   <div class="sh-main" data-task="${t.id}">
     <input class="sh-t" type="text" data-f="title" value="${esc(t.title)}" placeholder="Nombre" aria-label="Nombre">
     <div class="sh-r"><label class="f"><span>Responsable</span><input type="text" list="ownList" data-f="owner" value="${esc(t.owner)}" placeholder="Isa, Diego…"></label><label class="f"><span>Empieza</span><input type="date" data-f="start" value="${esc(t.start)}"></label><label class="f"><span>Termina</span><input type="date" data-f="due" value="${esc(t.due)}"></label></div>
@@ -2238,6 +2269,8 @@ function sheetHTML(t){
     <input type="text" class="qa needw" data-qa="${t.id}" placeholder="+ Agregar paso (escribe y Enter)" aria-label="Agregar paso">
     ${hasK?"":`<button type="button" class="btn sm needw" data-weeks="${t.id}">Dividir por semanas</button><small class="slx">Pon «Empieza» y «Termina» y se crea un paso por cada semana.</small>`}
   </div>
+  ${(()=>{const dps=depsOf(t),anc=new Set(ancIds(t)),cand=cache.tasks.filter(x=>x.id!==t.id&&!bad.has(x.id)&&!anc.has(x.id)&&!dps.includes(x.id)&&!reaches(t.id,x.id)).sort((a,b)=>nn(a.id).localeCompare(nn(b.id),undefined,{numeric:true}));
+    return`<div class="sh-dep" data-task="${t.id}"><h3>Depende de</h3>${dps.length?`<div class="chips2">${dps.map(d=>{const x=byId(d);return`<span class="chip2">${esc(nn(d))} ${esc(x.title||"Sin título")}${effSt(x)==="hecho"?" ✓":""}<button type="button" class="needw" data-depdel="${d}" aria-label="Quitar">×</button></span>`}).join("")}</div>`:`<p class="hint" style="margin:0">Sin dependencias. Si esta actividad solo puede empezar cuando termine otra, agrégala aquí.</p>`}<select data-depadd class="needw" aria-label="Agregar dependencia"><option value="">+ Empieza cuando termine…</option>${cand.map(x=>`<option value="${x.id}">${esc(nn(x.id))} ${esc(x.title||"Sin título")}</option>`).join("")}</select></div>`})()}
   <details class="why" ${cmMoreOpen?"open":""} data-moreopen><summary>Más opciones</summary><div class="iss-b" data-task="${t.id}">
     <label class="f wide">Pertenece a<select data-f="parent"><option value="">— Nivel superior —</option>${cache.tasks.filter(x=>!bad.has(x.id)).map(x=>[pathOf(x).concat(x.title||"Sin título").join(" › "),x.id]).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,i])=>`<option value="${i}" ${i===t.parent?"selected":""}>${esc(l)}</option>`).join("")}</select></label>
     <label class="tog wide"><input type="checkbox" data-f="milestone" ${t.milestone?"checked":""}> Es un hito (nivel superior del cronograma)</label>
@@ -2247,26 +2280,27 @@ function sheetHTML(t){
     <label class="f wide">Contramedida<textarea data-f="countermeasure" placeholder="Qué hacemos para resolverlo, o para que no pase">${esc(t.countermeasure)}</textarea></label>
     <label class="f wide">Notas<textarea data-f="notes" placeholder="Notas">${esc(t.notes)}</textarea></label>
   </div></details>
-  <div class="sh-act"><button type="button" class="btn sm needw" data-${root?"hdup":"tdup"}="${t.id}">Duplicar con lo que tiene</button><button type="button" class="btn sm ghost needw" data-tdel="${t.id}">Borrar</button></div>
+  <div class="sh-act"><button type="button" class="btn sm needw" data-next="${t.id}">＋ Siguiente ${root?"hito":"actividad"}</button><button type="button" class="btn sm needw" data-${root?"hdup":"tdup"}="${t.id}">Duplicar con lo que tiene</button><button type="button" class="btn sm ghost needw" data-tdel="${t.id}">Borrar</button></div>
   </div></div>`}
 // plantilla: un hito de lanzamiento con las actividades de cada clase (fechas editables)
 function seedLanzamiento(){const L="2027-01-11",d=k=>addD(L,k);
   const root=newTask({title:"Lanzamiento enero",milestone:true,start:todayKey,due:L});
   const clase=(nm,own)=>{const h=newTask({title:nm,parent:root,start:todayKey,due:L,owner:own||""});
-    const A=(title,k,steps)=>{const a=newTask({title,parent:h,start:todayKey,due:d(k),owner:own||""});(steps||[]).forEach(([s,j])=>newTask({title:s,parent:a,start:todayKey,due:d(j),owner:own||""}))};
-    A("Contrato con el maestro",-35,[["Revisar el contrato con abogado",-42],["Firmar contrato e imagen",-35]]);
-    A("Estrategia comercial",-35,[["Definir paquetes y precio fundador",-42],["Abrir la lista «Avísame cuando abra»",-35]]);
-    A("Estrategia de contenido",-28,[["Plan de videos por semana",-35],["Calendario de publicaciones",-28]]);
-    A("Videos para publicar",-14,[["Video de presentación (15 a 30 s)",-28],["Video de cómo se maneja la clase",-21],["Video del maestro",-14]]);
+    const A=(title,k,steps,after)=>{const a=newTask({title,parent:h,start:todayKey,due:d(k),owner:own||"",deps:after||[]});(steps||[]).forEach(([s,j])=>newTask({title:s,parent:a,start:todayKey,due:d(j),owner:own||""}));return a};
+    const c1=A("Contrato con el maestro",-35,[["Revisar el contrato con abogado",-42],["Firmar contrato e imagen",-35]]);
+    const c2=A("Estrategia comercial",-35,[["Definir paquetes y precio fundador",-42],["Abrir la lista «Avísame cuando abra»",-35]]);
+    const c3=A("Estrategia de contenido",-28,[["Plan de videos por semana",-35],["Calendario de publicaciones",-28]]);
+    A("Videos para publicar",-14,[["Video de presentación (15 a 30 s)",-28],["Video de cómo se maneja la clase",-21],["Video del maestro",-14]],[c3]);
     A("Fotos del maestro y de la clase",-21);
-    A("Publicidad en físico",-14,[["Diseñar flyers",-28],["Imprimir",-21],["Repartir en la zona",-14]]);
+    A("Publicidad en físico",-14,[["Diseñar flyers",-28],["Imprimir",-21],["Repartir en la zona",-14]],[c2]);
     A("Publicidad en línea",-7);
     A("Clase muestra gratis en Parque Río La Silla",-7);
     A("Clase grabada profesional",-3);
-    A("Clases presenciales: horario y sala de Zoom",0)};
+    A("Clases presenciales: horario y sala de Zoom",0,[],[c1])};
   clase("Lanzamiento Hatha yoga (Miranda)");clase("Lanzamiento Consciencia corporal","Diego");
   cmH=root;cmV="crono";cmD=false;cmX=new Set();renderTasks();toast("Cargué el hito con las actividades de las dos clases. Ajusta responsables y fechas.")}
 function renderTasks(){
+  NUM=cmNums();
   const all=cache.tasks,T=topsL().filter(h=>cmD||effSt(h)!=="hecho"),O=orphanRoots().filter(o=>cmD||effSt(o)!=="hecho");
   if(cmH!=="all"&&cmH!=="none"&&!T.some(h=>h.id===cmH))cmH="all";
   const G0=cmGroups("all",true),owners=[...new Set(G0.flatMap(g=>g.rows.map(r=>(r.t.owner||"").trim())).filter(Boolean))].sort();
@@ -2291,6 +2325,8 @@ function renderTasks(){
 }
 function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")location.hash="#cronograma";renderTasks()}
 {const M=$("#m-cronograma");
+  const unlocked=id=>{const dd=dependents(id).filter(x=>!waitOf(x).length&&effSt(x)!=="hecho");if(dd.length)toast("Se desbloquea: "+dd.map(x=>nn(x.id)+" "+(x.title||"")).join(", "))};
+  const unlink=id=>cache.tasks.filter(x=>depsOf(x).includes(id)).forEach(x=>upd(x.id,y=>{y.deps=y.deps.filter(d=>d!==id)},0));
   const later=()=>{clearTimeout(lightT);lightT=setTimeout(()=>{const a=document.activeElement;if(a&&a.blur&&a.type!=="text")a.blur();renderTasks()},250)};
   M.addEventListener("toggle",e=>{if(e.target.dataset&&e.target.dataset.moreopen!==undefined)cmMoreOpen=e.target.open},true);
   M.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
@@ -2305,23 +2341,29 @@ function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")
     if(b=g("[data-seed]")){seedLanzamiento();return}
     if(b=g("[data-hadd]")){const id=newTask({title:"Nuevo hito",milestone:true});cmH=id;cmV="tabla";cmD=false;cmDetail=id;renderTasks();const i=document.querySelector("#cmDetail .sh-t");if(i){i.focus();i.select()}return}
     if(b=g("[data-npend]")||g("[data-nrisk]")){const id=newTask({title:"Nuevo "+(b.dataset.nrisk!==undefined?"riesgo":"pendiente"),type:b.dataset.nrisk!==undefined?"riesgo":"tarea"});openIssue(id);return}
-    if(b=g("[data-ck]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,x.status==="hecho"?"pendiente":"hecho"),0);renderTasks();return}
-    if(b=g("[data-cyc]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,CM_NEXT[x.status||"pendiente"]),0);renderTasks();return}
-    if(b=g("[data-stset]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,b.dataset.stset),0);renderTasks();return}
+    if(b=g("[data-ordup]")||g("[data-orddn]")){const id=b.dataset.ordup||b.dataset.orddn,dir=b.dataset.ordup?-1:1,t=byId(id);if(!t)return;const L=sibsOf(t),i=L.findIndex(x=>x.id===id),o=L[i+dir];if(!o){toast(dir<0?"Ya es la primera.":"Ya es la última.");return}
+      const a=ordv(t),c=ordv(o);upd(t.id,x=>{x.ord=c===a?c+dir*0.001:c},0);upd(o.id,x=>{x.ord=a},0);renderTasks();return}
+    if(b=g("[data-next]")){const id=b.dataset.next,t=byId(id);if(!t)return;const L=sibsOf(t),i=L.findIndex(x=>x.id===id),nx=L[i+1],o=nx?(ordv(t)+ordv(nx))/2:ordv(t)+1;
+      const nid=newTask({title:"",parent:t.parent||"",milestone:!!(t.milestone&&isRoot(t)),start:t.due||todayKey,owner:t.owner||"",deps:[t.id],ord:o});if(t.parent)cmX.add(t.parent);cmDetail=nid;cmD=false;renderTasks();const ti=document.querySelector("#cmDetail .sh-t");if(ti)ti.focus();toast("Creé la siguiente: empieza cuando termine la actual.");return}
+    if(b=g("[data-depdel]")){const id=b.closest("[data-task]").dataset.task,d=b.dataset.depdel;upd(id,x=>{x.deps=(x.deps||[]).filter(z=>z!==d)},0);renderTasks();return}
+    if(b=g("[data-ck]")){const id=b.closest("[data-task]").dataset.task,was=byId(id).status==="hecho";upd(id,x=>setSt(x,was?"pendiente":"hecho"),0);renderTasks();if(!was)unlocked(id);return}
+    if(b=g("[data-cyc]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,CM_NEXT[x.status||"pendiente"]),0);renderTasks();if(byId(id).status==="hecho")unlocked(id);return}
+    if(b=g("[data-stset]")){const id=b.closest("[data-task]").dataset.task;upd(id,x=>setSt(x,b.dataset.stset),0);renderTasks();if(b.dataset.stset==="hecho")unlocked(id);return}
     if(b=g("[data-mv]")){upd(b.dataset.mv,x=>setSt(x,b.dataset.to),0);renderTasks();return}
     if(b=g("[data-weeks]")){const id=b.dataset.weeks,t=byId(id);if(!t)return;if(!t.due){toast("Ponle fecha en «Termina» y se divide por semanas.");return}
       if(kidsOf(id).length){toast("Ya tiene pasos.");return}
       const base=t.start&&t.start>todayKey?t.start:(todayKey<=t.due?todayKey:t.due);let m=wkMon(base),i=1;
       while(m<=t.due&&i<=26){newTask({title:"Semana "+i+" · "+wkLabel(m),parent:id,start:i===1?base:m,due:addD(m,6)>t.due?t.due:addD(m,6),owner:t.owner});m=addD(m,7);i++}
       cmX.add(id);renderTasks();toast("Creé un paso por semana.");return}
-    if(b=g("[data-sdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.sdel,t=byId(id);if(t){kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t.parent||""},0));remove("tasks",id)}renderTasks()}else{b.dataset.arm=Date.now();b.textContent="¿Quitar?";setTimeout(()=>{b.textContent="×";delete b.dataset.arm},4000)}return}
-    if(b=g("[data-hdup]")||g("[data-tdup]")){const id=b.dataset.hdup||b.dataset.tdup,t=byId(id);if(!t)return;const nid=dupNode(id,t.parent||"",true);cmD=false;cmDetail=nid;if(t.milestone&&isRoot(t))cmH=nid;cmV="tabla";if(t.parent)cmX.add(t.parent);renderTasks();
+    if(b=g("[data-sdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.sdel,t=byId(id);if(t){kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t.parent||""},0));unlink(id);remove("tasks",id)}renderTasks()}else{b.dataset.arm=Date.now();b.textContent="¿Quitar?";setTimeout(()=>{b.textContent="×";delete b.dataset.arm},4000)}return}
+    if(b=g("[data-hdup]")||g("[data-tdup]")){const id=b.dataset.hdup||b.dataset.tdup,t=byId(id);if(!t)return;dupMap={};const nid=dupNode(id,t.parent||"",true);Object.values(dupMap).forEach(z=>upd(z,x=>{if(x.deps)x.deps=x.deps.map(d=>dupMap[d]||d)},0));cmD=false;cmDetail=nid;if(t.milestone&&isRoot(t))cmH=nid;cmV="tabla";if(t.parent)cmX.add(t.parent);renderTasks();
       toast("Duplicado con todo lo que tiene. Cámbiale el nombre y las fechas.");return}
     if(b=g("[data-q]")){const r=b.closest("[data-task]"),d=QD.find(z=>z[0]===b.dataset.q);upd(r.dataset.task,x=>{x.urgent=d[3];x.important=d[4]},0);renderTasks();return}
-    if(b=g("[data-tdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.tdel,t=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t&&t.parent||""},0));remove("tasks",id);if(cmH===id)cmH="all";cmDetail=t&&t.parent&&byId(t.parent)?t.parent:null;renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez: sus pasos suben un nivel";setTimeout(()=>{b.textContent="Borrar";delete b.dataset.arm},4000)}return}});
+    if(b=g("[data-tdel]")){if(b.dataset.arm&&Date.now()-b.dataset.arm<4000){const id=b.dataset.tdel,t=byId(id);kidsOf(id).forEach(k=>upd(k.id,x=>{x.parent=t&&t.parent||""},0));unlink(id);remove("tasks",id);if(cmH===id)cmH="all";cmDetail=t&&t.parent&&byId(t.parent)?t.parent:null;renderTasks()}else{b.dataset.arm=Date.now();b.textContent="Toca otra vez: sus pasos suben un nivel";setTimeout(()=>{b.textContent="Borrar";delete b.dataset.arm},4000)}return}});
   M.addEventListener("input",e=>{const el=e.target;
     if(el.dataset.hf!==undefined){cmH=el.value;renderTasks();return}
     if(el.dataset.of!==undefined){cmO=el.value;renderTasks();return}
+    if(el.dataset.depadd!==undefined){if(!canWrite||!el.value)return;const id=el.closest("[data-task]").dataset.task,v=el.value;if(reaches(id,v)){toast("Eso crearía un ciclo.");return}upd(id,x=>{x.deps=(x.deps||[]).concat(v)},0);renderTasks();return}
     if(!canWrite)return;
     const r=el.closest("[data-task]"),f=el.dataset.f;if(!r||!f)return;const t=byId(r.dataset.task);if(!t)return;
     const x=clone(t),tp=el.type;x[f]=tp==="checkbox"?el.checked:tp==="range"?n(el.value):el.value;
@@ -2330,6 +2372,7 @@ function openIssue(id){cmDetail=id;openItem=id;if(location.hash!=="#cronograma")
     if(f==="milestone"&&x.milestone)x.parent="";
     if(f==="status"&&x.status==="hecho")x.progress=100;
     put("tasks",x);
+    if(f==="due"&&x.due){const m=cascade(x.id,x.due);if(m){toast("Recorrí "+m+(m===1?" fecha":" fechas")+" que dependen de esta.");renderTasks()}}
     if(tp!=="text"&&el.tagName!=="TEXTAREA")later()});
   M.addEventListener("keydown",e=>{const q=e.target.closest&&e.target.closest("[data-qa]");if(q&&e.key==="Enter"&&q.value.trim()&&canWrite){const id=q.dataset.qa;newTask({title:q.value.trim(),parent:id==="none"?"":id});if(id!=="none")cmX.add(id);cmFocus=id;renderTasks()}
     if(e.key==="Escape"&&cmDetail){cmDetail=null;renderTasks()}});
