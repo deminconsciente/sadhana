@@ -628,14 +628,15 @@ async function listarVotos(env) {
   const { results } = await env.DB.prepare('SELECT * FROM votos ORDER BY actualizado DESC').all();
   const porClase = new Map();
   for (const v of results) {
-    let dias = [], horas = [];
-    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); } catch (e) {}
+    let dias = [], horas = [], slots = null;
+    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); if (v.slots) slots = JSON.parse(v.slots); } catch (e) {}
     if (!porClase.has(v.clase)) porClase.set(v.clase, { clase: v.clase, titulo: v.titulo || v.clase, personas: [], dias: {}, horas: {}, combos: {}, modalidad: {} });
     const c = porClase.get(v.clase);
     c.personas.push({ nombre: v.nombre, tel: v.tel, dias, horas, modalidad: v.modalidad, comunidad: !!v.acepta_comunidad, actualizado: v.actualizado });
     for (const d of dias) c.dias[d] = (c.dias[d] || 0) + 1;
     for (const h of horas) c.horas[h] = (c.horas[h] || 0) + 1;
-    for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
+    if (slots) for (const k of slots) c.combos[k] = (c.combos[k] || 0) + 1; // día-hora exactos (voto de un toque)
+    else for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
     c.modalidad[v.modalidad || 'Presencial'] = (c.modalidad[v.modalidad || 'Presencial'] || 0) + 1;
   }
   const out = [...porClase.values()].map(c => ({
