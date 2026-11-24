@@ -1385,7 +1385,7 @@ function moveRow(s,from,to){s.rows=rowsOf(s).map(m=>m===from?to:m);[s.slots,s.sl
 function renderEditors(){
   const s=cur();const box=$("#m-escenarios");
   box.querySelectorAll(".sec,.card,.hero").forEach(e=>e.hidden=!s);$("#scenEmpty").hidden=!!s;
-  $("#scenEmptyTxt").textContent=db&&!loaded[COL]?"Cargando escenarios…":"Aún no hay escenarios.";$("#scenSeed").hidden=!!(db&&!loaded[COL]);
+  $("#scenEmptyTxt").textContent=db&&!loaded[COL]?"Cargando escenarios…":"Aún no hay escenarios.";$("#scenSeed").hidden=!!(db&&!loaded[COL])||(cache[COL]||[]).length>0;
   if(!s)return;
   $("#scenName").value=s.name;
   $("#agOpts").innerHTML=`<div class="stp"><span>Clase de</span>${stepBtns("classMin",30,120,15,true)}<span class="ag-l">min, más</span>${stepBtns("gapMin",0,60,5,true)}<span class="ag-l">de limpieza y transición</span></div>
@@ -1947,7 +1947,7 @@ function replaceScenarios(arr){cache[COL].slice().forEach(s=>remove(COL,s.id));a
 let resArm=0;
 $("#reset").onclick=()=>{if(Date.now()-resArm>4000){resArm=Date.now();$("#reset").textContent="Toca otra vez: se pierden los cambios";setTimeout(()=>$("#reset").textContent="Volver a los escenarios iniciales",4000);return}
   resArm=0;$("#reset").textContent="Volver a los escenarios iniciales";replaceScenarios(defaults());toast("Escenarios restablecidos")};
-$("#scenSeed").onclick=()=>{replaceScenarios(defaults());toast("Escenarios cargados")};
+$("#scenSeed").onclick=()=>{if((cache[COL]||[]).length){toast("Ya hay escenarios guardados: no se cargan los iniciales para no sobrescribirlos.");return}if(!confirm("Esto crea los 5 escenarios de fábrica y sobrescribe lo que haya con esos nombres. ¿Seguro?"))return;replaceScenarios(defaults());toast("Escenarios cargados")};
 $("#copy").onclick=()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({v:4,list:list()}))));$("#code").value=code;
   const fb=()=>{$("#code").select();toast("Selecciona y copia el código")};try{navigator.clipboard.writeText(code).then(()=>toast("Código copiado"),fb)}catch(e){fb()}};
 $("#load").onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($("#code").value.trim()))));if(!o.list||!o.list.length)throw 0;
