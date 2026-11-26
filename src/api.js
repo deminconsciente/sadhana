@@ -7,6 +7,7 @@
 //                               Vacío = la landing usa el directorio que trae escrito.
 //                               Trae también `paquetes` (máx. 4) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
+//   GET  /api/sala/disponibilidad · POST /api/sala/reservar   renta de la sala por hora, sin traslapes (src/sala.js).
 //   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
 //   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
 // Privado (contraseña en el secreto ADMIN_CLAVE):
@@ -15,6 +16,7 @@
 //   POST /admin/api/reservas/:folio  {estado?, nota?}
 import panelHTML from './admin.html';
 import { deSesion, sinSesion } from './sesion.js';
+import { esSala, sala, configPublica } from './sala.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -38,6 +40,7 @@ export async function api(request, env) {
   if (!env.DB) return json({ ok: false, error: 'Base de datos no configurada' }, 503);
 
   try {
+    if (esSala(p)) return await sala(request, env, url);
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
     if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);
@@ -228,7 +231,7 @@ async function catalogo(env) {
   } catch (e) {
     rows = []; // la tabla aún no existe: la landing usa su directorio escrito
   }
-  let fundadores = null, paquetes = null, promo = null, terapias = null;
+  let fundadores = null, paquetes = null, promo = null, terapias = null, salaCfg = configPublica({});
   const clases = [];
   for (const r of rows) {
     let d;
@@ -238,12 +241,14 @@ async function catalogo(env) {
     // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
     if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 4); if (d.promo) promo = d.promo; continue; }
     // Terapias 1:1: solo salen las activas.
+    // Sala y rentas: precios, paquetes de horas y bloque mensual de la sección «Soy terapeuta».
+    if (r.id === '_sala') { salaCfg = configPublica(d); continue; }
     if (r.id === '_terapias') { if (Array.isArray(d.items)) terapias = d.items.filter(x => x && x.estado !== 'oculta'); continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;
     clases.push({ ...d, id: r.id });
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
-  return json({ clases, fundadores, paquetes, promo, terapias }, 200, { 'cache-control': 'public, max-age=20' });
+  return json({ clases, fundadores, paquetes, promo, terapias, sala: salaCfg }, 200, { 'cache-control': 'public, max-age=20' });
 }
 
 // ---------- Votos por horario (clases nuevas u otro horario) ----------
@@ -254,6 +259,7 @@ export async function tablaVotos(env) {
     `CREATE TABLE IF NOT EXISTS votos (clase TEXT NOT NULL, tel TEXT NOT NULL, titulo TEXT, nombre TEXT NOT NULL, dias TEXT NOT NULL, horas TEXT NOT NULL,
      modalidad TEXT, acepta_comunidad INTEGER NOT NULL DEFAULT 0, creado TEXT NOT NULL, actualizado TEXT NOT NULL, PRIMARY KEY (clase, tel))`
   ).run();
+  try { await env.DB.prepare('ALTER TABLE votos ADD COLUMN slots TEXT').run(); } catch (e) {} // «día-hora» exactos; ya existe en bases nuevas
   votosLista = true;
 }
 
@@ -271,7 +277,10 @@ async function votar(request, env) {
   const nombre = txt(b.nombre, 120);
   const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
   const enteros = (v, min, max) => [...new Set((Array.isArray(v) ? v : []).map(Number).filter(n => Number.isInteger(n) && n >= min && n <= max))].sort((x, y) => x - y);
-  const dias = enteros(b.dias, 0, 6), horas = enteros(b.horas, 5, 23);
+  // slots: ["1-19","6-9"] = día-hora exactos que la persona pulsó. Si vienen, de ahí salen dias y horas.
+  const slots = [...new Set((Array.isArray(b.slots) ? b.slots : []).map(String).filter(k => /^[0-6]-([5-9]|1\d|2[0-3])$/.test(k)))].slice(0, 40);
+  const dias = slots.length ? enteros(slots.map(k => k.split('-')[0]), 0, 6) : enteros(b.dias, 0, 6);
+  const horas = slots.length ? enteros(slots.map(k => k.split('-')[1]), 5, 23) : enteros(b.horas, 5, 23);
   const modalidad = ['Presencial', 'En línea', 'Cualquiera'].includes(b.modalidad) ? b.modalidad : 'Presencial';
   if (!/^[A-Za-z0-9_.-]{1,60}$/.test(clase)) return json({ ok: false, error: 'Clase inválida' }, 400);
   if (!nombre || tel.length < 10 || !dias.length || !horas.length) return json({ ok: false, error: 'Faltan datos' }, 400);
@@ -282,10 +291,10 @@ async function votar(request, env) {
   if (n >= 12) return json({ ok: false, error: 'Demasiados votos' }, 429);
   const ahora = new Date().toISOString();
   await env.DB.prepare(
-    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?)
-     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas,
+    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, slots, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas, slots = excluded.slots,
        modalidad = excluded.modalidad, acepta_comunidad = excluded.acepta_comunidad, actualizado = excluded.actualizado`
-  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
+  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), slots.length ? JSON.stringify(slots) : null, modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE clase = ?').bind(clase).first();
   return json({ ok: true, interesados: r.n }, 201);
 }

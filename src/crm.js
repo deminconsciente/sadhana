@@ -372,6 +372,7 @@ async function cambiarReserva(folio, request, env) {
     sets.push('actualizado = ?'); vals.push(ahora());
     const r = await env.DB.prepare(`UPDATE reservas SET ${sets.join(', ')} WHERE folio = ?`).bind(...vals, folio).run();
     if (!r.meta.changes) return json({ ok: false, error: 'No existe ese folio' }, 404);
+    if (b.estado === 'confirmado') await activarPaqueteHoras(env, folio);
   }
   if (b.maestro !== undefined) {
     const existe = await env.DB.prepare('SELECT 1 FROM reservas WHERE folio = ?').bind(folio).first();
@@ -381,6 +382,27 @@ async function cambiarReserva(folio, request, env) {
   }
   if (!sets.length && b.maestro === undefined) return json({ ok: false, error: 'Nada que cambiar' }, 400);
   return json({ ok: true });
+}
+
+// Al confirmar el pago de un «Paquete de horas» (sala) se abre su membresía: clases = horas, con su vigencia.
+// Las rentas pagadas con el paquete restan de ahí (ver horasDisponibles en src/sala.js).
+async function activarPaqueteHoras(env, folio) {
+  const r = await env.DB.prepare("SELECT * FROM reservas WHERE folio = ? AND tipo = 'Paquete de horas'").bind(folio).first();
+  if (!r) return;
+  const nota = 'Folio ' + folio;
+  if (await env.DB.prepare('SELECT 1 FROM membresias WHERE nota = ?').bind(nota).first()) return;
+  let det = [];
+  try { det = JSON.parse(r.detalle || '[]'); } catch (e) {}
+  const val = k => (det.find(x => new RegExp(k, 'i').test(x[0])) || [])[1] || '';
+  const horas = parseInt(val('horas'), 10) || 0, dias = parseInt(val('vigencia'), 10) || 90;
+  if (!horas) return;
+  await sincronizarAlumnos(env);
+  const al = await env.DB.prepare('SELECT id FROM alumnos WHERE tel = ?').bind(r.tel).first();
+  if (!al) return;
+  const inicio = hoyMTY();
+  await env.DB.prepare(
+    'INSERT INTO membresias (alumno_id, plan, inicio, fin, clases, monto, metodo, nota, registrado_por, creado) VALUES (?,?,?,?,?,?,?,?,?,?)'
+  ).bind(al.id, `Paquete ${horas} h de sala`, inicio, sumaDias(inicio, dias), horas, r.monto || 0, r.metodo, nota, 'automático', ahora()).run();
 }
 
 // ---------- Confirmación de asistencia en línea ----------
@@ -625,14 +647,15 @@ async function listarVotos(env) {
   const { results } = await env.DB.prepare('SELECT * FROM votos ORDER BY actualizado DESC').all();
   const porClase = new Map();
   for (const v of results) {
-    let dias = [], horas = [];
-    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); } catch (e) {}
+    let dias = [], horas = [], slots = null;
+    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); if (v.slots) slots = JSON.parse(v.slots); } catch (e) {}
     if (!porClase.has(v.clase)) porClase.set(v.clase, { clase: v.clase, titulo: v.titulo || v.clase, personas: [], dias: {}, horas: {}, combos: {}, modalidad: {} });
     const c = porClase.get(v.clase);
     c.personas.push({ nombre: v.nombre, tel: v.tel, dias, horas, modalidad: v.modalidad, comunidad: !!v.acepta_comunidad, actualizado: v.actualizado });
     for (const d of dias) c.dias[d] = (c.dias[d] || 0) + 1;
     for (const h of horas) c.horas[h] = (c.horas[h] || 0) + 1;
-    for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
+    if (slots) for (const k of slots) c.combos[k] = (c.combos[k] || 0) + 1; // día-hora exactos (voto de un toque)
+    else for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
     c.modalidad[v.modalidad || 'Presencial'] = (c.modalidad[v.modalidad || 'Presencial'] || 0) + 1;
   }
   const out = [...porClase.values()].map(c => ({
