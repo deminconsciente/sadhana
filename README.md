@@ -9,6 +9,7 @@ Sitio de Sadhana en un Cloudflare Worker, con el mismo flujo que www.deminconsci
 |---|---|
 | sadhanaholistics.com/ | `public/index.html` (landing oficial de Sadhana) |
 | sadhanaholistics.com/om/ | `public/om/index.html` (El Poder del OM) |
+| sadhanaholistics.com/reservar/ | enlace corto que abre la renta de la sala en el sitio (`/?renta=sala`), conservando los utm_* |
 | audio de la prueba | `public/audios/om-prueba-1min.mp3` |
 | recursos compartidos | `public/assets/` (Glacial Indifference, logo secundario, sello, foto de velas) |
 
@@ -48,3 +49,12 @@ se borran: los reemplazan los dominios personalizados del Worker.
 - Esquema: `migrations/0001_reservas.sql` y `0002_crm.sql`. Cada visita es una fila de `reservas`; las fichas (`alumnos`) se ligan por teléfono.
 - Entrar: usuario `admin` (o tu nombre) + la clave maestra `ADMIN_CLAVE` (secreto del Worker). Desde la pestaña Equipo se crean usuarios con clave propia para cada maestro.
 - Local: `printf 'ADMIN_CLAVE=prueba\n' > .dev.vars && npx wrangler d1 migrations apply sadhana_crm --local && npm run dev`.
+
+## Sala única y renta por hora (`src/sala.js`)
+
+- Hay una sola sala. La sección **«Soy terapeuta»** de `public/index.html` (mismo flujo de reserva, datos, pago y ticket que el resto del sitio) pide la disponibilidad a `GET /api/sala/disponibilidad` y aparta con `POST /api/sala/reservar`. Cuentan como ocupado: clases (directorio activo + bloques base), eventos y bloqueos propios, terapias 1:1 y rentas apartadas, con 15 min de margen; lunes a viernes.
+- El apartado es atómico en D1 (`sala_ocupacion`, migración `0005_sala.sql`; el Worker también la crea sola). Una renta pendiente libera la sala a las 24 h; cancelarla en /equipo la libera de inmediato.
+- **Paquetes de horas**: se compran como reserva («Paquete de horas»); al confirmar el pago en /equipo se abre una membresía «Paquete N h de sala» (clases = horas). Al rentar, «Tengo un paquete de horas» descuenta de ahí con el mismo WhatsApp.
+- **/equipo → Directorio → Sala y rentas** edita todo en el documento `_sala` (`proyeccion_docs`, col `catalogo`): precios por hora, bloque mensual, paquetes de horas, horario, fines de semana, días cerrados, bloqueos y eventos, clave del calendario. Lo público sale en `/api/catalogo` (`sala`).
+- **Calendario** `GET /api/sala/calendario.ics?t=CLAVE`: se suscribe una vez en Google Calendar («Desde URL») y trae rentas, terapias, clases y eventos de la sala. Sin clave configurada responde 404.
+- `salaKpis(env, desde, hasta)` (exportada) da horas libres, ocupación e ingreso por renta para el tablero de KPIs. El origen UTM de cada renta va en `reservas.utm`.
