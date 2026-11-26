@@ -1950,7 +1950,8 @@ function paintRoom(){
     return;
   }
   const r = RENTAS.find(x => x.id===room);
-  const porHora = horasSem*4*r.precioHora, bloques = Math.ceil(horasSem/4), conBloque = room==="consultorio" ? bloques*3200 : null;
+  const bm = RENTAS.find(x => x.id==="bloque"), hb = bm ? (bm.horasSemana||4) : 4;
+  const porHora = horasSem*4*r.precioHora, bloques = Math.ceil(horasSem/hb), conBloque = room==="consultorio" && bm ? bloques*bm.precio : null;
   const max = Math.max(porHora, conBloque||0);
   $("#roomInfo").innerHTML = `<div class="roominfo">
     <p class="eyebrow">${esc(r.cap)}</p><h3 style="font-size:1.35rem">${esc(r.t)}</h3>
@@ -1969,8 +1970,27 @@ document.querySelectorAll(".plan .room").forEach(g => {
   g.onclick = () => { room = g.dataset.room; paintRoom(); };
   g.onkeydown = e => { if (e.key==="Enter"||e.key===" "){ e.preventDefault(); room = g.dataset.room; paintRoom(); } };
 });
+/* Lo que el equipo edita en /equipo → Directorio → Sala y rentas: precios por hora, bloque mensual, paquetes de horas y lo que incluye. */
+function aplicarSala(c){
+  const cons = RENTAS.find(x => x.id==="consultorio"), sal = RENTAS.find(x => x.id==="salon");
+  if (c.precios){ if (+c.precios.consultorio > 0) cons.precioHora = +c.precios.consultorio; if (+c.precios.salon > 0) sal.precioHora = +c.precios.salon; }
+  if (Array.isArray(c.kit) && c.kit.length){ cons.kit = c.kit; sal.kit = c.kit; }
+  const i = RENTAS.findIndex(x => x.id==="bloque");
+  if (c.bloqueMensual){ const b = c.bloqueMensual;
+    const nuevo = Object.assign(i >= 0 ? RENTAS[i] : {id:"bloque", g:"moon", mensual:true}, {t:b.t||"Bloque mensual fijo", precio:+b.precio||0, d:b.d||"", horasSemana:+b.horasSemana||4});
+    if (i < 0) RENTAS.splice(RENTAS.length-1, 0, nuevo);
+  } else if (i >= 0) RENTAS.splice(i, 1);
+  SALA.paquetes = (c.paquetes || []).filter(p => p && p.id && +p.horas > 0 && +p.precio > 0);
+  if (+c.minHoras) SALA.minHoras = +c.minHoras; if (+c.maxHoras) SALA.maxHoras = +c.maxHoras;
+}
 function paintRentas(){
-  $("#rentOpts").innerHTML = RENTAS.filter(r => r.mensual||r.propuesta).map(r => `<article class="card">
+  const paq = SALA.paquetes.map(p => `<article class="card">
+    <div class="art" style="height:80px;${aura("rp"+p.id)}">${glyph("lotus")}</div>
+    <div class="bd"><div class="row"><h3>${esc(p.t)}</h3><span class="price">${money(p.precio)}</span></div>
+    <div class="pills">${pill(p.horas+" horas","line","clock")+pill(money(Math.round(p.precio/p.horas))+" por hora","line","check")+pill((+p.dias||90)+" días","line","cal")}</div>
+    <div class="go"><span></span><button class="btn btn-p btn-s" data-renta="paq:${esc(p.id)}">Comprar</button></div></div>
+  </article>`).join("");
+  $("#rentOpts").innerHTML = paq + RENTAS.filter(r => r.mensual||r.propuesta).map(r => `<article class="card">
     <div class="art" style="height:80px;${aura("r"+r.id)}">${glyph(r.g)}</div>
     <div class="bd"><div class="row"><h3>${esc(r.t)}</h3><span class="price">${r.propuesta ? "Sin costo" : money(r.precio)+" / mes"}</span></div>
     <div class="pills">${r.propuesta?pill("Respuesta en 48 h","line","clock")+pill("Publicamos tu taller","line","star"):pill("4 h por semana","line","clock")+pill("Mismo día y hora","line","cal")}</div>
@@ -2512,36 +2532,138 @@ function flujoRenta(id){
     return;
   }
   if (r.mensual){
+    SALA_DIAS = null;
     const pasosBase = [
       {nombre:"Tu bloque", pintar(el, o){
-        o.diaFijo ||= "2"; o.horaFijo ||= "10";
-        el.innerHTML = `<p class="muted">${esc(r.d)}</p>
-          <div class="field"><label class="lbl" for="bD">Día de la semana</label><select class="inp" id="bD">${[1,2,3,4,5,6].map(d=>`<option value="${d}" ${o.diaFijo==d?"selected":""}>${DIAS_L[d]}</option>`).join("")}</select></div>
-          <div class="field"><label class="lbl" for="bH">Horario</label><select class="inp" id="bH">${[8,9,10,11,12,13,14,15,16,17].map(h=>`<option value="${h}" ${o.horaFijo==h?"selected":""}>${fHora(new Date(2026,0,1,h))} a ${fHora(new Date(2026,0,1,h+4))}</option>`).join("")}</select></div>
-          <p class="note">Equivale a ${money(Math.round(r.precio/16))} por hora, contra ${money(250)} por hora suelta.</p>`;
-        el.querySelector("#bD").onchange = e => o.diaFijo = e.target.value;
+        if (!SALA_DIAS){ el.innerHTML = `<p class="muted">Buscando horarios libres…</p>`; cargarSala().then(() => pintar()).catch(() => { SALA_DIAS = []; pintar(); }); return; }
+        const hs = r.horasSemana || 4, HR = [7,8,9,10,11,12,13,14,15,16,17].filter(h => h*60 + hs*60 <= 21*60);
+        // Un bloque fijo se repite cada semana: solo se ofrece lo que está libre en todas las semanas que se ven.
+        const libre = (dow, h) => SALA_DIAS.filter(d => fechaDe(d.f).getDay() === dow).every(d => d.libres.some(([a,z]) => a <= h*60 && z >= (h+hs)*60));
+        o.diaFijo ||= "2";
+        if (!HR.some(h => libre(+o.diaFijo, h))) o.diaFijo = String([1,2,3,4,5].find(d => HR.some(h => libre(d, h))) || o.diaFijo);
+        if (!o.horaFijo || !libre(+o.diaFijo, +o.horaFijo)) o.horaFijo = String(HR.find(h => libre(+o.diaFijo, h)) || "");
+        el.innerHTML = `<p class="muted">${esc(r.d)} Solo ves los horarios que están libres cada semana.</p>
+          <div class="field"><label class="lbl" for="bD">Día de la semana</label><select class="inp" id="bD">${[1,2,3,4,5].map(d=>`<option value="${d}" ${o.diaFijo==d?"selected":""} ${HR.some(h=>libre(d,h))?"":"disabled"}>${DIAS_L[d]}</option>`).join("")}</select></div>
+          <div class="field"><label class="lbl" for="bH">Horario</label><select class="inp" id="bH">${HR.filter(h => libre(+o.diaFijo, h)).map(h=>`<option value="${h}" ${o.horaFijo==h?"selected":""}>${hMin(h*60)} a ${hMin(h*60+hs*60)}</option>`).join("") || `<option value="">Sin horarios libres ese día</option>`}</select></div>
+          <p class="note">Equivale a ${money(Math.round(r.precio/(hs*4)))} por hora, contra ${money(RENTAS[0].precioHora)} por hora suelta.</p>`;
+        el.querySelector("#bD").onchange = e => { o.diaFijo = e.target.value; pintar(); };
         el.querySelector("#bH").onchange = e => o.horaFijo = e.target.value;
-      }},
+      }, valido: o => !!o.horaFijo},
       pasoDatos(), pasoPago(), pasoTicket()];
     abrir({tipo:"Renta para terapeutas", titulo:r.t, pasosBase, total:()=>r.precio,
-      resumen:o=>[["Bloque", `${DIAS_L[o.diaFijo]} · ${fHora(new Date(2026,0,1,+o.horaFijo))}`],["Duración", "4 h por semana, 1 mes"]],
-      armar:o=>({tipo:"Acceso de terapeuta", titulo:r.t, mensaje:"Tu bloque está reservado.", detalle:[["Horario fijo", `${DIAS_L[o.diaFijo]} de ${fHora(new Date(2026,0,1,+o.horaFijo))} a ${fHora(new Date(2026,0,1,+o.horaFijo+4))}`],["Código de acceso", String(Math.floor(1000+Math.random()*9000))]],
-        siguiente:"Antes de tu primera sesión te damos un recorrido de 15 minutos por el espacio."})});
+      resumen:o=>[["Bloque", `${DIAS_L[o.diaFijo]} · ${hMin(+o.horaFijo*60)}`],["Duración", `${r.horasSemana||4} h por semana, 1 mes`]],
+      armar:o=>({tipo:"Acceso de terapeuta", titulo:r.t, mensaje:"Tu bloque queda apartado.", detalle:[["Horario fijo", `${DIAS_L[o.diaFijo]} de ${hMin(+o.horaFijo*60)} a ${hMin((+o.horaFijo+(r.horasSemana||4))*60)}`]],
+        siguiente:"Cuando verifiquemos tu pago confirmamos tu bloque y lo reservamos en la sala cada semana. Antes de tu primera sesión te damos un recorrido de 15 minutos."})});
     return;
   }
+  // Por hora: una sola sala. La disponibilidad sale del servidor (clases, eventos, terapias y rentas ya apartadas).
+  SALA_DIAS = null;
+  const precioH = () => r.precioHora;
+  const pasosBase = [pasoSala(r), pasoDatos(), pasoPagoSala(r), pasoTicket()];
+  abrir({tipo:"Renta para terapeutas", titulo:r.t, pasosBase, total:o=>o.usaPaquete ? 0 : (o.horas||1)*precioH(),
+    resumen:o=>[["Espacio", r.t],["Cuándo", `${fFechaL(fechaDe(o.dia))} · ${hMin(o.a)}`],["Horas", o.usaPaquete ? `${o.horas} h de tu paquete` : `${o.horas} h × ${money(precioH())}`]],
+    armar:o=>({tipo:"Renta de sala", titulo:`Renta de sala · ${o.horas} h`, recurso:"sala", ini:o.ini, dur:o.horas*60, mensaje:o.usaPaquete ? "Tu espacio está reservado con tu paquete." : "Tu espacio está apartado.",
+      detalle:[["Espacio","Sala Sadhana"],["Horario",`${hMin(o.a)} a ${hMin(o.a+o.horas*60)}`],["Duración",`${o.horas} h`],["Uso", r.id==="salon"?"Taller o clase":"Sesión 1:1"]],
+      siguiente:"Llega 10 minutos antes. Deja el espacio como lo encontraste. Si necesitas cambiar tu horario, avísanos por WhatsApp con 24 horas de anticipación."})});
+}
+
+/* Renta por hora: minutos desde las 0:00 → «9:30 am»; «2027-01-05» → fecha local (mediodía) */
+const hMin = m => fHora(new Date(2000,0,1,Math.floor(m/60),m%60));
+const fechaDe = f => { const [y,m,d] = f.split("-").map(Number); return new Date(y, m-1, d, 12); };
+let SALA_DIAS = null;
+const SALA = {minHoras:1, maxHoras:4, paquetes:[]};
+async function cargarSala(){
+  const r = await fetch("/api/sala/disponibilidad?dias=21", {cache:"no-store"});
+  if (!r.ok) throw new Error("sala"); const j = await r.json();
+  SALA.minHoras = j.minHoras || 1; SALA.maxHoras = j.maxHoras || 4; SALA_DIAS = j.dias;
+}
+function pasoSala(r){
+  return {nombre:"Día y hora",
+    pintar(el, o, err){
+      if (!SALA_DIAS){
+        el.innerHTML = `<p class="muted">Buscando horarios libres…</p>`;
+        cargarSala().then(() => pintar()).catch(() => { el.innerHTML = `<p class="note">No pudimos cargar la disponibilidad. <a href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Hola Sadhana, quiero rentar la sala por hora.")}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y la apartamos contigo.</p>`; });
+        return;
+      }
+      o.horas ||= SALA.minHoras;
+      const D = SALA_DIAS, hay = d => d.libres.some(([a,z]) => z - Math.ceil(a/30)*30 >= o.horas*60);
+      if (!o.dia || !D.some(d => d.f === o.dia)) o.dia = (D.find(hay) || D[0]).f;
+      const d = D.find(x => x.f === o.dia), slots = [];
+      for (const [a,z] of d.libres) for (let t = Math.ceil(a/30)*30; t + o.horas*60 <= z; t += 30) slots.push(t);
+      if (o.a != null && !slots.includes(o.a)){ o.a = null; o.ini = null; }
+      const lleno = d.abierto ? "Este día ya no tiene horas libres para esa duración. Prueba con otro día o con menos horas." : `${esc(d.motivo||"Cerrado")}. Si quieres hacer un evento o taller, escríbenos por WhatsApp.`;
+      el.innerHTML = `<p class="muted">${esc(r.d)} Una sola sala: lo que ves libre es lo que de verdad está libre.</p>
+        <div><span class="lbl">Horas</span><div class="stepper"><button type="button" id="hMenos" aria-label="Menos horas">−</button><output id="hOut">${o.horas} h</output><button type="button" id="hMas" aria-label="Más horas">+</button></div></div>
+        <div><span class="lbl">Día</span><div class="chips" id="pDias">${D.map(x => { const dt = fechaDe(x.f);
+          return `<button class="chip daychip" data-d="${x.f}" aria-pressed="${x.f===o.dia}" ${hay(x)?"":"disabled"}><small>${DIAS[dt.getDay()]}</small><b>${dt.getDate()}</b></button>`; }).join("")}</div></div>
+        <div><span class="lbl">Hora de inicio · ${fFechaL(fechaDe(o.dia))}</span>
+          ${slots.length ? `<div class="slots" id="pSlots">${slots.map(t => `<button class="slot" data-t="${t}" aria-pressed="${o.a===t}">${hMin(t)}</button>`).join("")}</div>` : `<div class="empty">${lleno}</div>`}
+          ${err && o.a==null ? `<span class="err">Elige una hora.</span>` : ""}</div>`;
+      el.querySelector("#hMenos").disabled = o.horas <= SALA.minHoras; el.querySelector("#hMas").disabled = o.horas >= SALA.maxHoras;
+      el.querySelector("#hMenos").onclick = () => { o.horas--; pintar(); };
+      el.querySelector("#hMas").onclick = () => { o.horas++; pintar(); };
+      el.querySelector("#pDias").onclick = e => { const b = e.target.closest("[data-d]"); if (!b || b.disabled) return; o.dia = b.dataset.d; o.a = null; o.ini = null; pintar(); };
+      const ps = el.querySelector("#pSlots"); if (ps) ps.onclick = e => { const b = e.target.closest("[data-t]"); if (!b) return; o.a = +b.dataset.t;
+        o.ini = new Date(`${o.dia}T${String(Math.floor(o.a/60)).padStart(2,"0")}:${String(o.a%60).padStart(2,"0")}:00-06:00`).toISOString(); pintar(); };
+    },
+    valido: o => o.a != null
+  };
+}
+/* Pago de la renta: se aparta en el servidor ANTES del ticket, para que dos personas no tomen la misma hora. */
+function pasoPagoSala(r){
+  return {nombre:"Pago", propioBoton:true,
+    pintar(el, o){
+      o.folio ||= folio();
+      const total = F.total(o), concepto = `${o.folio} ${((o.datos||{}).nombre||"").trim()}`.trim();
+      el.innerHTML = `<dl class="sum">${F.resumen(o).map(([k,v])=>`<div><span>${k}</span><span>${esc(v)}</span></div>`).join("")}<div><span>Total</span><span class="price">${total ? money(total)+" MXN" : "Con tu paquete"}</span></div></dl>
+        ${SALA.paquetes.length ? `<label class="opt" style="grid-template-columns:auto 1fr"><input type="checkbox" id="usaPq" ${o.usaPaquete?"checked":""}><span><b>Tengo un paquete de horas</b><small>Se descuentan de las horas que ya pagaste con este WhatsApp.</small></span></label>` : ""}
+        ${total ? datosPagoHTML(total, concepto) : `<p class="note">Se descuentan ${o.horas} h de tu paquete. Si no te alcanzan, te avisamos y puedes pagar por transferencia.</p>`}
+        <button class="btn btn-p" id="payBtn" style="width:100%">${total ? "Apartar y enviar por WhatsApp" : "Reservar con mi paquete"}</button>
+        <button class="btn btn-g" id="payBack" style="width:100%">Atrás</button>
+        <p class="note">${total ? "Tu horario queda apartado 24 h mientras envías tu comprobante. Si no llega, se libera solo." : ""}</p>
+        <p class="err" id="payErr" hidden></p>`;
+      montarCopias(el);
+      const up = el.querySelector("#usaPq"); if (up) up.onchange = e => { o.usaPaquete = e.target.checked; pintar(); };
+      el.querySelector("#payBack").onclick = () => { F.paso--; pintar(); };
+      el.querySelector("#payBtn").onclick = async () => {
+        const btn = el.querySelector("#payBtn"), er = el.querySelector("#payErr"), d = o.datos || {};
+        btn.disabled = true; btn.textContent = "Apartando tu horario…"; er.hidden = true;
+        let rs, j = {};
+        try {
+          rs = await fetch("/api/sala/reservar", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
+            folio:o.folio, fecha:o.dia, a:o.a, horas:o.horas, espacio:r.id, usaPaquete:!!o.usaPaquete, nombre:d.nombre, tel:d.tel, email:d.email,
+            aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad, utm:(window.SadhanaMeta && SadhanaMeta.utm()) || undefined})});
+          j = await rs.json().catch(() => ({}));
+        } catch(e){ rs = null; }
+        if (rs && rs.status === 201 && j.ok){
+          o.metodo = o.usaPaquete ? "paquete-horas" : "transferencia"; o.pago = o.usaPaquete ? {ok:true} : {pendiente:true}; o.sinRegistro = true;
+          emitir(o); o.ticket.registrado = true; save();
+          if (!o.usaPaquete) enviarWA(o.ticket);
+          siguiente(); return;
+        }
+        let msg = "No pudimos apartar el horario. Intenta de nuevo o escríbenos por WhatsApp.";
+        if (rs && rs.status === 409 && j.error === "ocupado"){ msg = "Alguien acaba de tomar ese horario. Elige otro."; SALA_DIAS = null; o.a = null; o.ini = null;
+          er.textContent = msg; er.hidden = false; btn.textContent = "Elegir otro horario"; btn.disabled = false; btn.onclick = () => { F.paso = 0; pintar(); }; return; }
+        if (rs && rs.status === 409 && j.error === "sin_horas") msg = "Ese WhatsApp no tiene horas suficientes en un paquete activo. Desmarca la opción para pagar por transferencia.";
+        else if (rs && rs.status === 429) msg = j.error === "pendientes" ? "Ya tienes 3 rentas esperando pago. Envía tu comprobante o espera a que se liberen." : "Hiciste muchas reservas seguidas. Escríbenos por WhatsApp.";
+        er.textContent = msg; er.hidden = false; btn.disabled = false; btn.textContent = total ? "Apartar y enviar por WhatsApp" : "Reservar con mi paquete";
+      };
+    }
+  };
+}
+/* Paquetes de horas: se compran como una reserva normal; al confirmar el pago, el equipo activa las horas (src/crm.js). */
+function flujoPaqueteHoras(id){
+  const p = SALA.paquetes.find(x => x.id === id); if (!p) return;
+  const dias = +p.dias || 90, porHora = Math.round(p.precio / p.horas);
   const pasosBase = [
-    pasoFechaHora(r.id, r.horario, o => (o.horas||1)*60, null, {
-      arriba:o=>`<p class="muted">${esc(r.d)}</p><div><span class="lbl">Horas</span><div class="stepper"><button type="button" id="hMenos" aria-label="Menos horas">−</button><output id="hOut">${o.horas||1} h</output><button type="button" id="hMas" aria-label="Más horas">+</button></div></div>`,
-      montar:(el,o)=>{ o.horas ||= 1;
-        el.querySelector("#hMenos").onclick = () => { o.horas = Math.max(1,o.horas-1); o.ini=null; pintar(); };
-        el.querySelector("#hMas").onclick = () => { o.horas = Math.min(6,o.horas+1); o.ini=null; pintar(); }; }
-    }),
+    {nombre:"Tu paquete", pintar(el){
+      el.innerHTML = `<dl class="sum"><div><span>Incluye</span><span>${p.horas} horas de sala</span></div><div><span>Cada hora</span><span>${money(porHora)} (contra ${money(RENTAS[0].precioHora)} suelta)</span></div><div><span>Vigencia</span><span>${dias} días desde que confirmamos tu pago</span></div></dl>
+        <p class="note">Después reservas tus horas desde «Rentar la sala» eligiendo «Tengo un paquete de horas». Una sola sala: reservas el día y la hora que estén libres.</p>`; }},
     pasoDatos(), pasoPago(), pasoTicket()];
-  abrir({tipo:"Renta para terapeutas", titulo:r.t, pasosBase, total:o=>(o.horas||1)*r.precioHora,
-    resumen:o=>[["Espacio", r.t],["Cuándo", `${fFecha(new Date(o.ini))} · ${fHora(new Date(o.ini))}`],["Horas", `${o.horas} h × ${money(r.precioHora)}`]],
-    armar:o=>({tipo:"Acceso de terapeuta", titulo:r.t, recurso:r.id, ini:o.ini, dur:o.horas*60, mensaje:"Tu espacio está reservado.",
-      detalle:[["Horas", `${o.horas} h`],["Código de acceso", String(Math.floor(1000+Math.random()*9000))]],
-      siguiente:"El código abre la puerta 15 minutos antes de tu horario. Deja el espacio como lo encontraste."})});
+  abrir({tipo:"Renta para terapeutas", titulo:p.t, pasosBase, total:() => p.precio,
+    resumen:() => [["Paquete", p.t],["Horas", `${p.horas} h`],["Vigencia", `${dias} días`]],
+    armar:() => ({tipo:"Paquete de horas", titulo:p.t, mensaje:"Tu paquete está apartado.", detalle:[["Horas", `${p.horas} h`],["Vigencia", `${dias} días`]],
+      siguiente:"Cuando verifiquemos tu pago activamos tus horas con este WhatsApp. Después reservas la sala eligiendo «Tengo un paquete de horas»."})});
 }
 
 /* =====================================================================
@@ -2678,8 +2800,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.taller) flujoTaller(b.dataset.taller);
   else if (b.dataset.ruta) flujoRuta(b.dataset.ruta);
   else if (b.dataset.renta){
-    // La renta por hora (consultorio y salón) vive en /reservar/: ahí la disponibilidad es real (una sola sala, sin traslapes).
-    if (b.dataset.renta === "consultorio" || b.dataset.renta === "salon") location.href = "/reservar/#rentar";
+    if (b.dataset.renta.startsWith("paq:")) flujoPaqueteHoras(b.dataset.renta.slice(4));
     else flujoRenta(b.dataset.renta);
   }
 });
@@ -2741,7 +2862,8 @@ function aplicarTerapias(L){
     if (j.promo) Object.assign(PROMO, j.promo);
     const conTer = Array.isArray(j.terapias) && j.terapias.length; if (conTer) aplicarTerapias(j.terapias);
     const conPaq = Array.isArray(j.paquetes) && j.paquetes.length; if (conPaq) aplicarPaquetes(j.paquetes);
-    if (!Array.isArray(j.clases) || !j.clases.length){ if (j.promo || conTer || conPaq) paintAll(); return; }
+    if (j.sala) aplicarSala(j.sala);
+    if (!Array.isArray(j.clases) || !j.clases.length){ paintAll(); return; }
     const famCat = f => CATS[f] ? f : "yoga";
     const cat = j.clases.map(c => ({...c, clases:(c.estado==="activa" ? (c.horarios||[]) : []).map((h,i) => h.id || `${c.id}-${i+1}`)}));
     const cls = [];
@@ -2819,5 +2941,7 @@ compactar();
 if (CONFIG.comunidad){ const l = $("#lnkCom"); if (l){ l.href = CONFIG.comunidad; l.hidden = false; } }
 Registro.sincronizar();
 cargarVotos();
+/* Enlace directo a la renta de la sala: /?renta=sala (lo usa /reservar/). */
+try { if (/[?&]renta=/.test(location.search)) setTimeout(() => flujoRenta(/renta=salon/.test(location.search) ? "salon" : "consultorio"), 400); } catch(e){}
 </script>
 <script src="/assets/burbuja.js" defer></script>

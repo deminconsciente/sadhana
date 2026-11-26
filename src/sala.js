@@ -18,11 +18,16 @@
 
 const MTY = -6 * 3600e3; // Monterrey, UTC-6 todo el año
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
-const USOS = ['Sesión 1:1', 'Taller o clase', 'Ensayo o práctica propia', 'Otro'];
+const ESPACIOS = { consultorio: 'Sesión 1:1', salon: 'Taller o clase' }; // los dos usan la misma y única sala
 
 export const BASE = {
-  // Precios en MXN. SUPUESTO por validar con Diego: la competencia cobra $380 a $420 por hora.
-  precios: { hora: 400 },
+  // Precios por hora en MXN (se editan en /equipo → Directorio → Sala y rentas).
+  // SUPUESTO por validar con Diego: la competencia cobra $380 a $420 por hora.
+  precios: { consultorio: 400, salon: 500 },
+  kit: ['Camilla y cojines', 'Tapetes y mantas', 'Cuencos y gong', 'Bocina y música'],
+  paquetes: [],         // paquetes de horas: [{id, t, horas, precio, dias, estado}]
+  bloqueMensual: { activo: true, t: 'Bloque mensual fijo', precio: 3200, horasSemana: 4, d: '4 horas por semana, el mismo día y hora, durante un mes.' },
+  calToken: '',         // clave del calendario .ics (se genera en /equipo)
   horario: { abre: 7 * 60, cierra: 21 * 60 + 30 }, // lunes a viernes
   rentaFinSemana: false, // sábado y domingo son de eventos fijos y variables
   margen: 15,            // minutos antes y después de cada bloque
@@ -68,6 +73,33 @@ export async function tablasSala(env) {
 }
 
 // ---------- Configuración y bloques ----------
+// Mezcla lo que el equipo guardó (`_sala`) con los valores base y con las clases activas del directorio.
+function fusionar(doc, clases) {
+  doc = doc || {};
+  const cfg = {
+    ...BASE, ...doc,
+    precios: { ...BASE.precios, ...(doc.precios || {}) },
+    horario: { ...BASE.horario, ...(doc.horario || {}) },
+    cerrados: Array.isArray(doc.cerrados) ? doc.cerrados : BASE.cerrados,
+    eventos: Array.isArray(doc.eventos) ? doc.eventos : BASE.eventos,
+    kit: Array.isArray(doc.kit) && doc.kit.length ? doc.kit : BASE.kit,
+    paquetes: Array.isArray(doc.paquetes) ? doc.paquetes : BASE.paquetes,
+    bloqueMensual: doc.bloqueMensual === null ? null : { ...BASE.bloqueMensual, ...(doc.bloqueMensual || {}) },
+  };
+  cfg.bloques = [...BASE.bloques, ...(Array.isArray(doc.bloques) ? doc.bloques : []), ...(clases || [])];
+  return cfg;
+}
+
+// Lo público de la configuración (sale en /api/catalogo para la sección «Soy terapeuta»).
+export function configPublica(doc) {
+  const c = fusionar(doc, []);
+  return {
+    precios: c.precios, minHoras: c.minHoras, maxHoras: c.maxHoras, kit: c.kit,
+    paquetes: c.paquetes.filter(p => p && p.estado !== 'oculta' && Number(p.horas) > 0),
+    bloqueMensual: c.bloqueMensual && c.bloqueMensual.activo !== false ? c.bloqueMensual : null,
+  };
+}
+
 async function leerConfig(env) {
   let rows = [];
   try {
@@ -85,27 +117,41 @@ async function leerConfig(env) {
         clases.push({ dias: [h.dia], h: +h.h, m: +h.m || 0, dur: +h.dur || 60, n: [d.titulo, d.guia].filter(Boolean).join(' · ') });
     }
   }
-  const cfg = {
-    ...BASE, ...doc,
-    precios: { ...BASE.precios, ...(doc.precios || {}) },
-    horario: { ...BASE.horario, ...(doc.horario || {}) },
-    cerrados: Array.isArray(doc.cerrados) ? doc.cerrados : BASE.cerrados,
-    eventos: Array.isArray(doc.eventos) ? doc.eventos : BASE.eventos,
-  };
-  cfg.bloques = [...BASE.bloques, ...(Array.isArray(doc.bloques) ? doc.bloques : []), ...clases];
-  return cfg;
+  return fusionar(doc, clases);
 }
 
+const precioDe = (cfg, espacio) => Number(espacio === 'salon' ? cfg.precios.salon : cfg.precios.consultorio) || 0;
+
+// Rentas apartadas (con nombre, para el calendario del equipo) y terapias 1:1 reservadas desde el sitio:
+// las terapias de Isa y Diego también se dan en la sala, así que la ocupan.
 async function leerRentas(env, desde, hasta) {
   await tablasSala(env);
   const corte = new Date(Date.now() - 24 * 3600e3).toISOString(); // un lugar pendiente se aparta 24 h
   const { results } = await env.DB.prepare(
-    `SELECT o.folio, o.fecha, o.a, o.b, o.uso, r.estado, r.monto
+    `SELECT o.folio, o.fecha, o.a, o.b, o.uso, r.estado, r.monto, r.nombre
        FROM sala_ocupacion o JOIN reservas r ON r.folio = o.folio
       WHERE o.fecha >= ? AND o.fecha <= ?
         AND (r.estado IN ('confirmado', 'asistio') OR (r.estado = 'pendiente' AND r.creado > ?))`
   ).bind(desde, hasta, corte).all();
-  return results;
+  const rows = results.map(r => ({ ...r, t: 'renta', n: `Renta · ${r.nombre} (${r.estado})` }));
+  try {
+    const i0 = new Date(`${desde}T00:00:00-06:00`).toISOString(), i1 = new Date(`${sumaDias(hasta, 1)}T00:00:00-06:00`).toISOString();
+    const { results: ter } = await env.DB.prepare(
+      `SELECT folio, titulo, ini, detalle, estado, nombre FROM reservas
+        WHERE tipo = 'Terapia 1:1' AND ini >= ? AND ini < ? AND (estado IN ('confirmado', 'asistio') OR (estado = 'pendiente' AND creado > ?))`
+    ).bind(i0, i1, corte).all();
+    for (const r of ter) {
+      const loc = new Date(Date.parse(r.ini) + MTY), fecha = loc.toISOString().slice(0, 10), a = loc.getUTCHours() * 60 + loc.getUTCMinutes();
+      let dur = 90; // si el ticket no trae la duración, se asume 1 h 30
+      try {
+        const txt = (JSON.parse(r.detalle || '[]').find(x => /duraci/i.test(x[0])) || [])[1] || '';
+        const h = /(\d+)\s*h/.exec(txt), m = /(\d+)\s*min/.exec(txt);
+        if (h || m) dur = (h ? +h[1] * 60 : 0) + (m ? +m[1] : 0);
+      } catch (e) {}
+      rows.push({ folio: r.folio, fecha, a, b: a + dur, t: 'terapia', n: `${r.titulo} · ${r.nombre} (${r.estado})`, estado: r.estado });
+    }
+  } catch (e) { /* sin tabla de reservas todavía */ }
+  return rows;
 }
 
 // Información de un día: bloques ocupados y ventanas libres (ya con el margen y el aviso mínimo).
@@ -122,7 +168,7 @@ function infoDia(f, cfg, rentas) {
     const a = (+e.h || 0) * 60 + (+e.m || 0);
     bloques.push({ a, b: a + (+e.dur || 120), t: 'evento', n: e.n || 'Evento' });
   }
-  for (const r of rentas) if (r.fecha === f) bloques.push({ a: r.a, b: r.b, t: 'renta', n: 'Reservado', folio: r.folio });
+  for (const r of rentas) if (r.fecha === f) bloques.push({ a: r.a, b: r.b, t: r.t || 'renta', n: r.n || 'Reservado', folio: r.folio });
   bloques.sort((x, y) => x.a - y.a);
 
   const cerrado = cfg.cerrados.includes(f);
@@ -156,7 +202,8 @@ function infoDia(f, cfg, rentas) {
 
 function publico(d) {
   return { f: d.f, dow: d.dow, abierto: d.abierto, motivo: d.motivo, abre: d.abre, cierra: d.cierra,
-    bloques: d.bloques.map(({ a, b, t, n }) => ({ a, b, t, n })), libres: d.libres };
+    // Rentas y terapias no muestran quién es: solo que la sala está ocupada.
+    bloques: d.bloques.map(({ a, b, t, n }) => ({ a, b, t: t === 'terapia' ? 'renta' : t, n: t === 'renta' || t === 'terapia' ? 'Reservado' : n })), libres: d.libres };
 }
 
 async function disponibilidad(url, env) {
@@ -169,7 +216,7 @@ async function disponibilidad(url, env) {
   const rentas = await leerRentas(env, desde, hasta);
   const dias = [];
   for (let i = 0; i < n; i++) dias.push(publico(infoDia(sumaDias(desde, i), cfg, rentas)));
-  return json({ hoy, precios: cfg.precios, minHoras: cfg.minHoras, maxHoras: cfg.maxHoras, margen: cfg.margen, usos: USOS, dias },
+  return json({ hoy, precios: cfg.precios, minHoras: cfg.minHoras, maxHoras: cfg.maxHoras, margen: cfg.margen, dias },
     200, { 'cache-control': 'public, max-age=15' });
 }
 
@@ -182,6 +229,53 @@ function limpiarUtm(u) {
     if (v) o[k] = v;
   }
   return Object.keys(o).length ? JSON.stringify(o) : null;
+}
+
+// Horas de sala que le quedan a un WhatsApp: paquetes activos y vigentes («… de sala», clases = horas)
+// menos las horas ya apartadas con ese paquete.
+async function horasDisponibles(env, tel, fecha) {
+  try {
+    const t10 = tel.slice(-10);
+    const { results } = await env.DB.prepare(
+      `SELECT m.clases FROM membresias m JOIN alumnos a ON a.id = m.alumno_id
+        WHERE substr(a.tel, -10) = ? AND m.estado = 'activa' AND m.plan LIKE '%de sala%' AND m.clases IS NOT NULL AND m.inicio <= ? AND m.fin >= ?`
+    ).bind(t10, fecha, fecha).all();
+    const total = results.reduce((x, r) => x + (r.clases || 0), 0);
+    if (!total) return 0;
+    const u = await env.DB.prepare(
+      `SELECT COALESCE(SUM(o.b - o.a), 0) AS min FROM sala_ocupacion o JOIN reservas r ON r.folio = o.folio
+        WHERE substr(r.tel, -10) = ? AND r.metodo = 'paquete-horas' AND r.estado <> 'cancelado'`
+    ).bind(t10).first();
+    return total - (u ? u.min : 0) / 60;
+  } catch (e) { return 0; }
+}
+
+// ---------- Calendario .ics para Google Calendar ----------
+// Se suscribe una sola vez («Otros calendarios → Desde URL»). Trae rentas, terapias 1:1, clases y eventos de la sala,
+// así el equipo los ve junto a su agenda. Google lo refresca solo, cada varias horas. Pide la clave `t` (calToken en /equipo).
+async function calendario(url, env) {
+  const cfg = await leerConfig(env);
+  const tk = cfg.calToken || env.CAL_TOKEN;
+  if (!tk || url.searchParams.get('t') !== tk) return new Response('No encontrado', { status: 404 });
+  const hoy = hoyMTY(), d0 = sumaDias(hoy, -7), d1 = sumaDias(hoy, 120);
+  const rentas = await leerRentas(env, d0, d1);
+  const esc = v => String(v).replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  const z = ms => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Sadhana//Sala//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Sadhana · Sala',
+    'X-WR-TIMEZONE:America/Monterrey', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+  const sello = z(Date.now());
+  for (let f = d0; f <= d1; f = sumaDias(f, 1)) {
+    const dia = infoDia(f, { ...cfg, cerrados: [] }, rentas), base = Date.parse(`${f}T00:00:00-06:00`);
+    for (const b of dia.bloques) {
+      const nombre = { clase: 'Clase', evento: 'Evento', renta: 'Renta', terapia: 'Terapia' }[b.t] || 'Sala';
+      L.push('BEGIN:VEVENT', `UID:${f}-${b.a}-${b.t}-${esc(b.folio || b.n).replace(/\W+/g, '')}@sadhanaholistics.com`, `DTSTAMP:${sello}`,
+        `DTSTART:${z(base + b.a * 60000)}`, `DTEND:${z(base + b.b * 60000)}`,
+        `SUMMARY:${esc(b.t === 'clase' || b.t === 'evento' ? b.n : b.n)}`, `CATEGORIES:${nombre}`,
+        `DESCRIPTION:${esc(b.folio ? 'Folio ' + b.folio : 'Bloque fijo de la sala')}`, 'LOCATION:Sadhana · P.º del Acueducto 430 Local 18', 'END:VEVENT');
+    }
+  }
+  L.push('END:VCALENDAR');
+  return new Response(L.join('\r\n'), { headers: { 'content-type': 'text/calendar; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
 }
 
 // ---------- Reservar ----------
@@ -202,7 +296,7 @@ async function reservar(request, env) {
   const folio = txt(b.folio, 20), nombre = txt(b.nombre, 120);
   const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
   const fecha = String(b.fecha || ''), a = Number(b.a), horas = Number(b.horas);
-  const uso = USOS.includes(b.uso) ? b.uso : 'Otro';
+  const espacio = b.espacio === 'salon' ? 'salon' : 'consultorio', uso = ESPACIOS[espacio];
   if (!folio || !FOLIO.test(folio)) return json({ ok: false, error: 'Folio inválido' }, 400);
   if (!nombre || tel.length < 10) return json({ ok: false, error: 'Faltan datos' }, 400);
   if (!diaISO.test(fecha) || !Number.isInteger(a) || a % 30 || !Number.isInteger(horas) || horas < cfg.minHoras || horas > cfg.maxHoras)
@@ -215,14 +309,17 @@ async function reservar(request, env) {
   const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM reservas WHERE tel = ? AND creado > ?').bind(tel, corte).first();
   if (n >= 15) return json({ ok: false, error: 'Demasiadas reservas' }, 429);
   const { p } = await env.DB.prepare("SELECT COUNT(*) AS p FROM reservas WHERE tel = ? AND tipo = 'Renta de sala' AND estado = 'pendiente' AND creado > ?").bind(tel, corte).first();
-  if (p >= 3) return json({ ok: false, error: 'pendientes' }, 429);
+  if (p >= 3 && !b.usaPaquete) return json({ ok: false, error: 'pendientes' }, 429);
 
   // 1. ¿Cabe en una ventana libre? (clases, eventos y otras rentas ya descontados, con margen)
   const rentas = await leerRentas(env, fecha, fecha);
   const dia = infoDia(fecha, cfg, rentas);
   if (!dia.libres.some(([x, y]) => a >= x && z <= y)) return json({ ok: false, error: 'ocupado' }, 409);
 
-  const monto = horas * Number(cfg.precios.hora);
+  // Con un paquete de horas: se descuenta de las horas que ya compró (y Sadhana confirmó) ese WhatsApp.
+  const usaPaquete = !!b.usaPaquete;
+  if (usaPaquete && (await horasDisponibles(env, tel, fecha)) < horas) return json({ ok: false, error: 'sin_horas' }, 409);
+  const monto = usaPaquete ? 0 : horas * precioDe(cfg, espacio);
   const ini = new Date(`${fecha}T${hhmm(a)}:00-06:00`).toISOString();
   const detalle = JSON.stringify([
     ['Espacio', 'Sala Sadhana'], ['Horario', `${hhmm(a)} a ${hhmm(z)}`], ['Duración', `${horas} h`], ['Uso', uso],
@@ -230,7 +327,7 @@ async function reservar(request, env) {
   const ahora = new Date().toISOString();
   const utm = limpiarUtm(b.utm);
   const valores = [folio, ahora, 'Renta de sala', `Renta de sala · ${horas} h`, ini, detalle, nombre, tel, txt(b.email, 160), monto,
-    'transferencia', 'pendiente', ahora, b.aceptaPrivacidad ? 1 : 0, b.aceptaComunidad ? 1 : 0];
+    usaPaquete ? 'paquete-horas' : 'transferencia', usaPaquete ? 'confirmado' : 'pendiente', ahora, b.aceptaPrivacidad ? 1 : 0, b.aceptaComunidad ? 1 : 0];
   const SQL = `INSERT OR IGNORE INTO reservas
      (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad`;
   let ins;
@@ -256,13 +353,14 @@ async function reservar(request, env) {
     await env.DB.prepare('DELETE FROM reservas WHERE folio = ?').bind(folio).run();
     return json({ ok: false, error: 'ocupado' }, 409);
   }
-  return json({ ok: true, folio, estado: 'pendiente', monto, ini }, 201);
+  return json({ ok: true, folio, estado: usaPaquete ? 'confirmado' : 'pendiente', monto, ini }, 201);
 }
 
 export async function sala(request, env, url) {
   const p = url.pathname.replace(/\/+$/, '');
   if (p === '/api/sala/disponibilidad' && request.method === 'GET') return disponibilidad(url, env);
   if (p === '/api/sala/reservar' && request.method === 'POST') return reservar(request, env);
+  if (p === '/api/sala/calendario.ics' && request.method === 'GET') return calendario(url, env);
   return json({ ok: false, error: 'No encontrado' }, 404);
 }
 

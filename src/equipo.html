@@ -225,6 +225,10 @@ body.proy nav.tab{display:none}
     <p class="hint" id="terNota" hidden style="margin:0 0 10px;color:var(--warn);font-weight:600">Estas son las terapias que hoy trae la página. Se guardan en la base al primer cambio.</p>
     <div class="list" id="listaTer"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="terNueva">+ Nueva terapia</button></div>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Sala y rentas</h2>
+    <p class="hint" style="margin:0 0 10px">Lo que se ve en «Soy terapeuta»: precio por hora, bloque mensual y paquetes de horas. Hay <b>una sola sala</b>: las clases, los eventos, las terapias y tus propios bloqueos la ocupan primero, y solo se puede rentar lo que queda libre.</p>
+    <div class="r" id="salaResumen"><p class="hint">Cargando…</p></div>
+    <div class="row" style="margin-top:12px"><button class="btn p" id="salaEditar">Editar sala y rentas</button></div>
     <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
       <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· clase suelta + 3 mensualidades</small></h2>
       <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
@@ -533,6 +537,7 @@ async function cargarDir(){
   const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,4), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
   planesDesdePaquetes(PAQ.items);
   cargarTer(l);
+  cargarSalaDoc(l);
   D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
   $("#dirVacio").hidden = D.length>0;
   $("#listaDir").innerHTML = D.map(c=>`<div class="r dir-c" data-cid="${esc(c.id)}">
@@ -637,6 +642,111 @@ $("#listaDir").addEventListener("click", async e => {
   if (es.dataset.est==="activa" && !(c.horarios||[]).length) { toast("Primero ponle un horario (Editar)"); editarClase(c); return; }
   try { await guardarClase({...c, estado:es.dataset.est}); toast(`${c.titulo}: ${EST[es.dataset.est]}`); cargarDir(); } catch(err){ toast(err.message); }
 });
+// ---------- Sala y rentas (doc _sala) ----------
+// Mismos valores base que BASE en src/sala.js. Si no hay doc guardado, se edita sobre esto.
+const SALA_DEF = {precios:{consultorio:400, salon:500}, bloqueMensual:{activo:true, t:"Bloque mensual fijo", precio:3200, horasSemana:4, d:"4 horas por semana, el mismo día y hora, durante un mes."},
+  paquetes:[], horario:{abre:420, cierra:1290}, minHoras:1, maxHoras:4, margen:15, rentaFinSemana:false, cerrados:["2026-12-25","2027-01-01"], eventos:[], bloques:[], calToken:""};
+let SALA = null, salaGuardada = false;
+const mmHHMM = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const hhmmMin = v => { const [h,m] = String(v||"0:0").split(":").map(Number); return (h||0)*60+(m||0); };
+function cargarSalaDoc(l){
+  const d = (l.find(x=>x.id==="_sala")||{}).data; salaGuardada = !!d;
+  SALA = {...SALA_DEF, ...(d||{}), precios:{...SALA_DEF.precios, ...((d||{}).precios||{})}, horario:{...SALA_DEF.horario, ...((d||{}).horario||{})},
+    bloqueMensual: d && d.bloqueMensual === null ? null : {...SALA_DEF.bloqueMensual, ...((d||{}).bloqueMensual||{})}};
+  pintarSala();
+}
+function pintarSala(){
+  const S = SALA, pq = (S.paquetes||[]).filter(p=>p.estado!=="oculta");
+  $("#salaResumen").innerHTML = `${salaGuardada?"":`<p class="hint" style="color:var(--warn);font-weight:600;margin:0 0 6px">Estos son los valores que hoy trae la página. Se guardan en la base al primer cambio.</p>`}
+    <div class="meta" style="display:grid;gap:4px">
+      <span><b>Por hora:</b> ${money(S.precios.consultorio)} 1:1 · ${money(S.precios.salon)} talleres y clases (${S.minHoras} a ${S.maxHoras} h por reserva)</span>
+      <span><b>Bloque mensual:</b> ${S.bloqueMensual&&S.bloqueMensual.activo!==false?`${money(S.bloqueMensual.precio)} · ${S.bloqueMensual.horasSemana} h por semana`:"apagado"}</span>
+      <span><b>Paquetes de horas:</b> ${pq.length?pq.map(p=>`${p.horas} h ${money(p.precio)}`).join(" · "):"ninguno"}</span>
+      <span><b>Horario de renta:</b> lunes a viernes, ${hAmPm(mmHHMM(S.horario.abre))} a ${hAmPm(mmHHMM(S.horario.cierra))}${S.rentaFinSemana?" y fines de semana":" (fines de semana: eventos)"}</span>
+      <span><b>Bloqueos y eventos:</b> ${(S.eventos||[]).filter(e=>e.fecha>=new Date().toISOString().slice(0,10)).length} próximos · ${(S.bloques||[]).length} sesiones fijas propias</span>
+      <span><b>Calendario de Google:</b> ${S.calToken?"activo":"sin activar"}</span></div>`;
+}
+const DIA_C = ["D","L","M","X","J","V","S"];
+function editarSala(){
+  const S = JSON.parse(JSON.stringify(SALA)), bm = S.bloqueMensual || {...SALA_DEF.bloqueMensual, activo:false};
+  $("#dT").textContent = "Sala y rentas";
+  const rowPaq = p => `<div class="pq" data-paq style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <div class="grid2"><label>Nombre<input data-k="t" value="${esc(p.t)}" placeholder="Paquete 10 horas"></label><label>Horas<input data-k="horas" type="number" min="1" value="${esc(p.horas)}"></label></div>
+      <div class="grid2"><label>Precio (MXN)<input data-k="precio" type="number" min="0" value="${esc(p.precio)}"></label><label>Vigencia (días)<input data-k="dias" type="number" min="7" value="${esc(p.dias||90)}"></label></div>
+      <label class="tog"><input type="checkbox" data-k="oculto" ${p.estado==="oculta"?"checked":""}> <span>Oculto (no se vende)</span></label>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const rowEv = e => `<div class="pq" data-ev style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <div class="grid2"><label>Fecha<input data-k="fecha" type="date" value="${esc(e.fecha||"")}"></label><label>Nombre<input data-k="n" value="${esc(e.n||"")}" placeholder="El Poder del OM"></label></div>
+      <div class="grid2"><label>Empieza<input data-k="h" type="time" value="${esc(e.h!=null?mmHHMM(e.h*60+(e.m||0)):"10:00")}"></label><label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${esc(e.dur||120)}"></label></div>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const rowBl = b => `<div class="pq" data-bl style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <label>Nombre<input data-k="n" value="${esc(b.n||"")}" placeholder="Terapias de Isa"></label>
+      <div class="dchips" role="group" aria-label="Días">${[1,2,3,4,5,6,0].map(d=>`<button type="button" data-d="${d}" aria-pressed="${(b.dias||[]).includes(d)}" aria-label="${DIAS[d]}">${DIA_C[d]}</button>`).join("")}</div>
+      <div class="grid2"><label>Empieza<input data-k="h" type="time" value="${esc(b.h!=null?mmHHMM(b.h*60+(b.m||0)):"10:00")}"></label><label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${esc(b.dur||60)}"></label></div>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const url = t => `${location.origin}/api/sala/calendario.ics?t=${t}`;
+  $("#dB").innerHTML = `<form class="form" id="fSala" autocomplete="off" novalidate style="border:0;padding:0;background:none">
+    <h3>Precio por hora</h3>
+    <div class="grid2"><label>Sesión 1:1 (consultorio)<input name="pc" type="number" min="0" value="${esc(S.precios.consultorio)}"></label><label>Taller o clase (salón)<input name="ps" type="number" min="0" value="${esc(S.precios.salon)}"></label></div>
+    <p class="hint" style="margin:0">Son la misma sala: si uno se aparta, el otro también. La competencia cobra de $380 a $420 por hora.</p>
+    <h3>Bloque mensual</h3>
+    <label class="tog"><input type="checkbox" name="bmOn" ${S.bloqueMensual&&bm.activo!==false?"checked":""}> <span>Ofrecer bloque mensual fijo</span></label>
+    <div class="grid2"><label>Precio del mes<input name="bmP" type="number" min="0" value="${esc(bm.precio)}"></label><label>Horas por semana<input name="bmH" type="number" min="1" max="20" value="${esc(bm.horasSemana)}"></label></div>
+    <h3>Paquetes de horas</h3>
+    <p class="hint" style="margin:0">Se compran como reserva; al confirmar el pago en «Hoy» se activan las horas con ese WhatsApp.</p>
+    <div id="sPaq" style="display:grid;gap:8px">${(S.paquetes||[]).map(rowPaq).join("")}</div>
+    <button type="button" class="btn s" id="sPaqAdd">+ Agregar paquete</button>
+    <h3>Horario de renta</h3>
+    <div class="grid2"><label>Abre<input name="ab" type="time" value="${mmHHMM(S.horario.abre)}"></label><label>Cierra<input name="ci" type="time" value="${mmHHMM(S.horario.cierra)}"></label></div>
+    <div class="grid2"><label>Mínimo de horas<input name="mn" type="number" min="1" max="8" value="${esc(S.minHoras)}"></label><label>Máximo de horas<input name="mx" type="number" min="1" max="12" value="${esc(S.maxHoras)}"></label></div>
+    <label>Margen entre bloques (minutos)<input name="mg" type="number" min="0" step="5" value="${esc(S.margen)}"></label>
+    <label class="tog"><input type="checkbox" name="fin" ${S.rentaFinSemana?"checked":""}> <span>Rentar también sábado y domingo <small class="hint">(hoy son para eventos fijos y variables)</small></span></label>
+    <label>Días cerrados <small class="hint">(uno por línea, AAAA-MM-DD)</small><textarea name="cer" rows="3">${esc((S.cerrados||[]).join("\n"))}</textarea></label>
+    <h3>Bloqueos y eventos de fecha</h3>
+    <p class="hint" style="margin:0">Una sesión tuya, un evento de fin de semana o un facilitador externo: bloquean la sala para que nadie la rente encima.</p>
+    <div id="sEv" style="display:grid;gap:8px">${(S.eventos||[]).map(rowEv).join("")}</div>
+    <button type="button" class="btn s" id="sEvAdd">+ Bloquear una fecha</button>
+    <h3>Sesiones fijas propias <small class="hint">(se repiten cada semana)</small></h3>
+    <div id="sBl" style="display:grid;gap:8px">${(S.bloques||[]).map(rowBl).join("")}</div>
+    <button type="button" class="btn s" id="sBlAdd">+ Agregar sesión fija</button>
+    <h3>Calendario de Google</h3>
+    <p class="hint" style="margin:0">Genera una clave y suscribe el enlace una vez en Google Calendar (Otros calendarios → Desde URL). Verán rentas, terapias, clases y eventos de la sala junto a su agenda. Google lo actualiza solo cada varias horas.</p>
+    <label>Clave del calendario<input name="tok" value="${esc(S.calToken||"")}" readonly placeholder="Sin activar"></label>
+    <div class="row"><button type="button" class="btn s" id="sTok">${S.calToken?"Cambiar la clave":"Activar calendario"}</button>${S.calToken?`<button type="button" class="btn s" id="sTokCopia" data-url="${esc(url(S.calToken))}">Copiar enlace</button><button type="button" class="btn s" id="sTokQuita">Apagar</button>`:""}</div>
+    <button class="btn p w" type="submit">Guardar</button>
+  </form>`;
+  const f = $("#fSala");
+  f.addEventListener("click", e => {
+    const q = e.target.closest("[data-quitar]"); if (q){ q.closest(".pq").remove(); return; }
+    const d = e.target.closest("[data-d]"); if (d){ d.setAttribute("aria-pressed", d.getAttribute("aria-pressed")!=="true"); return; }
+  });
+  $("#sPaqAdd").onclick = () => $("#sPaq").insertAdjacentHTML("beforeend", rowPaq({t:"", horas:10, precio:3500, dias:90}));
+  $("#sEvAdd").onclick = () => $("#sEv").insertAdjacentHTML("beforeend", rowEv({}));
+  $("#sBlAdd").onclick = () => $("#sBl").insertAdjacentHTML("beforeend", rowBl({dias:[]}));
+  $("#sTok").onclick = () => { const a = new Uint8Array(18); crypto.getRandomValues(a); f.tok.value = [...a].map(x=>x.toString(36).padStart(2,"0")).join("").slice(0,24); toast("Clave nueva. Toca Guardar para activarla."); };
+  const cp = $("#sTokCopia"); if (cp) cp.onclick = () => { navigator.clipboard.writeText(cp.dataset.url).then(()=>toast("Enlace copiado"), ()=>toast(cp.dataset.url)); };
+  const qk = $("#sTokQuita"); if (qk) qk.onclick = () => { f.tok.value = ""; toast("Calendario apagado. Toca Guardar."); };
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const n = (k) => +f[k].value || 0, v = (row, k) => row.querySelector(`[data-k=${k}]`);
+    const paquetes = [...f.querySelectorAll("[data-paq]")].map((r,i) => ({id:"p"+(i+1)+"-"+(+v(r,"horas").value||0)+"h", t:v(r,"t").value.trim(), horas:+v(r,"horas").value||0, precio:+v(r,"precio").value||0, dias:+v(r,"dias").value||90, estado:v(r,"oculto").checked?"oculta":"activa"}));
+    const mala = paquetes.find(p=>!p.t || p.horas<1 || p.precio<1);
+    if (mala){ toast("Cada paquete necesita nombre, horas y precio (o quítalo)"); return; }
+    const eventos = [...f.querySelectorAll("[data-ev]")].map(r => { const [h,m] = (v(r,"h").value||"10:00").split(":").map(Number); return {fecha:v(r,"fecha").value, n:v(r,"n").value.trim()||"Bloqueado", h, m, dur:+v(r,"dur").value||60}; }).filter(x=>x.fecha);
+    const bloques = [...f.querySelectorAll("[data-bl]")].map(r => { const [h,m] = (v(r,"h").value||"10:00").split(":").map(Number); return {n:v(r,"n").value.trim()||"Sesión fija", dias:[...r.querySelectorAll("[data-d][aria-pressed=true]")].map(x=>+x.dataset.d), h, m, dur:+v(r,"dur").value||60}; });
+    if (bloques.some(b=>!b.dias.length)){ toast("Elige los días de cada sesión fija (o quítala)"); return; }
+    const cerrados = f.cer.value.split(/\s+/).map(x=>x.trim()).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x));
+    if (hhmmMin(f.ci.value) <= hhmmMin(f.ab.value)){ toast("El cierre debe ser después de la apertura"); return; }
+    const doc = {...(salaGuardada?SALA:{}), precios:{consultorio:n("pc"), salon:n("ps")},
+      bloqueMensual: {activo:f.bmOn.checked, t:SALA_DEF.bloqueMensual.t, precio:n("bmP"), horasSemana:n("bmH")||4, d:`${n("bmH")||4} horas por semana, el mismo día y hora, durante un mes.`},
+      paquetes, horario:{abre:hhmmMin(f.ab.value), cierra:hhmmMin(f.ci.value)}, minHoras:Math.max(1,n("mn")), maxHoras:Math.max(n("mn")||1,n("mx")||4), margen:n("mg"),
+      rentaFinSemana:f.fin.checked, cerrados, eventos, bloques, calToken:f.tok.value.trim()};
+    if (doc.precios.consultorio<1 || doc.precios.salon<1){ toast("Pon el precio por hora"); return; }
+    try { await docs("_sala", doc); SALA = {...SALA_DEF, ...doc}; salaGuardada = true; toast("Guardado. Ya se ve en la página."); $("#dlg").close(); pintarSala(); } catch(err){ toast(err.message); }
+  };
+  $("#dlg").showModal();
+}
+$("#salaEditar").onclick = editarSala;
 // ---------- Terapias 1:1 (doc _terapias {items}) ----------
 const TERAPEUTA = {isa:"Isa", diego:"Diego"};
 const GLIFOS = {lotus:"Loto", sun:"Sol", spine:"Columna", star:"Estrella", sound:"Sonido", moon:"Luna", tree:"Árbol", wave:"Onda", spiral:"Espiral", eye:"Ojo"};

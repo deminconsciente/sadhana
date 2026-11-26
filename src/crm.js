@@ -375,6 +375,7 @@ async function cambiarReserva(folio, request, env) {
     sets.push('actualizado = ?'); vals.push(ahora());
     const r = await env.DB.prepare(`UPDATE reservas SET ${sets.join(', ')} WHERE folio = ?`).bind(...vals, folio).run();
     if (!r.meta.changes) return json({ ok: false, error: 'No existe ese folio' }, 404);
+    if (b.estado === 'confirmado') await activarPaqueteHoras(env, folio);
   }
   if (b.maestro !== undefined) {
     const existe = await env.DB.prepare('SELECT 1 FROM reservas WHERE folio = ?').bind(folio).first();
@@ -384,6 +385,27 @@ async function cambiarReserva(folio, request, env) {
   }
   if (!sets.length && b.maestro === undefined) return json({ ok: false, error: 'Nada que cambiar' }, 400);
   return json({ ok: true });
+}
+
+// Al confirmar el pago de un «Paquete de horas» (sala) se abre su membresía: clases = horas, con su vigencia.
+// Las rentas pagadas con el paquete restan de ahí (ver horasDisponibles en src/sala.js).
+async function activarPaqueteHoras(env, folio) {
+  const r = await env.DB.prepare("SELECT * FROM reservas WHERE folio = ? AND tipo = 'Paquete de horas'").bind(folio).first();
+  if (!r) return;
+  const nota = 'Folio ' + folio;
+  if (await env.DB.prepare('SELECT 1 FROM membresias WHERE nota = ?').bind(nota).first()) return;
+  let det = [];
+  try { det = JSON.parse(r.detalle || '[]'); } catch (e) {}
+  const val = k => (det.find(x => new RegExp(k, 'i').test(x[0])) || [])[1] || '';
+  const horas = parseInt(val('horas'), 10) || 0, dias = parseInt(val('vigencia'), 10) || 90;
+  if (!horas) return;
+  await sincronizarAlumnos(env);
+  const al = await env.DB.prepare('SELECT id FROM alumnos WHERE tel = ?').bind(r.tel).first();
+  if (!al) return;
+  const inicio = hoyMTY();
+  await env.DB.prepare(
+    'INSERT INTO membresias (alumno_id, plan, inicio, fin, clases, monto, metodo, nota, registrado_por, creado) VALUES (?,?,?,?,?,?,?,?,?,?)'
+  ).bind(al.id, `Paquete ${horas} h de sala`, inicio, sumaDias(inicio, dias), horas, r.monto || 0, r.metodo, nota, 'automático', ahora()).run();
 }
 
 // ---------- Confirmación de asistencia en línea ----------
