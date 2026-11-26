@@ -1443,7 +1443,7 @@ const Registro = {
     d = d || ST.datos || {};
     const cuerpo = {folio:t.folio, tipo:t.tipo, titulo:t.titulo, ini:t.ini||null, detalle:t.detalle||null,
       nombre:t.nombre, tel:d.tel, email:d.email, monto:t.pagado||0, metodo:t.metodo, estado:t.estado,
-      aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad};
+      aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad, utm:(window.SadhanaMeta&&SadhanaMeta.utm())||undefined};
     // keepalive: el envío sobrevive aunque WhatsApp se abra en el mismo clic.
     try {
       fetch(CONFIG.reservasAPI, {method:"POST", keepalive:true, headers:{"Content-Type":"application/json"}, body:JSON.stringify(cuerpo)})
@@ -1456,7 +1456,7 @@ const Registro = {
     d = d || ST.datos || {};
     try {
       const r = await fetch(CONFIG.reservasAPI, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({folio:t.folio, tipo:t.tipo, titulo:t.titulo, ini:t.ini||null, detalle:t.detalle||null,
-        nombre:t.nombre, tel:d.tel, email:d.email, monto:0, metodo:t.metodo, estado:t.estado, aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad})});
+        nombre:t.nombre, tel:d.tel, email:d.email, monto:0, metodo:t.metodo, estado:t.estado, aceptaPrivacidad:true, aceptaComunidad:!!d.comunidad, utm:(window.SadhanaMeta&&SadhanaMeta.utm())||undefined})});
       if (r.status === 409){ const j = await r.json().catch(()=>({})); return j.error === "promo_cerrada" ? "promo_cerrada" : "ya_usada"; }
       if (r.ok || r.status === 400){ t.registrado = true; save(); }
       return "ok";
@@ -2013,6 +2013,7 @@ let lastFocus = null;
 function abrir(flujo){
   lastFocus = document.activeElement;
   F = Object.assign({paso:0, orden:{}}, flujo);
+  try { SadhanaMeta.track("ReservaIniciada", {titulo:F.titulo}); } catch(e){}
   ov.hidden = false; document.body.classList.add("lock");
   pintar();
   setTimeout(()=>$("#shClose").focus(), 30);
@@ -2196,6 +2197,7 @@ function emitir(o){
   if (t.daCreditos && t.estado === "confirmado"){ for (const [k,v] of Object.entries(t.daCreditos)) ST.creditos[k] = (ST.creditos[k]||0)+v; }
   ST.tickets.unshift(t); save();
   if (!o.sinRegistro) Registro.guardar(t, o.datos);
+  try { SadhanaMeta.track(gratisT(t) ? "ClasePrueba" : "ReservaPendiente", {titulo:t.titulo, valor:t.pagado||0}, t.folio); } catch(e){}
   o.ticket = t;
 }
 function gcal(t){
@@ -2816,4 +2818,5 @@ if (CONFIG.comunidad){ const l = $("#lnkCom"); if (l){ l.href = CONFIG.comunidad
 Registro.sincronizar();
 cargarVotos();
 </script>
+<script src="/assets/meta.js"></script>
 <script src="/assets/burbuja.js" defer></script>
