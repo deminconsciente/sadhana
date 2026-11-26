@@ -28,6 +28,7 @@ export const BASE = {
   paquetes: [],         // paquetes de horas: [{id, t, horas, precio, dias, estado}]
   bloqueMensual: { activo: true, t: 'Bloque mensual fijo', precio: 3200, horasSemana: 4, d: '4 horas por semana, el mismo día y hora, durante un mes.' },
   calToken: '',         // clave del calendario .ics (se genera en /equipo)
+  talleresActivos: ['reiki1'], // certificaciones visibles en «Soy terapeuta» (se edita en /equipo)
   horario: { abre: 7 * 60, cierra: 21 * 60 + 30 }, // lunes a viernes
   rentaFinSemana: false, // sábado y domingo son de eventos fijos y variables
   margen: 15,            // minutos antes y después de cada bloque
