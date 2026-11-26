@@ -7,6 +7,7 @@
 //                               Vacío = la landing usa el directorio que trae escrito.
 //                               Trae también `paquetes` (máx. 4) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
+//   GET  /api/sala/disponibilidad · POST /api/sala/reservar   renta de la sala por hora, sin traslapes (src/sala.js).
 //   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
 //   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
 // Privado (contraseña en el secreto ADMIN_CLAVE):
@@ -14,6 +15,7 @@
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
 //   POST /admin/api/reservas/:folio  {estado?, nota?}
 import panelHTML from './admin.html';
+import { esSala, sala } from './sala.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -37,6 +39,7 @@ export async function api(request, env) {
   if (!env.DB) return json({ ok: false, error: 'Base de datos no configurada' }, 503);
 
   try {
+    if (esSala(p)) return await sala(request, env, url);
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
     if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);

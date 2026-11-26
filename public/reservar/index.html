@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reserva el espacio · Sadhana</title>
+<meta name="description" content="Toma una clase o un evento en Sadhana, o renta la sala por hora para tu sesión, taller o práctica. Satélite Acueducto, Monterrey.">
+<link rel="icon" href="/assets/img/sello.png">
+<style>
+@font-face{font-family:"Glacial Indifference";font-weight:400;font-display:swap;src:url(/assets/fonts/glacial-indifference-400.woff2) format("woff2")}
+@font-face{font-family:"Glacial Indifference";font-weight:700;font-display:swap;src:url(/assets/fonts/glacial-indifference-700.woff2) format("woff2")}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+:root{
+  --bg:#f7f0ec; --surface:#fffaf6; --surface-2:#f2e7e1; --ink:#2b1d24; --ink-2:#6b5560;
+  --line:rgba(43,29,36,.14); --line-2:rgba(43,29,36,.26);
+  --wine:#7d2e5c; --on-wine:#fff7fb; --amber:#b86e12;
+  --ok:#2f7a4a; --ok-bg:rgba(47,122,74,.12); --bad:#a8382f; --warn:#9a5a12; --warn-bg:rgba(184,110,18,.14);
+  --clase:#7d2e5c; --evento:#b86e12; --libre:#2f7a4a;
+  --glass:rgba(255,250,246,.82); --shadow:0 22px 50px -26px rgba(43,29,36,.45);
+  --f:"Glacial Indifference","Avenir Next","Century Gothic",ui-sans-serif,system-ui,sans-serif;
+  --gl:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1a1317; --surface:#241a20; --surface-2:#2f232a; --ink:#f5ebef; --ink-2:#cdb9c3;
+  --line:rgba(245,235,239,.14); --line-2:rgba(245,235,239,.28);
+  --wine:#e2a3c6; --on-wine:#2a1420; --amber:#e3a54e;
+  --ok:#8fd0a2; --ok-bg:rgba(143,208,162,.14); --bad:#f08a7e; --warn:#f0bf86; --warn-bg:rgba(240,191,134,.14);
+  --clase:#e2a3c6; --evento:#e3a54e; --libre:#8fd0a2;
+  --glass:rgba(36,26,32,.82); --shadow:0 22px 50px -24px rgba(0,0,0,.7); color-scheme:dark}}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--f);overflow-x:hidden}
+a{color:var(--wine)}
+h1,h2,h3{font-weight:400;line-height:1.15;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding:0 var(--gr) 0 var(--gl)}
+/* Barra en píldora translúcida */
+.bar{position:sticky;top:max(8px,env(safe-area-inset-top,0px));z-index:20;margin:8px auto 0;max-width:760px;padding:0 var(--gr) 0 var(--gl)}
+.bar>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 8px 8px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.bar b{font-weight:700;letter-spacing:.04em}
+/* Portada: velas con fade */
+.hero{position:relative;margin-top:-58px;padding:92px 0 28px;isolation:isolate}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to bottom,rgba(26,19,23,.35),var(--bg) 96%),url(/assets/img/velas.jpg) center/cover;opacity:.9;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent);mask-image:linear-gradient(to bottom,#000 55%,transparent)}
+.hero h1{font-size:clamp(2rem,8vw,3.1rem);color:#fff7f0;text-shadow:0 2px 14px rgba(26,19,23,.55)}
+.hero p{margin:10px 0 0;max-width:30em;color:#fff1e6;text-shadow:0 1px 8px rgba(26,19,23,.6);font-size:1.08rem}
+.doors{display:grid;gap:10px;margin-top:20px}
+@media (min-width:600px){.doors{grid-template-columns:1fr 1fr}}
+.door{display:grid;gap:2px;text-decoration:none;color:var(--ink);padding:16px 18px;border-radius:20px;background:var(--glass);border:1px solid var(--line-2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.door b{font-size:1.12rem;font-weight:700}.door span{font-size:.92rem;color:var(--ink-2)}
+.door:active{transform:scale(.99)}
+/* Tarjetas y pasos */
+section.card{margin:22px 0;padding:20px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--wine);font-weight:700;margin:0 0 6px}
+.muted{color:var(--ink-2)}
+.paso{margin-top:20px}
+.lbl{display:block;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px}
+/* Días */
+.dias{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px;scrollbar-width:thin}
+.dia{flex:0 0 58px;scroll-snap-align:start;display:grid;place-items:center;gap:0;padding:8px 0;border-radius:16px;border:1px solid var(--line-2);background:transparent;color:var(--ink);font:inherit;cursor:pointer;min-height:64px}
+.dia small{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.dia b{font-size:1.3rem;font-weight:700;line-height:1.1}
+.dia i{width:6px;height:6px;border-radius:50%;background:var(--libre);margin-top:3px}
+.dia.sin i{background:var(--line-2)}
+.dia[aria-pressed="true"]{background:var(--wine);color:var(--on-wine);border-color:var(--wine)}
+.dia[aria-pressed="true"] small{color:var(--on-wine);opacity:.85}
+/* Línea de tiempo del día */
+.linea{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fila{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2)}
+.fila time{font-size:.9rem;color:var(--ink-2);font-variant-numeric:tabular-nums;line-height:1.25}
+.fila b{font-weight:700;display:block}
+.fila .t{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.fila.clase{border-left:5px solid var(--clase)}.fila.clase .t{color:var(--clase)}
+.fila.evento{border-left:5px solid var(--evento)}.fila.evento .t{color:var(--evento)}
+.fila.renta{border-left:5px solid var(--line-2);opacity:.8}.fila.renta .t{color:var(--ink-2)}
+.fila.libre{border:1px dashed var(--libre);background:var(--ok-bg);cursor:pointer;text-align:left;font:inherit;color:var(--ink);width:100%}
+.fila.libre .t{color:var(--libre)}
+.fila.libre[aria-pressed="true"]{outline:2px solid var(--libre);outline-offset:1px}
+.aviso{padding:14px 16px;border-radius:16px;background:var(--warn-bg);color:var(--ink)}
+.aviso a{font-weight:700}
+/* Chips y controles */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--wine);color:var(--on-wine);border-color:var(--wine)}
+.paso-horas{display:flex;align-items:center;gap:14px}
+.paso-horas button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line-2);background:transparent;color:var(--ink);font:inherit;font-size:1.4rem;cursor:pointer}
+.paso-horas output{min-width:4.5em;text-align:center;font-weight:700;font-size:1.1rem}
+.resumen{margin-top:18px;padding:14px 16px;border-radius:16px;background:var(--surface-2);display:grid;gap:4px}
+.resumen div{display:flex;justify-content:space-between;gap:12px}
+.resumen .tot{font-size:1.2rem;font-weight:700;border-top:1px solid var(--line-2);padding-top:8px;margin-top:4px}
+.field{display:grid;gap:6px;margin-top:14px}
+.inp{width:100%;min-height:48px;padding:10px 14px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:inherit}
+.inp:focus-visible,.btn:focus-visible,.chip:focus-visible,.dia:focus-visible,.fila.libre:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.92rem;color:var(--ink-2)}
+.chk input{width:22px;height:22px;margin-top:1px;accent-color:var(--wine);flex:none}
+.err{color:var(--bad);font-size:.9rem;margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 24px;border-radius:999px;border:1px solid transparent;background:var(--wine);color:var(--on-wine);font:700 1rem var(--f);text-decoration:none;cursor:pointer;width:100%;margin-top:18px}
+.btn.g{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn[disabled]{opacity:.5;cursor:wait}
+.btn.s{min-height:38px;padding:0 14px;font-size:.88rem;width:auto;margin:0}
+/* Ticket */
+.ticket{border-radius:22px;border:1px solid var(--line-2);overflow:hidden;background:var(--surface)}
+.tk-top{padding:18px;background:linear-gradient(135deg,#e9b46a,#c99aa6 55%,#8a3b68);color:#2a1420}
+.tk-top h3{font-size:1.4rem}
+.tk-top p{margin:2px 0 0}
+.tk-body{padding:16px 18px;display:grid;gap:8px}
+.tk-body div{display:flex;justify-content:space-between;gap:12px}
+.folio{font-weight:700;letter-spacing:.06em}
+.estado{display:inline-block;padding:6px 12px;border-radius:999px;background:var(--warn-bg);color:var(--warn);font-weight:700;font-size:.88rem;justify-self:start}
+.pago{margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--surface-2);display:grid;gap:8px}
+.pago div{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.num{font-variant-numeric:tabular-nums;text-align:right;word-break:break-all}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.nota{font-size:.9rem;color:var(--ink-2);margin:12px 0 0}
+footer{padding:26px 0 calc(40px + env(safe-area-inset-bottom,0px));font-size:.92rem;color:var(--ink-2)}
+.res{margin:22px 0;padding:18px;border-radius:22px;border:1px dashed var(--line-2)}
+</style>
+</head>
+<body>
+<div class="bar"><div><b>SADHANA</b><a class="btn g s" href="/">Volver al inicio</a></div></div>
+
+<header class="hero"><div class="wrap">
+  <h1>Reserva el espacio</h1>
+  <p>Una sola sala, sin traslapes: lo que ves libre aquí es lo que de verdad está libre.</p>
+  <nav class="doors" aria-label="Qué quieres hacer">
+    <a class="door" href="/#agenda"><b>Tomar una clase o un evento</b><span>Yoga, consciencia corporal, chi kung, meditación y pranayama</span></a>
+    <a class="door" href="#rentar"><b>Rentar la sala por hora</b><span>Para tu sesión, taller o práctica</span></a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section class="card" id="rentar" aria-labelledby="h-rentar">
+    <p class="eyebrow">Renta por hora</p>
+    <h2 id="h-rentar">Elige tu día y tu hora</h2>
+    <p class="muted" id="intro">Cargando la disponibilidad…</p>
+
+    <div class="paso" id="p1" hidden>
+      <span class="lbl" id="lblDia">1 · Día</span>
+      <div class="dias" id="dias" role="group" aria-labelledby="lblDia"></div>
+    </div>
+
+    <div class="paso" id="p2" hidden>
+      <span class="lbl">2 · La sala ese día</span>
+      <ul class="linea" id="linea"></ul>
+    </div>
+
+    <div class="paso" id="p3" hidden>
+      <span class="lbl">3 · Cuánto tiempo y a qué hora</span>
+      <div class="paso-horas"><button type="button" id="hMenos" aria-label="Una hora menos">−</button><output id="hOut" aria-live="polite"></output><button type="button" id="hMas" aria-label="Una hora más">+</button></div>
+      <span class="lbl" style="margin-top:16px">Hora de inicio</span>
+      <div class="chips" id="inicios" role="group" aria-label="Hora de inicio"></div>
+      <div class="resumen" id="resumen" hidden></div>
+    </div>
+
+    <form class="paso" id="p4" hidden novalidate>
+      <span class="lbl">4 · Tus datos</span>
+      <div class="field"><label for="nom">Nombre</label><input class="inp" id="nom" autocomplete="name" required></div>
+      <div class="field"><label for="tel">WhatsApp</label><input class="inp" id="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="81 1234 5678" required></div>
+      <div class="field"><label for="mail">Correo (opcional)</label><input class="inp" id="mail" type="email" autocomplete="email"></div>
+      <div class="field"><label for="uso">¿Para qué la usarás?</label><select class="inp" id="uso"></select></div>
+      <label class="chk"><input type="checkbox" id="priv"><span>Acepto el <a href="/privacidad/" target="_blank" rel="noopener">aviso de privacidad</a> y los <a href="/terminos/" target="_blank" rel="noopener">términos</a>.</span></label>
+      <p class="err" id="err" role="alert" hidden></p>
+      <button class="btn" id="enviar" type="submit">Apartar la sala</button>
+      <p class="nota">Tu horario queda apartado 24 horas mientras mandas tu comprobante. Si no llega, se libera solo.</p>
+    </form>
+
+    <div class="paso" id="ticket" hidden aria-live="polite"></div>
+  </section>
+
+  <aside class="res">
+    <p class="eyebrow">¿Rentas seguido?</p>
+    <p style="margin:0 0 12px">Estamos armando la membresía de residentes: un bloque de horas al mes a precio preferente y tu ficha en el directorio de Sadhana. Deja tu interés y te avisamos cuando abra.</p>
+    <a class="btn g s" id="waRes" href="#" target="_blank" rel="noopener">Quiero ser residente</a>
+  </aside>
+</main>
+
+<footer><div class="wrap">
+  <p style="margin:0">P.º del Acueducto 430, Local 18, Satélite Acueducto, Sexto Sector, 64979 Monterrey, N.L. · <a href="https://maps.app.goo.gl/vaXKCNu2pZtEAvrr9" target="_blank" rel="noopener">Cómo llegar</a></p>
+  <p style="margin:8px 0 0">Los fines de semana la sala es de eventos fijos y variables. Si quieres hacer uno, <a id="waEvento" href="#" target="_blank" rel="noopener">escríbenos</a>.</p>
+</div></footer>
+
+<script>
+(() => {
+  const WA = "528115458500";
+  const BANCO = {banco: "Banorte", titular: "Ana Isabela Arciniega Guerra", clabe: "072580002056012792"};
+  const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"], DIAS_L = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = n => "$" + Number(n).toLocaleString("es-MX");
+  const hora = min => { const h = Math.floor(min / 60), m = min % 60, h12 = h % 12 || 12; return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`; };
+  const wa = txt => `https://wa.me/${WA}?text=${encodeURIComponent(txt)}`;
+  const fechaL = f => { const [y, m, d] = f.split("-").map(Number); const w = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay(); return `${DIAS_L[w]} ${d} de ${MESES[m - 1]}`; };
+
+  $("#waRes").href = wa("Hola Sadhana, me interesa ser residente y rentar la sala por bloques de horas al mes. ¿Me avisan cuando abra?");
+  $("#waEvento").href = wa("Hola Sadhana, quiero proponer un evento o taller en fin de semana.");
+
+  // Origen de la visita: lo captura /assets/meta.js (utm_*, fbclid; primer toque, 30 días) y viaja con la reserva.
+  const utm = () => { try { return (window.SadhanaMeta && SadhanaMeta.utm()) || undefined; } catch (e) { return undefined; } };
+
+  const S = {data: null, dia: null, win: null, horas: 1, a: null, enviando: false};
+  const diaSel = () => S.data.dias.find(d => d.f === S.dia);
+
+  async function cargar() {
+    try {
+      const r = await fetch("/api/sala/disponibilidad?dias=28", {cache: "no-store"});
+      if (!r.ok) throw 0;
+      S.data = await r.json();
+    } catch (e) {
+      $("#intro").innerHTML = `No pudimos cargar la disponibilidad. <a href="${wa("Hola Sadhana, quiero rentar la sala por hora.")}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y la apartamos contigo.`;
+      return;
+    }
+    const D = S.data;
+    $("#intro").textContent = `${money(D.precios.hora)} por hora, de ${D.minHoras} a ${D.maxHoras} horas por reserva. Incluye tapetes, cojines, cuencos y bocina. Lunes a viernes.`;
+    $("#uso").innerHTML = D.usos.map(u => `<option>${esc(u)}</option>`).join("");
+    if (!S.dia || !D.dias.some(d => d.f === S.dia)) S.dia = (D.dias.find(d => d.libres.length) || D.dias[0]).f;
+    $("#p1").hidden = false;
+    pintar();
+  }
+
+  function pintar() {
+    const D = S.data, d = diaSel();
+    $("#dias").innerHTML = D.dias.map(x => {
+      const [, m, dd] = x.f.split("-").map(Number);
+      return `<button type="button" class="dia ${x.libres.length ? "" : "sin"}" data-f="${x.f}" aria-pressed="${x.f === S.dia}" aria-label="${esc(fechaL(x.f))}${x.libres.length ? "" : ", sin horas libres"}"><small>${DIAS[x.dow]}</small><b>${dd}</b><i></i></button>`;
+    }).join("");
+    // Línea de tiempo: bloques ocupados y ventanas libres, en orden.
+    const filas = [
+      ...d.bloques.map(b => ({a: b.a, z: b.b, tipo: b.t, n: b.n})),
+      ...d.libres.map(([a, z]) => ({a, z, tipo: "libre"})),
+    ].sort((x, y) => x.a - y.a);
+    let html = "";
+    if (!d.abierto) {
+      html = `<li class="aviso">${esc(d.motivo || "Cerrado")}. ${d.dow === 0 || d.dow === 6 ? `Si quieres hacer un evento o taller, <a href="${wa("Hola Sadhana, quiero proponer un evento o taller el " + fechaL(d.f) + ".")}" target="_blank" rel="noopener">escríbenos</a>.` : ""}</li>`;
+      filas.filter(f => f.tipo !== "libre").forEach(f => { html += filaHTML(f); });
+    } else if (!filas.length) {
+      html = `<li class="aviso">Sin horas libres este día.</li>`;
+    } else {
+      html = filas.map(filaHTML).join("");
+      if (!d.libres.length) html += `<li class="aviso">Este día ya no tiene horas libres. Prueba con otro.</li>`;
+    }
+    $("#linea").innerHTML = html;
+    $("#p2").hidden = false;
+    const hayWin = S.win && d.libres.some(w => w[0] === S.win[0] && w[1] === S.win[1]);
+    if (!hayWin) { S.win = null; S.a = null; }
+    $("#p3").hidden = !S.win;
+    $("#p4").hidden = !(S.win && S.a != null);
+    if (S.win) pintarHoras();
+  }
+  function filaHTML(f) {
+    const rango = `${hora(f.a)}<br>${hora(f.z)}`;
+    if (f.tipo === "libre") {
+      const on = S.win && S.win[0] === f.a && S.win[1] === f.z;
+      return `<li><button type="button" class="fila libre" data-a="${f.a}" data-z="${f.z}" aria-pressed="${!!on}"><time>${rango}</time><span><span class="t">Libre</span><b>Rentar este horario</b></span></button></li>`;
+    }
+    const t = {clase: "Clase", evento: "Evento", renta: "Reservado"}[f.tipo];
+    return `<li class="fila ${f.tipo}"><time>${rango}</time><span><span class="t">${t}</span><b>${esc(f.tipo === "renta" ? "Sala ocupada" : f.n)}</b></span></li>`;
+  }
+
+  function inicios() {
+    const [a, z] = S.win, out = [];
+    for (let t = Math.ceil(a / 30) * 30; t + S.horas * 60 <= z; t += 30) out.push(t);
+    return out;
+  }
+  function pintarHoras() {
+    const D = S.data, [a, z] = S.win;
+    // Si ya no cabe la duración elegida en esta ventana, se baja.
+    while (S.horas > D.minHoras && !inicios().length) S.horas--;
+    const max = Math.min(D.maxHoras, Math.floor((z - Math.ceil(a / 30) * 30) / 60));
+    $("#hOut").textContent = `${S.horas} h`;
+    $("#hMenos").disabled = S.horas <= D.minHoras;
+    $("#hMas").disabled = S.horas >= max;
+    const opts = inicios();
+    if (S.a != null && !opts.includes(S.a)) S.a = null;
+    $("#inicios").innerHTML = opts.map(t => `<button type="button" class="chip" data-t="${t}" aria-pressed="${t === S.a}">${hora(t)}</button>`).join("");
+    const r = $("#resumen");
+    if (S.a == null) { r.hidden = true; $("#p4").hidden = true; return; }
+    r.hidden = false;
+    r.innerHTML = `<div><span>Día</span><span>${esc(fechaL(S.dia))}</span></div><div><span>Horario</span><span>${hora(S.a)} a ${hora(S.a + S.horas * 60)}</span></div>
+      <div><span>${S.horas} h × ${money(D.precios.hora)}</span><span></span></div><div class="tot"><span>Total</span><span>${money(S.horas * D.precios.hora)}</span></div>`;
+    $("#p4").hidden = false;
+  }
+
+  $("#dias").onclick = e => {
+    const b = e.target.closest("[data-f]"); if (!b) return;
+    S.dia = b.dataset.f; S.win = null; S.a = null; pintar();
+  };
+  $("#linea").onclick = e => {
+    const b = e.target.closest("[data-a]"); if (!b) return;
+    S.win = [+b.dataset.a, +b.dataset.z]; S.a = null; pintar();
+    $("#p3").scrollIntoView({behavior: "smooth", block: "nearest"});
+  };
+  $("#hMenos").onclick = () => { S.horas--; pintarHoras(); };
+  $("#hMas").onclick = () => { S.horas++; pintarHoras(); };
+  $("#inicios").onclick = e => {
+    const b = e.target.closest("[data-t]"); if (!b) return;
+    S.a = +b.dataset.t; pintarHoras();
+    $("#p4").scrollIntoView({behavior: "smooth", block: "nearest"});
+  };
+
+  // Datos recordados de otras reservas en este navegador
+  try {
+    const st = JSON.parse(localStorage.getItem("sadhana.v1") || "{}");
+    if (st.datos) { $("#nom").value = st.datos.nombre || ""; $("#tel").value = st.datos.tel || ""; $("#mail").value = st.datos.email || ""; }
+  } catch (e) {}
+
+  const folio = () => "SAD-" + Math.random().toString(36).slice(2, 6).toUpperCase() + "-" + String(Date.now()).slice(-4);
+  const falla = t => { const e = $("#err"); e.textContent = t; e.hidden = !t; };
+
+  $("#p4").onsubmit = async ev => {
+    ev.preventDefault();
+    if (S.enviando) return;
+    const nombre = $("#nom").value.trim(), tel = $("#tel").value.replace(/\D/g, "");
+    if (nombre.length < 2) return falla("Escribe tu nombre.");
+    if (tel.length < 10) return falla("Escribe tu WhatsApp a 10 dígitos.");
+    if (!$("#priv").checked) return falla("Acepta el aviso de privacidad para continuar.");
+    falla("");
+    S.enviando = true; const btn = $("#enviar"); btn.disabled = true; btn.textContent = "Apartando…";
+    const cuerpo = {folio: folio(), fecha: S.dia, a: S.a, horas: S.horas, uso: $("#uso").value, nombre, tel, email: $("#mail").value.trim() || undefined, aceptaPrivacidad: true, utm: utm()};
+    try {
+      const r = await fetch("/api/sala/reservar", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(cuerpo)});
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 201 && j.ok) return listo(cuerpo, j);
+      if (r.status === 409 && j.error === "ocupado") { falla("Alguien acaba de tomar ese horario. Elige otro, ya actualizamos la lista."); await cargar(); }
+      else if (r.status === 429) falla(j.error === "pendientes" ? "Ya tienes 3 reservas esperando pago. Envía tu comprobante o espera a que se liberen." : "Hiciste muchas reservas seguidas. Escríbenos por WhatsApp.");
+      else falla("No pudimos apartar el horario. Intenta de nuevo o escríbenos por WhatsApp.");
+    } catch (e) { falla("Sin conexión. Intenta de nuevo."); }
+    S.enviando = false; btn.disabled = false; btn.textContent = "Apartar la sala";
+  };
+
+  function listo(c, j) {
+    const d = S.data, fin = c.a + c.horas * 60;
+    try { SadhanaMeta.track("ReservaPendiente", {titulo: "Renta de sala", valor: j.monto}, c.folio); } catch (e) {}
+    const t = {tipo: "Renta de sala", titulo: `Renta de sala · ${c.horas} h`, ini: j.ini, dur: c.horas * 60, folio: c.folio, creado: new Date().toISOString(),
+      estado: "pendiente", nombre: c.nombre, pagado: j.monto, metodo: "transferencia",
+      detalle: [["Espacio", "Sala Sadhana"], ["Horario", `${hora(c.a)} a ${hora(fin)}`], ["Duración", `${c.horas} h`], ["Uso", c.uso]],
+      siguiente: "Cuando verifiquemos tu transferencia, tu reserva pasa a confirmada. Llega 10 minutos antes para recibirte."};
+    // Se guarda igual que las reservas de la página principal, para que salga en «Mis reservas».
+    try {
+      const st = JSON.parse(localStorage.getItem("sadhana.v1") || "{}");
+      st.tickets = [t, ...(st.tickets || [])]; st.datos = {nombre: c.nombre, tel: c.tel, email: c.email || ""};
+      localStorage.setItem("sadhana.v1", JSON.stringify(st));
+    } catch (e) {}
+    const fin12 = new Date(j.ini), f = x => x.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const gcal = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent("Renta de sala · Sadhana") + "&dates=" + f(fin12) + "/" + f(new Date(fin12.getTime() + c.horas * 3600e3)) +
+      "&details=" + encodeURIComponent("Folio " + c.folio) + "&location=" + encodeURIComponent("P.º del Acueducto 430, Local 18, Satélite Acueducto, Monterrey");
+    const concepto = `${c.folio} ${c.nombre}`;
+    const cp = (k, v) => `<div><span>${k}</span><span class="num">${esc(v)} <button type="button" class="btn g s" data-copy="${esc(v)}">Copiar</button></span></div>`;
+    const msg = `Hola Sadhana, soy ${c.nombre}. Aparté la sala el ${fechaL(c.fecha)}, de ${hora(c.a)} a ${hora(fin)} (${c.horas} h). Folio ${c.folio}. Pago: ${money(j.monto)} por transferencia. Te envío mi comprobante.`;
+    for (const id of ["p1", "p2", "p3", "p4"]) $("#" + id).hidden = true;
+    $("#intro").hidden = true;
+    const el = $("#ticket"); el.hidden = false;
+    el.innerHTML = `<p style="font-size:1.1rem;margin:0 0 14px">Listo, ${esc(c.nombre.split(" ")[0])}. Tu horario queda apartado 24 horas mientras envías tu comprobante.</p>
+      <div class="ticket"><div class="tk-top"><p class="eyebrow" style="color:#2a1420">Renta de sala</p><h3>${esc(fechaL(c.fecha))}</h3><p>${hora(c.a)} a ${hora(fin)} · ${c.horas} h</p></div>
+      <div class="tk-body"><div><span>Folio</span><span class="folio">${esc(c.folio)}</span></div><div><span>Uso</span><span>${esc(c.uso)}</span></div><div><span>Total</span><span><b>${money(j.monto)}</b></span></div>
+      <span class="estado">Apartado 24 h · pago pendiente</span></div></div>
+      <div class="pago"><b>Paga por transferencia</b>${cp("Banco", BANCO.banco)}${cp("Titular", BANCO.titular)}${cp("CLABE", BANCO.clabe)}${cp("Monto", String(j.monto))}${cp("Concepto", concepto)}</div>
+      <a class="btn" href="${wa(msg)}" target="_blank" rel="noopener">Enviar mi comprobante por WhatsApp</a>
+      <p class="nota">Sin ese mensaje Sadhana no recibe tu comprobante. La reserva no se confirma hasta verificar el pago.</p>
+      <div class="acts"><a class="btn g s" href="${gcal}" target="_blank" rel="noopener">Agregar a Google Calendar</a><a class="btn g s" href="https://maps.app.goo.gl/vaXKCNu2pZtEAvrr9" target="_blank" rel="noopener">Cómo llegar</a><button class="btn g s" type="button" data-copy="${esc(c.folio)}">Copiar folio</button></div>
+      <p class="nota">${esc(t.siguiente)}</p>`;
+    el.scrollIntoView({behavior: "smooth", block: "start"});
+    S.enviando = false;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-copy]"); if (!b) return;
+    const v = b.dataset.copy, ok = () => { const o = b.textContent; b.textContent = "Copiado"; setTimeout(() => b.textContent = o, 1400); };
+    (navigator.clipboard ? navigator.clipboard.writeText(v).then(ok, ok) : ok());
+  });
+
+  cargar();
+  setInterval(() => { if (document.visibilityState === "visible" && !S.enviando && $("#ticket").hidden && S.data) cargar(); }, 60000);
+})();
+</script>
+<script src="/assets/meta.js"></script>
+<script src="/assets/burbuja.js" defer></script>
+</body>
+</html>

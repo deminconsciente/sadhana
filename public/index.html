@@ -2677,7 +2677,11 @@ document.addEventListener("click", e => {
   else if (b.dataset.pack) flujoPaquete(b.dataset.pack);
   else if (b.dataset.taller) flujoTaller(b.dataset.taller);
   else if (b.dataset.ruta) flujoRuta(b.dataset.ruta);
-  else if (b.dataset.renta) flujoRenta(b.dataset.renta);
+  else if (b.dataset.renta){
+    // La renta por hora (consultorio y salón) vive en /reservar/: ahí la disponibilidad es real (una sola sala, sin traslapes).
+    if (b.dataset.renta === "consultorio" || b.dataset.renta === "salon") location.href = "/reservar/#rentar";
+    else flujoRenta(b.dataset.renta);
+  }
 });
 
 

@@ -9,6 +9,7 @@ Sitio de Sadhana en un Cloudflare Worker, con el mismo flujo que www.deminconsci
 |---|---|
 | sadhanaholistics.com/ | `public/index.html` (landing oficial de Sadhana) |
 | sadhanaholistics.com/om/ | `public/om/index.html` (El Poder del OM) |
+| sadhanaholistics.com/reservar/ | `public/reservar/index.html` (reserva del espacio: clase o evento, y renta de la sala por hora con disponibilidad real) |
 | audio de la prueba | `public/audios/om-prueba-1min.mp3` |
 | recursos compartidos | `public/assets/` (Glacial Indifference, logo secundario, sello, foto de velas) |
 
@@ -48,3 +49,10 @@ se borran: los reemplazan los dominios personalizados del Worker.
 - Esquema: `migrations/0001_reservas.sql` y `0002_crm.sql`. Cada visita es una fila de `reservas`; las fichas (`alumnos`) se ligan por teléfono.
 - Entrar: usuario `admin` (o tu nombre) + la clave maestra `ADMIN_CLAVE` (secreto del Worker). Desde la pestaña Equipo se crean usuarios con clave propia para cada maestro.
 - Local: `printf 'ADMIN_CLAVE=prueba\n' > .dev.vars && npx wrangler d1 migrations apply sadhana_crm --local && npm run dev`.
+
+## Sala única y renta por hora (`src/sala.js`)
+
+- Hay una sola sala. `/reservar/` pinta, por día, las clases (directorio activo + bloques base de `BASE.bloques`), los eventos y las rentas ya apartadas, y solo deja rentar lo libre (con 15 min de margen entre bloques, de lunes a viernes).
+- `GET /api/sala/disponibilidad` y `POST /api/sala/reservar`. El apartado es atómico en D1 (`sala_ocupacion`, migración `0005_sala.sql`; el Worker también la crea sola). Una renta pendiente libera la sala a las 24 h; cancelarla en /equipo la libera de inmediato.
+- Lo editable (precio por hora, horario, bloques extra, eventos de fin de semana, días cerrados, `rentaFinSemana`) vive en `proyeccion_docs` (col `catalogo`, id `_sala`); lo que falte usa `BASE`. El precio de $400/h es un supuesto (competencia: $380–$420).
+- `salaKpis(env, desde, hasta)` (exportada en `src/sala.js`) da horas libres, ocupación e ingreso por renta para el tablero de KPIs. El origen UTM de cada renta se guarda en `reservas.utm`, igual que las demás reservas.
