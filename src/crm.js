@@ -203,11 +203,12 @@ function nuevoToken() {
 
 async function sincronizarAlumnos(env) {
   try {
-    // Origen = utm_source de su primera reserva con UTM (instagram, facebook…); si no hay, 'web'.
+    // Origen = fuente[:campaña] de su primera reserva con UTM (p. ej. meta:enero); si no hay, 'web'.
     await env.DB.prepare(
       `INSERT OR IGNORE INTO alumnos (tel, nombre, email, origen, acepta_comunidad, creado)
        SELECT tel, nombre, email,
-              COALESCE((SELECT json_extract(r2.utm, '$.utm_source') FROM reservas r2
+              COALESCE((SELECT json_extract(r2.utm, '$.utm_source') ||
+                               COALESCE(':' || json_extract(r2.utm, '$.utm_campaign'), '') FROM reservas r2
                         WHERE r2.tel = reservas.tel AND r2.utm IS NOT NULL ORDER BY r2.creado LIMIT 1), 'web'),
               MAX(acepta_comunidad), MIN(creado) FROM reservas GROUP BY tel`
     ).run();

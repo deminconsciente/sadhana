@@ -15,6 +15,8 @@
     var q; try { q = new URLSearchParams(location.search); } catch(e){ return; }
     var nuevo = {t: Date.now()}, hay = false;
     CAMPOS.forEach(function(k){ var x = q.get(k); if (x){ nuevo[k] = x.slice(0,100); hay = true; } });
+    // Alias cortos para los enlaces de anuncios: ?fuente=meta&campana=enero
+    [["fuente","utm_source"],["campana","utm_campaign"]].forEach(function(a){ var x = q.get(a[0]); if (x && !nuevo[a[1]]){ nuevo[a[1]] = x.slice(0,100); hay = true; } });
     if (hay && !leer()) guardar(nuevo);
     else if (!hay && !leer() && document.referrer){
       try { var h = new URL(document.referrer).hostname; if (h && h !== location.hostname) guardar({t: Date.now(), ref: h.slice(0,100)}); } catch(e){}
