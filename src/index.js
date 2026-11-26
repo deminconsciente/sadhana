@@ -7,7 +7,7 @@
 //  - /equipo, /api/crm/* y /api/confirmar → CRM y panel del equipo (ver src/crm.js).
 import { esMedia, servirConRango } from './range.js';
 import { esApi, api } from './api.js';
-import { esCRM, crm } from './crm.js';
+import { esCRM, crm, resumenKpisDeLosLunes } from './crm.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -20,5 +20,9 @@ export default {
     if (esApi(url.pathname)) return api(request, env);
     if (esMedia(url.pathname)) return servirConRango(request, env, ctx);
     return env.ASSETS.fetch(request);
+  },
+  // Lunes 8:00 am (Monterrey): guarda el resumen de KPIs de la semana anterior (wrangler.jsonc → triggers).
+  async scheduled(event, env, ctx) {
+    if (env.DB) ctx.waitUntil(resumenKpisDeLosLunes(env).catch(e => console.error('resumen kpis', e && e.stack ? e.stack : e)));
   },
 };

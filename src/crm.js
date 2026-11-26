@@ -19,12 +19,14 @@
 // Solo administradores:
 //   GET  /api/crm/equipo · POST /api/crm/equipo · POST /api/crm/equipo/:id
 //   GET  /api/crm/resumen?mes=YYYY-MM     números del mes para Proyección Sadhana (presupuesto vs real)
+//   GET  /api/crm/kpis?semana=YYYY-MM-DD  tablero de KPIs (Proyección → Tablero): 16 indicadores, semáforos, publicidad y equilibrio
 //   GET  /proyeccion                      → /equipo#proyeccion (la calculadora va embebida con ?embed=1)
 //   GET  /api/crm/docs/:col · POST/DELETE /api/crm/docs/:col/:id   sus datos (escenarios, pendientes, presupuesto)
 // Importación única (encabezado x-import-token = secreto IMPORT_TOKEN): POST /api/crm/docs-import
 import equipoHTML from './equipo.html';
 import proyeccionHTML from './proyeccion.html';
 import { tablaVotos } from './api.js';
+import { calcular as calcularKpis, guardarResumenSemanal } from './kpis.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -114,6 +116,10 @@ export async function crm(request, env) {
       if (!c && M === 'GET') return await listarDocs(b, env);
       if (c && M === 'POST') return await guardarDoc(b, c, request, env, yo);
       if (c && M === 'DELETE') return await borrarDoc(b, c, env);
+    }
+    if (a === 'kpis' && M === 'GET') {
+      if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administradores' }, 403);
+      return json(await calcularKpis(env, { semana: url.searchParams.get('semana') }, sincronizarAlumnos));
     }
     if (a === 'equipo' || a === 'resumen') {
       if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administradores' }, 403);
@@ -568,7 +574,7 @@ async function resumen(url, env) {
 
 // ---------- Datos de Proyección Sadhana (la calculadora) ----------
 // Cada documento es el mismo objeto que guardaba el artefacto, como JSON.
-const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks', 'catalogo'];
+const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks', 'catalogo', 'kpis'];
 const DOC_ID = /^[A-Za-z0-9_.-]{1,60}$/;
 let tablaLista = false;
 async function tablaDocs(env) {
@@ -646,3 +652,6 @@ async function listarVotos(env) {
   out.sort((x, y) => y.personas.length - x.personas.length);
   return json(out);
 }
+
+// Resumen de los lunes (lo llama el cron de src/index.js).
+export const resumenKpisDeLosLunes = env => guardarResumenSemanal(env, sincronizarAlumnos);

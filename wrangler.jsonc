@@ -30,6 +30,8 @@
   },
   // La contraseña de /admin es un secreto: npx wrangler secret put ADMIN_CLAVE
   "observability": { "enabled": true },
+  // Lunes 8:00 am de Monterrey (14:00 UTC): resumen semanal del tablero de KPIs.
+  "triggers": { "crons": ["0 14 * * 1"] },
   // Se activan cuando el dominio ya esté en Cloudflare (ver README, paso 4).
   "routes": [
     { "pattern": "sadhanaholistics.com", "custom_domain": true },
