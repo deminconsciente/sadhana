@@ -418,6 +418,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:640px){.tl-steps{grid-template-columns:repeat(7,64px)}.tl-steps button span{font-size:.62rem}}
 
 /* Renta */
+.fold{margin-top:22px}.fold>summary{cursor:pointer;font-weight:600;padding:12px 18px;border-radius:999px;background:var(--glass);border:1px solid var(--line);list-style:none;display:inline-block}.fold>summary::-webkit-details-marker{display:none}.fold[open]>summary{margin-bottom:18px}
+.rent-hint{margin:0 0 14px;color:var(--muted)}
 .space{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:start}
 @media (max-width:900px){.space{grid-template-columns:1fr}}
 .plan{border-radius:22px;background:var(--glass);border:1px solid var(--line);padding:16px;display:grid;gap:10px}
@@ -1127,6 +1129,40 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
     </section>
   </div>
 
+  <!-- RENTA -->
+  <div data-v="t" class="band">
+    <section class="wrap sec" id="terapeutas" aria-labelledby="h-re">
+      <div class="s-head"><p class="eyebrow">Renta</p><h2 id="h-re">Tienes la terapia. Aquí tienes el espacio.</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Por hora</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Bloque o paquete</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Todo listo</span></div></div>
+      <div class="grid3" id="rentOpts"></div>
+      <details class="fold" id="conoce"><summary>Conoce los espacios y calcula tu ahorro</summary>
+      <div class="space">
+        <div class="plan">
+          <svg viewBox="0 0 420 270" role="group" aria-label="Plano del espacio">
+            <g class="room" data-room="salon" tabindex="0" role="button" aria-label="Salón">
+              <rect x="6" y="6" width="236" height="170" rx="10"/>
+              <g class="furn"><rect x="24" y="40" width="22" height="56" rx="3"/><rect x="56" y="40" width="22" height="56" rx="3"/><rect x="88" y="40" width="22" height="56" rx="3"/><rect x="120" y="40" width="22" height="56" rx="3"/><rect x="24" y="106" width="22" height="56" rx="3"/><rect x="56" y="106" width="22" height="56" rx="3"/><rect x="88" y="106" width="22" height="56" rx="3"/><rect x="120" y="106" width="22" height="56" rx="3"/><circle cx="196" cy="90" r="22"/></g>
+              <text x="20" y="28">Salón</text><text class="s" x="168" y="128">gong</text>
+            </g>
+            <g class="room" data-room="consultorio" tabindex="0" role="button" aria-label="Consultorio">
+              <rect x="250" y="6" width="164" height="120" rx="10"/>
+              <g class="furn"><rect x="290" y="50" width="86" height="30" rx="8"/><circle cx="270" cy="105" r="8"/><circle cx="292" cy="105" r="6"/></g>
+              <text x="264" y="28">Consultorio</text><text class="s" x="304" y="98">camilla</text>
+            </g>
+            <g class="room" data-room="recepcion" tabindex="0" role="button" aria-label="Recepción">
+              <rect x="250" y="134" width="164" height="130" rx="10"/>
+              <g class="furn"><rect x="268" y="200" width="60" height="18" rx="4"/><rect x="350" y="170" width="44" height="70" rx="6"/></g>
+              <text x="264" y="158">Recepción y espera</text>
+            </g>
+            <g class="fix"><rect x="6" y="184" width="236" height="80" rx="10"/><text x="20" y="230">Baño · acceso · jardín</text></g>
+          </svg>
+          <p class="cap">Plano ilustrativo. Distribución por confirmar.</p>
+        </div>
+        <div id="roomInfo"></div>
+      </div>
+      </details>
+    </section>
+  </div>
+
   <!-- FORMACIÓN -->
   <div data-v="t" class="band paper">
     <section class="wrap sec" id="formacion" aria-labelledby="h-fo">
@@ -1152,38 +1188,6 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
         <div class="tl-steps" id="tlSteps"><div class="tl-track"><em id="tlFill"></em></div></div>
         <div id="tlDetail"></div>
       </div>
-    </section>
-  </div>
-
-  <!-- RENTA -->
-  <div data-v="t" class="band">
-    <section class="wrap sec" id="terapeutas" aria-labelledby="h-re">
-      <div class="s-head"><p class="eyebrow">Renta</p><h2 id="h-re">Tienes la terapia. Aquí tienes el espacio.</h2><div class="pills"><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Por hora</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Todo listo</span><span class="pill big glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4l10-10"/></svg>Toca el plano</span></div></div>
-      <div class="space">
-        <div class="plan">
-          <svg viewBox="0 0 420 270" role="group" aria-label="Plano del espacio">
-            <g class="room" data-room="salon" tabindex="0" role="button" aria-label="Salón">
-              <rect x="6" y="6" width="236" height="170" rx="10"/>
-              <g class="furn"><rect x="24" y="40" width="22" height="56" rx="3"/><rect x="56" y="40" width="22" height="56" rx="3"/><rect x="88" y="40" width="22" height="56" rx="3"/><rect x="120" y="40" width="22" height="56" rx="3"/><rect x="24" y="106" width="22" height="56" rx="3"/><rect x="56" y="106" width="22" height="56" rx="3"/><rect x="88" y="106" width="22" height="56" rx="3"/><rect x="120" y="106" width="22" height="56" rx="3"/><circle cx="196" cy="90" r="22"/></g>
-              <text x="20" y="28">Salón</text><text class="s" x="168" y="128">gong</text>
-            </g>
-            <g class="room" data-room="consultorio" tabindex="0" role="button" aria-label="Consultorio">
-              <rect x="250" y="6" width="164" height="120" rx="10"/>
-              <g class="furn"><rect x="290" y="50" width="86" height="30" rx="8"/><circle cx="270" cy="105" r="8"/><circle cx="292" cy="105" r="6"/></g>
-              <text x="264" y="28">Consultorio</text><text class="s" x="304" y="98">camilla</text>
-            </g>
-            <g class="room" data-room="recepcion" tabindex="0" role="button" aria-label="Recepción">
-              <rect x="250" y="134" width="164" height="130" rx="10"/>
-              <g class="furn"><rect x="268" y="200" width="60" height="18" rx="4"/><rect x="350" y="170" width="44" height="70" rx="6"/></g>
-              <text x="264" y="158">Recepción y espera</text>
-            </g>
-            <g class="fix"><rect x="6" y="184" width="236" height="80" rx="10"/><text x="20" y="230">Baño · acceso · jardín</text></g>
-          </svg>
-          <p class="cap">Plano ilustrativo. Distribución por confirmar.</p>
-        </div>
-        <div id="roomInfo"></div>
-      </div>
-      <div class="grid3" id="rentOpts"></div>
     </section>
   </div>
 
@@ -1215,7 +1219,7 @@ body[data-vista="c"] footer .cross[data-v="c"],body[data-vista="t"] footer .cros
   <p class="proto">Pagos por transferencia u OXXO; tu lugar se aparta 24 h. Horarios, precios de Diego, talleres y renta son de ejemplo.</p></details></footer>
 </main>
 
-<div class="dock"><a data-v="c" class="btn btn-p" href="#agenda">Reservar</a><a data-v="c" class="btn btn-g" href="#terapias">Terapias</a><a data-v="t" class="btn btn-p" href="#ec1375">Certifícate</a><a data-v="t" class="btn btn-g" href="#terapeutas">Renta</a></div>
+<div class="dock"><a data-v="c" class="btn btn-p" href="#agenda">Reservar</a><a data-v="c" class="btn btn-g" href="#terapias">Terapias</a><a data-v="t" class="btn btn-p" href="#terapeutas">Renta</a><a data-v="t" class="btn btn-g" href="#ec1375">Certifícate</a></div>
 
 
 <button class="opt-fab" id="optFab" type="button" aria-label="Opciones" aria-expanded="false" aria-controls="optPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Opciones</button>
@@ -1379,6 +1383,9 @@ const TALLERES = [
   {id:"transf", t:"Terapia transgeneracional", esc:"linaje", guia:"Diego", linea:16, prac:12, precio:5000, inicio:[2027,2,27]},
   {id:"pauxf", t:"Primeros auxilios para terapeutas", esc:"linaje", guia:"Equipo Sadhana", linea:4, prac:4, precio:1500, inicio:[2027,1,9]},
 ];
+/* Certificaciones que se muestran: por ahora solo Reiki Usui nivel 1. Se edita en /equipo → Directorio → Certificaciones. */
+let TALLERES_ON = new Set(["reiki1"]);
+const tallerVisible = t => TALLERES_ON.has(t.id);
 const APARTADO = 1000;
 
 const RUTAS = [
@@ -1579,7 +1586,7 @@ const qsa = q => [...document.querySelectorAll(q)];
    ===================================================================== */
 const NAVS = {
   c: [["#agenda","Agenda"],["#paquetes","Paquetes"],["#terapias","Terapias"],["#necesitas","Para ti"],["#equipo","Visítanos"]],
-  t: [["#formacion","Formación"],["#ec1375","EC1375"],["#terapeutas","Renta"],["#equipo","Equipo"]]
+  t: [["#terapeutas","Renta"],["#formacion","Certificación"],["#ec1375","EC1375"],["#equipo","Equipo"]]
 };
 let navIO = null;
 function setVista(v, irA){
@@ -1610,12 +1617,12 @@ function vistaDe(sel){ const el = document.querySelector(sel); const w = el && e
 document.addEventListener("click", e => {
   const a = e.target.closest('a[href^="#"]'); if (!a) return;
   const h = a.getAttribute("href");
-  if (h === "#consultante" || h === "#terapeuta"){ e.preventDefault(); const v = h==="#consultante"?"c":"t"; setVista(v, v==="c"?"#agenda":"#formacion"); history.replaceState(null,"",h); return; }
+  if (h === "#consultante" || h === "#terapeuta"){ e.preventDefault(); const v = h==="#consultante"?"c":"t"; setVista(v, v==="c"?"#agenda":"#terapeutas"); history.replaceState(null,"",h); return; }
   const v = vistaDe(h);
   if (v === "c" || v === "t"){ if (document.body.dataset.vista !== v) setVista(v); }
   else if (v === "ct" && !document.body.dataset.vista) setVista("c");
 }, true);
-qsa(".vsw [data-vista]").forEach(b => b.onclick = () => { const v = b.dataset.vista; setVista(v, v==="c"?"#agenda":"#formacion"); history.replaceState(null,"",v==="c"?"#consultante":"#terapeuta"); });
+qsa(".vsw [data-vista]").forEach(b => b.onclick = () => { const v = b.dataset.vista; setVista(v, v==="c"?"#agenda":"#terapeutas"); history.replaceState(null,"",v==="c"?"#consultante":"#terapeuta"); });
 (function(){
   const h = location.hash; let v = "";
   if (h === "#consultante") v = "c"; else if (h === "#terapeuta") v = "t";
@@ -1872,9 +1879,12 @@ $("#nClases").addEventListener("input", paintPacks);
    ===================================================================== */
 let fEsc = "todas";
 function paintTalleres(){
-  $("#schools").innerHTML = Object.entries(ESCUELAS).map(([k,e]) => `<button class="school" data-e="${k}" aria-pressed="${fEsc===k}" style="background:radial-gradient(80% 90% at 100% 0%,${e.c[1]}aa,transparent 70%),${e.c[0]}">
-    ${glyph(e.g)}<b>${e.t}</b><small>${TALLERES.filter(t=>t.esc===k).length} talleres · ${fEsc===k?"toca para ver todos":"toca para filtrar"}</small></button>`).join("");
-  $("#talleres").innerHTML = TALLERES.filter(t => fEsc==="todas"||t.esc===fEsc).map(t => {
+  const vis = TALLERES.filter(tallerVisible), activas = Object.entries(ESCUELAS).filter(([k]) => vis.some(t => t.esc===k));
+  if (fEsc!=="todas" && !activas.some(([k]) => k===fEsc)) fEsc = "todas";
+  $("#schools").hidden = activas.length < 2;
+  $("#schools").innerHTML = activas.map(([k,e]) => `<button class="school" data-e="${k}" aria-pressed="${fEsc===k}" style="background:radial-gradient(80% 90% at 100% 0%,${e.c[1]}aa,transparent 70%),${e.c[0]}">
+    ${glyph(e.g)}<b>${e.t}</b><small>${TALLERES.filter(t=>tallerVisible(t)&&t.esc===k).length} talleres · ${fEsc===k?"toca para ver todos":"toca para filtrar"}</small></button>`).join("");
+  $("#talleres").innerHTML = vis.filter(t => fEsc==="todas"||t.esc===fEsc).map(t => {
     const ini = new Date(t.inicio[0], t.inicio[1]-1, t.inicio[2]); const E = ESCUELAS[t.esc];
     return `<article class="card">
       <div class="art" style="height:90px;${aura(t.id)}">${glyph(E.g)}</div>
@@ -1884,7 +1894,7 @@ function paintTalleres(){
       <div class="pills">${pill(t.linea+" h en línea","line","laptop")}${pill(t.prac+" h práctica","line","hand")}${t.req?pill(t.req,"line"):""}</div>
       <div class="pills">${pill("Certificado Sadhana","ok","check")}${pill("Suma a EC1375","ok","star")}</div>
       <div class="go"><span class="meta">Aparta con ${money(APARTADO)}</span><button class="btn btn-p btn-s" data-taller="${t.id}">Inscribirme</button></div></div>
-    </article>`; }).join("");
+    </article>`; }).join("") + `<article class="card plain"><div class="bd"><h3>Más formaciones, pronto</h3><p class="muted">Estamos preparando las demás. Avísanos cuál te interesa y te escribimos cuando abra.</p><div class="go"><span></span><a class="btn btn-g btn-s" href="https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent("Hola Sadhana, quiero que me avisen cuando abran más formaciones.")}" target="_blank" rel="noopener">Avísame</a></div></div></article>`;
 }
 $("#schools").addEventListener("click", e => { const b = e.target.closest("[data-e]"); if (!b) return; fEsc = fEsc===b.dataset.e ? "todas" : b.dataset.e; paintTalleres(); });
 
@@ -1972,6 +1982,7 @@ document.querySelectorAll(".plan .room").forEach(g => {
 });
 /* Lo que el equipo edita en /equipo → Directorio → Sala y rentas: precios por hora, bloque mensual, paquetes de horas y lo que incluye. */
 function aplicarSala(c){
+  if (Array.isArray(c.talleresActivos)) TALLERES_ON = new Set(c.talleresActivos);
   const cons = RENTAS.find(x => x.id==="consultorio"), sal = RENTAS.find(x => x.id==="salon");
   if (c.precios){ if (+c.precios.consultorio > 0) cons.precioHora = +c.precios.consultorio; if (+c.precios.salon > 0) sal.precioHora = +c.precios.salon; }
   if (Array.isArray(c.kit) && c.kit.length){ cons.kit = c.kit; sal.kit = c.kit; }
@@ -1984,18 +1995,31 @@ function aplicarSala(c){
   if (+c.minHoras) SALA.minHoras = +c.minHoras; if (+c.maxHoras) SALA.maxHoras = +c.maxHoras;
 }
 function paintRentas(){
-  const paq = SALA.paquetes.map(p => `<article class="card">
-    <div class="art" style="height:80px;${aura("rp"+p.id)}">${glyph("lotus")}</div>
-    <div class="bd"><div class="row"><h3>${esc(p.t)}</h3><span class="price">${money(p.precio)}</span></div>
-    <div class="pills">${pill(p.horas+" horas","line","clock")+pill(money(Math.round(p.precio/p.horas))+" por hora","line","check")+pill((+p.dias||90)+" días","line","cal")}</div>
-    <div class="go"><span></span><button class="btn btn-p btn-s" data-renta="paq:${esc(p.id)}">Comprar</button></div></div>
-  </article>`).join("");
-  $("#rentOpts").innerHTML = paq + RENTAS.filter(r => r.mensual||r.propuesta).map(r => `<article class="card">
-    <div class="art" style="height:80px;${aura("r"+r.id)}">${glyph(r.g)}</div>
-    <div class="bd"><div class="row"><h3>${esc(r.t)}</h3><span class="price">${r.propuesta ? "Sin costo" : money(r.precio)+" / mes"}</span></div>
-    <div class="pills">${r.propuesta?pill("Respuesta en 48 h","line","clock")+pill("Publicamos tu taller","line","star"):pill("4 h por semana","line","clock")+pill("Mismo día y hora","line","cal")}</div>
-    <div class="go"><span></span><button class="btn ${r.propuesta?"btn-g":"btn-p"} btn-s" data-renta="${r.id}">${r.propuesta?"Proponer":"Reservar"}</button></div></div>
-  </article>`).join("");
+  const cons = RENTAS.find(x => x.id==="consultorio"), sal = RENTAS.find(x => x.id==="salon"), bm = RENTAS.find(x => x.id==="bloque");
+  const card = (clave, titulo, precio, pills, desc, acts, glifo) => `<article class="card">
+    <div class="art" style="height:80px;${aura("r"+clave)}">${glyph(glifo)}</div>
+    <div class="bd"><div class="row"><h3>${esc(titulo)}</h3><span class="price">${precio}</span></div>
+    <p class="muted" style="margin:0">${desc}</p><div class="pills">${pills}</div>
+    <div class="go">${acts}</div></div></article>`;
+  const out = [];
+  out.push(card("hora","Por hora",`Desde ${money(Math.min(cons.precioHora, sal.precioHora))}/h`,
+    pill("Tú eliges día y hora","line","cal")+pill("Apartas en 3 pasos","line","check"),
+    "Ves solo los horarios libres de la sala. Sin compromiso de meses.",
+    `<button class="btn btn-p btn-s" data-renta="consultorio">Sesión 1:1 · ${money(cons.precioHora)}/h</button><button class="btn btn-g btn-s" data-renta="salon">Taller o clase · ${money(sal.precioHora)}/h</button>`,"lotus"));
+  if (bm){
+    const hs = bm.horasSemana||4;
+    out.push(card("bloque", bm.t, `${money(bm.precio)}/mes`,
+      pill(hs+" h por semana","line","clock")+pill(money(Math.round(bm.precio/(hs*4)))+" por hora","line","check"),
+      `Tu horario fijo: el mismo día y hora cada semana durante un mes, sin volver a reservar. Ahorras ${money(Math.max(0,hs*4*cons.precioHora-bm.precio))} frente a pagar por hora.`,
+      `<button class="btn btn-p btn-s" data-renta="bloque">Elegir mi horario fijo</button>`,"moon"));
+  }
+  for (const p of SALA.paquetes) out.push(card("p"+p.id, p.t, money(p.precio),
+    pill(p.horas+" horas","line","clock")+pill(money(Math.round(p.precio/p.horas))+" por hora","line","check")+pill((+p.dias||90)+" días","line","cal"),
+    `Compras las horas una vez y las usas cuando quieras: reservas cada sesión con tus horas, sin pagar de nuevo.`,
+    `<button class="btn btn-p btn-s" data-renta="paq:${esc(p.id)}">Comprar paquete</button>`,"lotus"));
+  const pr = RENTAS.find(x => x.propuesta);
+  if (pr) out.push(card("prop", pr.t, "Sin costo", pill("Respuesta en 48 h","line","clock")+pill("Publicamos tu taller","line","star"), esc(pr.d), `<button class="btn btn-g btn-s" data-renta="${pr.id}">Proponer</button>`, pr.g));
+  $("#rentOpts").innerHTML = out.join("");
 }
 
 /* =====================================================================
@@ -2542,10 +2566,13 @@ function flujoRenta(id){
         o.diaFijo ||= "2";
         if (!HR.some(h => libre(+o.diaFijo, h))) o.diaFijo = String([1,2,3,4,5].find(d => HR.some(h => libre(d, h))) || o.diaFijo);
         if (!o.horaFijo || !libre(+o.diaFijo, +o.horaFijo)) o.horaFijo = String(HR.find(h => libre(+o.diaFijo, h)) || "");
-        el.innerHTML = `<p class="muted">${esc(r.d)} Solo ves los horarios que están libres cada semana.</p>
-          <div class="field"><label class="lbl" for="bD">Día de la semana</label><select class="inp" id="bD">${[1,2,3,4,5].map(d=>`<option value="${d}" ${o.diaFijo==d?"selected":""} ${HR.some(h=>libre(d,h))?"":"disabled"}>${DIAS_L[d]}</option>`).join("")}</select></div>
-          <div class="field"><label class="lbl" for="bH">Horario</label><select class="inp" id="bH">${HR.filter(h => libre(+o.diaFijo, h)).map(h=>`<option value="${h}" ${o.horaFijo==h?"selected":""}>${hMin(h*60)} a ${hMin(h*60+hs*60)}</option>`).join("") || `<option value="">Sin horarios libres ese día</option>`}</select></div>
-          <p class="note">Equivale a ${money(Math.round(r.precio/(hs*4)))} por hora, contra ${money(RENTAS[0].precioHora)} por hora suelta.</p>`;
+        const fechas = SALA_DIAS.filter(d => fechaDe(d.f).getDay() === +o.diaFijo).slice(0,4).map(d => fechaDe(d.f));
+        const dd = fechas.map(d => d.getDate()).join(", "), mm = fechas.length ? MESES_L[fechas[fechas.length-1].getMonth()] : "";
+        el.innerHTML = `<p class="muted">Eliges un horario y es tuyo cada semana durante un mes: ${hs} h por semana, ${hs*4} h en total.</p>
+          <div class="field"><label class="lbl" for="bD">¿Qué día de la semana?</label><select class="inp" id="bD">${[1,2,3,4,5].map(d=>`<option value="${d}" ${o.diaFijo==d?"selected":""} ${HR.some(h=>libre(d,h))?"":"disabled"}>${DIAS_L[d]}</option>`).join("")}</select></div>
+          <div class="field"><label class="lbl" for="bH">¿A qué hora? <small>(${hs} h seguidas)</small></label><select class="inp" id="bH">${HR.filter(h => libre(+o.diaFijo, h)).map(h=>`<option value="${h}" ${o.horaFijo==h?"selected":""}>${hMin(h*60)} a ${hMin(h*60+hs*60)}</option>`).join("") || `<option value="">Sin horarios libres ese día</option>`}</select></div>
+          ${o.horaFijo ? `<div class="note" style="background:var(--surface);border:1px solid var(--line)"><b>Tu bloque:</b> ${DIAS_L[o.diaFijo]} de ${hMin(+o.horaFijo*60)} a ${hMin((+o.horaFijo+hs)*60)}${fechas.length ? `<br>Primeras fechas: ${esc(DIAS_L[o.diaFijo])} ${dd} de ${mm}` : ""}</div>` : ""}
+          <p class="note">Solo ves los horarios que están libres todas las semanas. Equivale a ${money(Math.round(r.precio/(hs*4)))} por hora, contra ${money(RENTAS[0].precioHora)} por hora suelta.</p>`;
         el.querySelector("#bD").onchange = e => { o.diaFijo = e.target.value; pintar(); };
         el.querySelector("#bH").onchange = e => o.horaFijo = e.target.value;
       }, valido: o => !!o.horaFijo},
@@ -2887,7 +2914,7 @@ function aplicarTerapias(L){
   f(); try { new ResizeObserver(f).observe(t); } catch(e){ addEventListener("resize", f); } })();
 
 /* Desplegables: secciones cerradas por defecto y tarjetas con "Detalles" */
-const ABIERTAS = new Set(["agenda"]);
+const ABIERTAS = new Set(["agenda","terapeutas"]);
 function abrirSec(sec, abrir){
   if (!sec) return; const h = sec.querySelector(":scope > .s-head.tg"); if (!h) return;
   sec.classList.toggle("cerrada", !abrir); h.setAttribute("aria-expanded", abrir);
@@ -2904,7 +2931,7 @@ qsa("section.sec").forEach(sec => {
   abrirSec(sec, ABIERTAS.has(sec.id));
 });
 document.addEventListener("click", e => { const a = e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) abrirDe(a.getAttribute("href")); }, true);
-const LIMITES = {"#panel-ter .grid3":3, "#talleres":3, "#rentOpts":2};
+const LIMITES = {"#panel-ter .grid3":3, "#talleres":3, "#rentOpts":3};
 function limitar(){
   Object.entries(LIMITES).forEach(([sel,n]) => { const c = document.querySelector(sel); if (!c || c.querySelector(":scope > .mas-lista")) return;
     const items = [...c.children].filter(x => x.tagName === "ARTICLE"); if (items.length <= n) return;
@@ -2915,7 +2942,7 @@ function limitar(){
 }
 function compactar(){
   limitar();
-  qsa(".ev:not(.cmp), #panel-ter .card:not(.cmp), #talleres .card:not(.cmp), #rentOpts .card:not(.cmp)").forEach(c => {
+  qsa(".ev:not(.cmp), #panel-ter .card:not(.cmp), #talleres .card:not(.cmp)").forEach(c => {
     if (!c.querySelector(".pills")) return;
     c.classList.add("cmp");
     const b = document.createElement("button"); b.type = "button"; b.className = "mas"; b.textContent = "Detalles"; b.setAttribute("aria-expanded","false");

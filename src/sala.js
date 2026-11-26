@@ -97,6 +97,7 @@ export function configPublica(doc) {
     precios: c.precios, minHoras: c.minHoras, maxHoras: c.maxHoras, kit: c.kit,
     paquetes: c.paquetes.filter(p => p && p.estado !== 'oculta' && Number(p.horas) > 0),
     bloqueMensual: c.bloqueMensual && c.bloqueMensual.activo !== false ? c.bloqueMensual : null,
+    talleresActivos: Array.isArray(c.talleresActivos) ? c.talleresActivos.filter(x => typeof x === 'string').slice(0, 50) : BASE.talleresActivos,
   };
 }
 

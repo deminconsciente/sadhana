@@ -229,6 +229,9 @@ body.proy nav.tab{display:none}
     <p class="hint" style="margin:0 0 10px">Lo que se ve en «Soy terapeuta»: precio por hora, bloque mensual y paquetes de horas. Hay <b>una sola sala</b>: las clases, los eventos, las terapias y tus propios bloqueos la ocupan primero, y solo se puede rentar lo que queda libre.</p>
     <div class="r" id="salaResumen"><p class="hint">Cargando…</p></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="salaEditar">Editar sala y rentas</button></div>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Certificaciones y talleres</h2>
+    <p class="hint" style="margin:0 0 10px">Lo que aparece en «Soy terapeuta → Certificación». Por ahora solo Reiki Usui nivel 1; prende las demás cuando estén listas. Se ve en la página al guardar.</p>
+    <div class="r" id="certLista" style="display:grid;gap:6px"></div>
     <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
       <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· clase suelta + 3 mensualidades</small></h2>
       <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
@@ -645,7 +648,7 @@ $("#listaDir").addEventListener("click", async e => {
 // ---------- Sala y rentas (doc _sala) ----------
 // Mismos valores base que BASE en src/sala.js. Si no hay doc guardado, se edita sobre esto.
 const SALA_DEF = {precios:{consultorio:400, salon:500}, bloqueMensual:{activo:true, t:"Bloque mensual fijo", precio:3200, horasSemana:4, d:"4 horas por semana, el mismo día y hora, durante un mes."},
-  paquetes:[], horario:{abre:420, cierra:1290}, minHoras:1, maxHoras:4, margen:15, rentaFinSemana:false, cerrados:["2026-12-25","2027-01-01"], eventos:[], bloques:[], calToken:""};
+  paquetes:[], horario:{abre:420, cierra:1290}, minHoras:1, maxHoras:4, margen:15, rentaFinSemana:false, cerrados:["2026-12-25","2027-01-01"], eventos:[], bloques:[], calToken:"", talleresActivos:["reiki1"]};
 let SALA = null, salaGuardada = false;
 const mmHHMM = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
 const hhmmMin = v => { const [h,m] = String(v||"0:0").split(":").map(Number); return (h||0)*60+(m||0); };
@@ -653,7 +656,7 @@ function cargarSalaDoc(l){
   const d = (l.find(x=>x.id==="_sala")||{}).data; salaGuardada = !!d;
   SALA = {...SALA_DEF, ...(d||{}), precios:{...SALA_DEF.precios, ...((d||{}).precios||{})}, horario:{...SALA_DEF.horario, ...((d||{}).horario||{})},
     bloqueMensual: d && d.bloqueMensual === null ? null : {...SALA_DEF.bloqueMensual, ...((d||{}).bloqueMensual||{})}};
-  pintarSala();
+  pintarSala(); pintarCerts();
 }
 function pintarSala(){
   const S = SALA, pq = (S.paquetes||[]).filter(p=>p.estado!=="oculta");
@@ -747,6 +750,21 @@ function editarSala(){
   $("#dlg").showModal();
 }
 $("#salaEditar").onclick = editarSala;
+// ---------- Certificaciones visibles (doc _sala.talleresActivos) ----------
+const CERTS = [["reiki1","Reiki Usui nivel 1"],["reiki2","Reiki Usui nivel 2"],["reikim","Reiki máster"],["tarotf","Tarot terapéutico"],["craneo1","Terapia craneosacral nivel 1"],["soundf","Sound healing y gong"],["breathf","Facilitador de breathwork"],["hipnof","Hipnosis no clínica"],["pnlf","PNL aplicada a la sesión"],["coachf","Coaching ontológico"],["biof","Biodescodificación y desprogramación emocional"],["transf","Terapia transgeneracional"],["pauxf","Primeros auxilios para terapeutas"]];
+function pintarCerts(){
+  const on = new Set(SALA.talleresActivos || []);
+  $("#certLista").innerHTML = CERTS.map(([id,t]) => `<label class="tog"><input type="checkbox" data-cert="${id}" ${on.has(id)?"checked":""}> <span>${esc(t)}</span></label>`).join("") + `<p class="hint" style="margin:4px 0 0">${on.size} visible${on.size===1?"":"s"}. Las demás no se muestran.</p>`;
+}
+$("#certLista").addEventListener("change", async e => {
+  const c = e.target.closest("[data-cert]"); if (!c) return;
+  const on = new Set(SALA.talleresActivos || []); c.checked ? on.add(c.dataset.cert) : on.delete(c.dataset.cert);
+  const doc = {...(salaGuardada?SALA:{}), talleresActivos:CERTS.map(x=>x[0]).filter(x=>on.has(x))};
+  try { await docs("_sala", doc); SALA = {...SALA_DEF, ...doc}; salaGuardada = true; toast("Guardado. Ya se ve en la página."); }
+  catch(err){ toast(err.message); c.checked = !c.checked; }
+  pintarCerts(); pintarSala();
+});
+
 // ---------- Terapias 1:1 (doc _terapias {items}) ----------
 const TERAPEUTA = {isa:"Isa", diego:"Diego"};
 const GLIFOS = {lotus:"Loto", sun:"Sol", spine:"Columna", star:"Estrella", sound:"Sonido", moon:"Luna", tree:"Árbol", wave:"Onda", spiral:"Espiral", eye:"Ojo"};
