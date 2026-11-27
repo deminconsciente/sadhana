@@ -775,6 +775,50 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
   .lr{grid-template-areas:"t o s a i c x"!important}
   .ldt small{display:none}
 }
+
+/* ===== tablero de KPIs ===== */
+a.btn{color:inherit;text-decoration:none;display:inline-block}
+#m-tablero{display:flex;flex-direction:column;gap:14px}
+.tb-week{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tb-week b{display:block;font-size:1.05rem}.tb-week small{color:var(--ink-3);font-size:.78rem}
+.tb-week .btn{min-width:40px;text-align:center}.tb-week .btn[disabled]{opacity:.35;cursor:default}
+.tb-count{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tb-ver{border-left:6px solid var(--line-2);display:flex;flex-direction:column;gap:6px}
+.tb-ver.verde{border-left-color:var(--good)}.tb-ver.ambar{border-left-color:var(--amber)}.tb-ver.rojo{border-left-color:var(--bad)}
+.tb-ver small.k{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.tb-ver h2{font-size:1.5rem}
+.tb-ver p{margin:0}
+.tb-rules{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:8px}
+.tb-rules td{padding:6px 4px;border-top:1px solid var(--line);vertical-align:top}.tb-rules td:first-child{font-weight:700;white-space:nowrap;padding-right:10px}
+.tb-eco{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+@media (min-width:640px){.tb-eco{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tb-eco div{background:var(--surface-2);border-radius:12px;padding:8px 10px;min-width:0}
+.tb-eco span{display:block;font-size:.7rem;color:var(--ink-2);letter-spacing:.04em;text-transform:uppercase}.tb-eco b{font-size:1.05rem}.tb-eco small{display:block;color:var(--ink-3);font-size:.74rem}
+.tb-eq .big{font-size:1.9rem;font-weight:700;line-height:1.1}
+.tb-eq .meter{height:14px;margin:10px 0 6px}
+.tb-list{display:flex;flex-direction:column}
+.tb-row{border-top:1px solid var(--line)}
+.tb-row:first-child{border-top:0}
+.tb-row>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:11px 14px}
+.tb-row>summary::-webkit-details-marker{display:none}
+.tb-row .nm{font-weight:700;font-size:.97rem}
+.tb-row .vl{font-weight:700;font-size:1.05rem;text-align:right;white-space:nowrap}
+.tb-row .sb{grid-column:2/-1;color:var(--ink-3);font-size:.78rem;display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.tb-dot{width:12px;height:12px;border-radius:50%;background:var(--line-2);flex-shrink:0}
+.tb-dot.verde{background:var(--good)}.tb-dot.ambar{background:var(--amber)}.tb-dot.rojo{background:var(--bad)}
+.tb-dot.poca,.tb-dot.sin,.tb-dot.calibrar{background:transparent;border:2px dashed var(--ink-3)}
+.tb-spark{width:84px;height:22px;flex-shrink:0}.tb-spark polyline{fill:none;stroke:var(--wine);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}.tb-spark circle{fill:var(--wine)}
+.tb-body{padding:2px 14px 14px 38px;display:flex;flex-direction:column;gap:6px;font-size:.88rem;color:var(--ink-2)}
+.tb-body p{margin:0}.tb-body b{color:var(--ink)}
+.tb-um{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.tb-um label.f{flex:1 1 120px}
+.tb-txt{white-space:pre-wrap;font:inherit;font-size:.9rem;background:var(--surface-2);border-radius:12px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
+.tb-act{display:flex;gap:8px;flex-wrap:wrap}
+.tb-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:0 16px 16px}
+.tb-form h3{grid-column:1/-1;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin-top:6px}
+.tb-form .hint{grid-column:1/-1}
+.tb-hist details{border-top:1px solid var(--line);padding:8px 0}.tb-hist summary{cursor:pointer;font-size:.9rem}
+.tb-empty{padding:18px;text-align:center;color:var(--ink-2)}
+.tb-sec-in{padding:0 0 4px}
 </style>
 
 <div class="wrap">
@@ -787,6 +831,7 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
   <nav class="nav" aria-label="Módulos">
     <a href="#escenarios" data-mod="escenarios">Escenarios</a>
     <a href="#presupuesto" data-mod="presupuesto">Presupuesto vs real</a>
+    <a href="#tablero" data-mod="tablero">Tablero</a>
     <a href="#cronograma" data-mod="cronograma">Cronograma</a>
   </nav>
 
@@ -1043,6 +1088,8 @@ h3.more{margin:22px 4px 8px;font-size:.9rem;text-transform:uppercase;letter-spac
     </section>
   </div>
 
+  <div class="mod" id="m-tablero" hidden></div>
+
   <div class="mod cm" id="m-cronograma" hidden>
     <section class="card">
       <h2 style="font-size:1.08rem">Cronograma</h2>
@@ -1084,7 +1131,7 @@ const today=new Date(), todayKey=today.toISOString().slice(0,10), monthNow=today
 /* ===================== almacenamiento ===================== */
 /* Con la base compartida (db) todos ven lo mismo; sin ella, se guarda solo en este navegador. */
 let db=null, canWrite=true, live=false;
-const cache={escenarios:[],scenarios:[],actuals:[],tasks:[],risks:[],invest:[],meta:[]};
+const cache={escenarios:[],scenarios:[],actuals:[],tasks:[],risks:[],invest:[],meta:[],kpis:[]};
 const listeners={};
 const pending={}; // path -> {data, mode, timer}
 const inflight={};const deleting={};const loaded={};
@@ -2383,12 +2430,109 @@ function openIssue(id){cmDetail=id;if(location.hash!=="#cronograma")location.has
     if(e.key==="Escape"&&cmDetail){cmDetail=null;renderTasks()}});
 }
 
+/* ===================== tablero de KPIs ===================== */
+/* Lo calcula el servidor (GET /api/crm/kpis) con el CRM y lo capturado cada semana; aquí solo se pinta y se captura. */
+const TB={d:null,ws:null,last:null,err:"",busy:false,open:{},tm:null};
+const TBE={verde:["Bien","good"],ambar:["Ojo","warn"],rojo:["Atender","bad"],poca:["Muestra chica",""],sin:["Sin datos",""],calibrar:["Por calibrar",""]};
+const TBU={cpl:["cpl"],frec:["frec"],cac:["cac"],ltvcac:["ltvcac"],c2p:["c2p"],p2m:["p2m"],ret:["ret2","ret3"],asist:["asist"],ocup:["ocupLo","ocupHi"],util:["util"],eq:["eq"],fuera:["fuera"],com:["com"],ref:["ref"],cont:["cont"],res:["resH","resR"]};
+const TBL={cpl:"Máximo $",frec:"Máximo",cac:"Máximo $",ltvcac:"Mínimo",c2p:"Mínimo %",p2m:"Mínimo %",ret2:"Mes 2 mínimo %",ret3:"Mes 3 mínimo %",asist:"Mínimo",ocupLo:"Desde %",ocupHi:"Hasta %",util:"Mínimo $",eq:"Mínimo %",fuera:"Mínimo $",com:"Mínimo",ref:"Mínimo %",cont:"Mínimo %",resH:"Horas mínimo %",resR:"Renovación mínimo %"};
+const tbGrupos=["Publicidad","Embudo","Operación","Finanzas","Comunidad","Contenido","Residentes"];
+const tbDay=(ymd,n)=>new Date(Date.parse(ymd+"T12:00:00Z")+n*864e5).toISOString().slice(0,10);
+function tbSpark(a){const p=a.map((v,i)=>[i,v]).filter(x=>x[1]!=null&&isFinite(x[1]));if(p.length<2)return'<svg class="tb-spark" aria-hidden="true"></svg>';
+  const lo=Math.min(...p.map(x=>x[1])),hi=Math.max(...p.map(x=>x[1])),sp=hi-lo||1;
+  const pt=p.map(([i,v])=>[(i/(a.length-1))*80+2,20-((v-lo)/sp)*16]);
+  return`<svg class="tb-spark" viewBox="0 0 84 22" aria-hidden="true"><polyline points="${pt.map(x=>x[0].toFixed(1)+","+x[1].toFixed(1)).join(" ")}"/><circle cx="${pt[pt.length-1][0].toFixed(1)}" cy="${pt[pt.length-1][1].toFixed(1)}" r="2.6"/></svg>`}
+function tbLoad(ws,keepForm){
+  if(TB.busy)return;TB.busy=true;
+  fetch("/api/crm/kpis"+(ws?"?semana="+ws:""),{cache:"no-store"}).then(async r=>{
+    if(!r.ok)throw new Error(r.status===403?"Solo administración puede ver el tablero.":r.status===401?"Entra otra vez para ver el tablero.":"No se pudo calcular el tablero.");
+    return r.json()}).then(d=>{TB.d=d;TB.ws=d.semana;if(!TB.last||d.semana>TB.last)TB.last=d.semana;TB.err=""}).catch(e=>{TB.err=(e&&e.message)||"El tablero necesita la versión web de Proyección (sadhanaholistics.com/equipo)."}).finally(()=>{TB.busy=false;
+    const a=document.activeElement;if(keepForm&&a&&a.closest&&a.closest("#m-tablero")&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"))return;
+    if((location.hash||"")==="#tablero")renderTablero()})}
+function tbSoon(){clearTimeout(TB.tm);TB.tm=setTimeout(()=>tbLoad(TB.ws,true),1800)}
+function tbIn(label,key,val,ph,step){return`<label class="f">${label}<input type="number" inputmode="decimal" step="${step||"any"}" data-sem="${key}" value="${val==null?"":esc(val)}" placeholder="${esc(ph||"")}"${canWrite?"":" disabled"}></label>`}
+function tbCfgIn(label,path,val,ph){return`<label class="f">${label}<input type="number" inputmode="decimal" step="any" data-cfg="${path}" value="${val==null?"":esc(val)}" placeholder="${esc(ph||"")}"${canWrite?"":" disabled"}></label>`}
+const tbPct=v=>v==null?"—":Math.round(v)+"%";
+function tbRow(k){const d=TB.d,E=TBE[k.estado]||TBE.sin,key="r-"+k.id;
+  const um=(TBU[k.id]||[]).map(u=>{const v=d.cfg.umbrales[u];const auto=u==="cpl"?d.cfgAuto.cpl:u==="cac"?d.cfgAuto.cac:u==="cont"?d.cfgAuto.cont:null;
+    return tbCfgIn(TBL[u],"umbrales."+u,v,auto!=null?(u==="cont"?auto.toFixed(1):Math.round(auto))+" (auto)":"")}).join("");
+  return`<details class="tb-row" data-k="${key}"${TB.open[key]?" open":""}><summary><i class="tb-dot ${k.estado}" title="${E[0]}"></i><span class="nm">${esc(k.nombre)}</span><span class="vl num">${esc(k.texto)}</span>
+    <span class="sb"><span>${k.umbralTxt?"Meta "+esc(k.umbralTxt):E[0]} · ${esc(k.ventana)}</span>${tbSpark(k.serie)}</span></summary>
+    <div class="tb-body"><p><b>${E[0]}.</b> ${k.estado==="poca"?`Con ${k.n} ${esc(k.nTxt)} (se piden ${k.nMin}) todavía no se puede concluir.`:k.estado==="sin"?"Falta capturar o generar datos para medirlo.":k.estado==="calibrar"?"Aún no hay umbral: escribe uno abajo cuando tengas unas 4 semanas de datos.":"Qué hacer: "+esc(k.decision)+"."}</p>
+    <p><b>Fórmula:</b> ${esc(k.formula)} · <b>Frecuencia:</b> ${esc(k.frec)} · <b>Mueve:</b> ${esc(k.decision)}</p>${k.extra?`<p>${esc(k.extra)}</p>`:""}
+    <div class="tb-um">${um}</div></div></details>`}
+function renderTablero(){const M=$("#m-tablero");if(!M)return;
+  if(!TB.d){M.innerHTML=TB.err?`<section class="card tb-empty">${esc(TB.err)}</section>`:`<section class="card tb-empty">Calculando el tablero…</section>`;if(!TB.err&&!TB.busy)tbLoad();return}
+  const d=TB.d,c=d.conteo,p=d.publicidad,x=d.economia,q=d.equilibrio,P=d.cfg.pauta;
+  const f1=v=>(Math.round(v*10)/10).toLocaleString("es-MX");
+  const head=`<section class="card"><div class="tb-week"><button class="btn sm" data-tb="prev" aria-label="Semana anterior">‹</button><div style="text-align:center"><b>Semana del ${esc(d.etiqueta)}</b><small>Lunes a domingo · hora de Monterrey${TB.ws===TB.last?" · última semana completa":""}</small></div><button class="btn sm" data-tb="next" aria-label="Semana siguiente"${TB.ws>=TB.last?" disabled":""}>›</button></div>
+    <div class="tb-count"><span class="chip good">${c.verde} bien</span><span class="chip warn">${c.ambar} con ojo</span><span class="chip bad">${c.rojo} por atender</span><span class="chip" style="background:var(--surface-2);color:var(--ink-2)">${c.poca+c.sin} sin datos o muestra chica</span></div>
+    ${TB.err?`<p class="hint" style="margin-top:8px;color:var(--bad)">${esc(TB.err)}</p>`:""}</section>`;
+  const rules=`<table class="tb-rules"><tr><td>Esperar</td><td>Menos de ${P.minContactos} contactos o ${fmt(P.minGasto)} gastados (acumulado desde que arrancó la pauta).</td></tr>
+    <tr><td>Escalar ${P.escalaPct}%</td><td>CPL ≤ máximo 2 semanas seguidas, LTV/CAC ≥ ${d.cfg.umbrales.ltvcac}, frecuencia < ${P.frecEscala} y al menos 3 clientes nuevos.</td></tr>
+    <tr><td>Mantener</td><td>LTV/CAC entre ${P.ltvMantener} y ${d.cfg.umbrales.ltvcac}.</td></tr>
+    <tr><td>Cambiar creatividad</td><td>CPL ${P.cplCambiaPct}% sobre el máximo en la semana, o frecuencia > ${P.frecCambia}.</td></tr>
+    <tr><td>Cortar</td><td>LTV/CAC < 1 pasados ${P.diasCorte} días, o ROAS menor al de equilibrio (${x.roasEq!=null?f1(x.roasEq)+"×":"—"}) con ${P.minContactos} contactos o más.</td></tr></table>`;
+  const eco=`<div class="tb-eco"><div><span>LTV</span><b class="num">${fmt(x.ltv)}</b><small>${fmt(d.cfg.ltv.precio)} × ${d.cfg.ltv.margenPct}% × ${d.cfg.ltv.permanencia} meses</small></div>
+    <div><span>CAC máximo</span><b class="num">${fmt(x.cacMax)}</b><small>LTV ÷ ${d.cfg.ltv.ratioMeta}</small></div>
+    <div><span>CPL máximo</span><b class="num">${fmt(x.cplMax)}</b><small>CAC máx × ${d.cfg.ltv.convPct}% a cliente</small></div>
+    <div><span>ROAS de equilibrio</span><b class="num">${x.roasEq!=null?f1(x.roasEq)+"×":"—"}</b><small>1 ÷ margen de ${d.cfg.ltv.margenPct}%</small></div>
+    <div><span>CAC real (4 sem)</span><b class="num">${x.cac!=null?fmt(x.cac):"—"}</b><small>${x.clientes} cliente${x.clientes===1?"":"s"} nuevo${x.clientes===1?"":"s"}</small></div>
+    <div><span>LTV/CAC real</span><b class="num">${x.ltvcac!=null?f1(x.ltvcac)+"×":"—"}</b><small>meta ${d.cfg.umbrales.ltvcac}×</small></div>
+    <div><span>Recuperas el CAC en</span><b class="num">${x.paybackMeses!=null?f1(x.paybackMeses)+" meses":"—"}</b><small>meta menos de 3</small></div>
+    <div><span>Contacto → cliente</span><b class="num">${x.convReal!=null?Math.round(x.convReal*100)+"%":"—"}</b><small>supuesto ${d.cfg.ltv.convPct}%</small></div></div>
+    ${x.permanenciaReal!=null?`<p class="hint" style="margin-top:8px">Con tu retención real, la permanencia sería de unos ${f1(x.permanenciaReal)} meses (hoy usas ${d.cfg.ltv.permanencia}). Cámbialo en Supuestos si te convence.</p>`:""}`;
+  const ver=`<section class="card tb-ver ${p.color}"><small class="k">Decisión de publicidad</small><h2>${esc(p.veredicto)}</h2><p>${esc(p.porque)}</p>${p.siguiente?`<p class="hint">${esc(p.siguiente)}</p>`:""}
+    <details data-k="reglas"${TB.open.reglas?" open":""}><summary style="cursor:pointer;font-weight:700;color:var(--wine);font-size:.88rem;margin-top:6px">Reglas y números base</summary>${rules}${eco}</details></section>`;
+  const pct=Math.max(0,Math.min(100,q.avance));
+  const eqs=`<section class="card tb-eq"><small class="k" style="font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)">Punto de equilibrio del espacio</small>
+    <div class="big num">${fmt(q.contribucion)} <span style="font-size:1rem;font-weight:400;color:var(--ink-2)">de ${fmt(q.fijos)} al mes</span></div><div class="meter"><i style="width:${pct}%"></i></div>
+    <p class="hint">${q.faltante>0?`Faltan ${fmt(q.faltante)}${q.membresiasFaltan!=null?`, unas ${q.membresiasFaltan} membresías de ${fmt(x.mc)} de contribución cada una`:""}. Solo con membresías harían falta ${q.membresiasTotal||"—"}.`:"Ya se cubren los gastos fijos del mes."} Es la contribución (ingresos − pago a maestros − anuncios) de las últimas 4 semanas llevada a un mes.</p></section>`;
+  const grupos=tbGrupos.map(g=>{const L=d.kpis.filter(k=>k.grupo===g);if(!L.length)return"";const key="g-"+g;
+    const w=L.some(k=>k.estado==="rojo")?"rojo":L.some(k=>k.estado==="ambar")?"ambar":L.every(k=>k.estado==="verde")?"verde":"sin";
+    return`<details class="sec" data-k="${key}"${TB.open[key]!==false&&(TB.open[key]||g==="Publicidad"||w==="rojo"||w==="ambar")?" open":""}><summary><i class="tb-dot ${w}"></i><h2>${g}</h2><span class="sum">${L.length} indicador${L.length>1?"es":""}</span></summary><div class="tb-list">${L.map(tbRow).join("")}</div></details>`}).join("");
+  const wa="https://wa.me/?text="+encodeURIComponent(d.texto);
+  const hist=(d.resumenes||[]).map(r=>`<details><summary>Semana del ${esc(r.ws.slice(8)+"/"+r.ws.slice(5,7))} · guardado el lunes</summary><pre class="tb-txt">${esc(r.texto)}</pre></details>`).join("");
+  const res=`<section class="card"><h2 style="font-size:1.08rem">Resumen para el lunes</h2><p class="hint" style="margin:4px 0 0">Se arma solo con lo de arriba. Cada lunes a las 8:00 am queda guardado de la semana anterior; aquí lo copias o lo mandas.</p>
+    <pre class="tb-txt" id="tbTxt">${esc(d.texto)}</pre><div class="tb-act"><button class="btn primary" data-tb="copy">Copiar</button><a class="btn" href="${wa}" target="_blank" rel="noopener">Mandar por WhatsApp</a></div>
+    ${hist?`<div class="tb-hist" style="margin-top:12px"><b style="font-size:.86rem">Guardados los lunes</b>${hist}</div>`:""}</section>`;
+  const s=d.captura||{};const F=(k,l,ph)=>tbIn(l,k,s[k],ph);
+  const form=`<details class="sec" data-k="captura"${TB.open.captura?" open":""}><summary><h2>Capturar la semana</h2><span class="sum">${d.faltan.length?"Falta: "+esc(d.faltan.join(", ")):"Todo lo básico capturado"}</span></summary>
+    <div class="tb-form"><p class="hint">Lo de anuncios sale del Administrador de anuncios de Meta; lo demás, de tu operación. Lo que dejes vacío se calcula con el CRM o queda sin dato. Se guarda solo.</p>
+      <h3>Anuncios</h3>${F("gasto","Gasto en anuncios ($)")}${F("contactos","Contactos de anuncios (WhatsApp o formulario)")}${F("impresiones","Impresiones")}${F("alcance","Alcance")}
+      <h3>Otros contactos y comunidad</h3>${F("contactosOrg","Contactos orgánicos (si vacío: fichas nuevas del CRM)")}${F("comunidad","Personas en el grupo de comunidad (total)")}
+      <h3>Contenido</h3>${F("guardados","Guardados + compartidos de los reels")}${F("alcanceReels","Alcance de esos reels")}
+      <h3>Dinero que el CRM no ve</h3>${F("pagoMaestros","Pago real a maestros ($)","si vacío: "+d.cfg.costoVarPct+"% de ingresos")}${F("otrosIngresos","Comisiones y otros ingresos ($)","EC1375, etc.")}
+      <h3>Residentes (valor del mes)</h3>${F("horasVendidas","Horas vendidas")}${F("renovados","Renovados")}${F("vencidos","Contratos vencidos")}</div></details>`;
+  const C=d.cfg,cf=(l,p,v)=>tbCfgIn(l,p,v);
+  const sup=`<details class="sec" data-k="supuestos"${TB.open.supuestos?" open":""}><summary><h2>Supuestos y umbrales</h2><span class="sum">Editables; se recalibran con 60 días de datos</span></summary>
+    <div class="tb-form"><p class="hint">Son puntos de partida del plan maestro, no verdades. Cada umbral de un indicador se cambia abriendo su fila arriba.</p>
+      <h3>Valor de un cliente (LTV)</h3>${cf("Precio de la membresía ($)","ltv.precio",C.ltv.precio)}${cf("Margen después de pagar al maestro (%)","ltv.margenPct",C.ltv.margenPct)}${cf("Permanencia (meses)","ltv.permanencia",C.ltv.permanencia)}${cf("Contacto → cliente (%)","ltv.convPct",C.ltv.convPct)}${cf("LTV/CAC que buscas","ltv.ratioMeta",C.ltv.ratioMeta)}
+      <h3>Espacio</h3>${cf("Gastos fijos al mes ($)","fijos",C.fijos)}${cf("Cupo por clase","cupo",C.cupo)}${cf("Costo variable si no capturas el pago real (%)","costoVarPct",C.costoVarPct)}${cf("Horas de sala vendibles al mes","horasDisp",C.horasDisp)}${cf("Tolerancia del ámbar (%)","margenAmbar",C.margenAmbar)}
+      <h3>Reglas de publicidad</h3>${cf("Contactos mínimos para decidir","pauta.minContactos",C.pauta.minContactos)}${cf("Gasto mínimo para decidir ($)","pauta.minGasto",C.pauta.minGasto)}${cf("Escalar (%)","pauta.escalaPct",C.pauta.escalaPct)}${cf("Cambiar si el CPL pasa del máximo (%)","pauta.cplCambiaPct",C.pauta.cplCambiaPct)}${cf("Cambiar si la frecuencia pasa de","pauta.frecCambia",C.pauta.frecCambia)}${cf("Escalar solo con frecuencia menor a","pauta.frecEscala",C.pauta.frecEscala)}${cf("Mantener desde LTV/CAC","pauta.ltvMantener",C.pauta.ltvMantener)}${cf("Días antes de cortar por LTV/CAC","pauta.diasCorte",C.pauta.diasCorte)}</div></details>`;
+  const keep=window.scrollY;M.innerHTML=head+ver+eqs+grupos+res+form+sup;window.scrollTo(0,keep)}
+function tbSaveSem(){if(!canWrite||!TB.d)return;const doc={id:"sem-"+TB.ws};document.querySelectorAll("#m-tablero [data-sem]").forEach(i=>{if(i.value!=="")doc[i.dataset.sem]=+i.value});
+  put("kpis",doc);setStatus("live","Guardando…");tbSoon()}
+function tbSaveCfg(el){if(!canWrite||!TB.d)return;const c=clone(TB.d.cfg);const path=el.dataset.cfg.split(".");let o=c;for(let i=0;i<path.length-1;i++)o=o[path[i]];
+  o[path[path.length-1]]=el.value===""?(path[0]==="umbrales"?null:o[path[path.length-1]]):+el.value;
+  TB.d.cfg=c;c.id="cfg";put("kpis",c);tbSoon()}
+function tbCopy(){const t=TB.d&&TB.d.texto;if(!t)return;const ok=()=>toast("Resumen copiado");
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,()=>{const r=document.createRange();r.selectNodeContents($("#tbTxt"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Selecciónalo y cópialo")});
+  else{const r=document.createRange();r.selectNodeContents($("#tbTxt"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Selecciónalo y cópialo")}}
+{const M=$("#m-tablero");
+  M.addEventListener("click",e=>{const b=e.target.closest("[data-tb]");if(!b||b.disabled)return;const a=b.dataset.tb;
+    if(a==="prev"||a==="next"){TB.d=null;TB.ws=tbDay(TB.ws,a==="prev"?-7:7);TB.err="";renderTablero();tbLoad(TB.ws)}
+    if(a==="copy")tbCopy()});
+  M.addEventListener("toggle",e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)TB.open[k]=e.target.open},true);
+  let ts;M.addEventListener("input",e=>{const t=e.target;if(t.dataset.sem!=null){clearTimeout(ts);ts=setTimeout(tbSaveSem,600)}});
+  M.addEventListener("change",e=>{const t=e.target;if(t.dataset.cfg)tbSaveCfg(t);else if(t.dataset.sem!=null){clearTimeout(ts);tbSaveSem()}})}
+
 /* ===================== navegación ===================== */
-const MODS=["escenarios","presupuesto","cronograma"];
+const MODS=["escenarios","presupuesto","tablero","cronograma"];
 function route(){let h=(location.hash||"").slice(1);if(h==="riesgos"||h==="pendientes"){history.replaceState(null,"","#cronograma");h="cronograma"}const m=MODS.includes(h)?h:"escenarios";
   {const u=$("#ubarU");if(u)u.hidden=m!=="escenarios"}
   MODS.forEach(x=>{$("#m-"+x).hidden=x!==m;const a=document.querySelector(`[data-mod="${x}"]`);if(x===m)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
-  if(m==="presupuesto")renderBudget();if(m==="cronograma")renderTasks();}
+  if(m==="presupuesto")renderBudget();if(m==="tablero")renderTablero();if(m==="cronograma")renderTasks();}
 window.addEventListener("hashchange",route);
 function busy(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")}
 function renderAll(){renderTabs();if(!busy())renderEditors();renderOut();const h=(location.hash||"").slice(1);
