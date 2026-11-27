@@ -5,9 +5,11 @@
 //  - /audios/* → respuesta 206 con Range (Safari lo necesita para reproducir).
 //  - /api/* y /admin → reservas en D1 (ver src/api.js).
 //  - /equipo, /api/crm/* y /api/confirmar → CRM y panel del equipo (ver src/crm.js).
+//  - /entrar y /salir → inicio de sesión del equipo con cookie de 90 días (ver src/sesion.js).
 import { esMedia, servirConRango } from './range.js';
 import { esApi, api } from './api.js';
 import { esCRM, crm, resumenKpisDeLosLunes } from './crm.js';
+import { esSesion, sesion } from './sesion.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -16,6 +18,7 @@ export default {
       url.hostname = 'sadhanaholistics.com';
       return Response.redirect(url.toString(), 301);
     }
+    if (esSesion(url.pathname)) return sesion(request, env);
     if (esCRM(url.pathname)) return crm(request, env);
     if (esApi(url.pathname)) return api(request, env);
     if (esMedia(url.pathname)) return servirConRango(request, env, ctx);

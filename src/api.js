@@ -7,6 +7,7 @@
 //                               Vacío = la landing usa el directorio que trae escrito.
 //                               Trae también `paquetes` (máx. 4) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
+//   GET  /api/sala/disponibilidad · POST /api/sala/reservar   renta de la sala por hora, sin traslapes (src/sala.js).
 //   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
 //   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
 // Privado (contraseña en el secreto ADMIN_CLAVE):
@@ -14,6 +15,8 @@
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
 //   POST /admin/api/reservas/:folio  {estado?, nota?}
 import panelHTML from './admin.html';
+import { deSesion, sinSesion } from './sesion.js';
+import { esSala, sala, configPublica } from './sala.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -37,6 +40,7 @@ export async function api(request, env) {
   if (!env.DB) return json({ ok: false, error: 'Base de datos no configurada' }, 503);
 
   try {
+    if (esSala(p)) return await sala(request, env, url);
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
     if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);
@@ -44,7 +48,7 @@ export async function api(request, env) {
     if (p === '/api/votos/conteo' && request.method === 'GET') return await conteoVotos(env);
 
     if (p === '/admin' || p.startsWith('/admin/')) {
-      const auth = autorizado(request, env);
+      const auth = await autorizado(request, env);
       if (auth) return auth;
       if (p === '/admin' && request.method === 'GET')
         return new Response(panelHTML, {
@@ -155,19 +159,18 @@ async function estados(url, env) {
   return json(Object.fromEntries(results.map(r => [r.folio, r.estado])));
 }
 
-function autorizado(request, env) {
-  const clave = env.ADMIN_CLAVE;
-  if (!clave) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+async function autorizado(request, env) {
+  if (!env.ADMIN_CLAVE) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+  const ses = await deSesion(request, env); // cookie de /entrar (90 días)
+  if (ses && ses.rol === 'admin') return null;
   const h = request.headers.get('authorization') || '';
   let pass = '';
   if (h.startsWith('Basic ')) {
     try { pass = atob(h.slice(6)).split(':').slice(1).join(':'); } catch (e) {}
   }
-  if (pass && iguales(pass, clave)) return null;
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana admin", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  if (pass && iguales(pass, env.ADMIN_CLAVE)) return null;
+  if (ses) return new Response('Solo administración', { status: 403 });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {
@@ -228,7 +231,7 @@ async function catalogo(env) {
   } catch (e) {
     rows = []; // la tabla aún no existe: la landing usa su directorio escrito
   }
-  let fundadores = null, paquetes = null, promo = null, terapias = null;
+  let fundadores = null, paquetes = null, promo = null, terapias = null, salaCfg = configPublica({});
   const clases = [];
   for (const r of rows) {
     let d;
@@ -238,12 +241,14 @@ async function catalogo(env) {
     // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
     if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 4); if (d.promo) promo = d.promo; continue; }
     // Terapias 1:1: solo salen las activas.
+    // Sala y rentas: precios, paquetes de horas y bloque mensual de la sección «Soy terapeuta».
+    if (r.id === '_sala') { salaCfg = configPublica(d); continue; }
     if (r.id === '_terapias') { if (Array.isArray(d.items)) terapias = d.items.filter(x => x && x.estado !== 'oculta'); continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;
     clases.push({ ...d, id: r.id });
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
-  return json({ clases, fundadores, paquetes, promo, terapias }, 200, { 'cache-control': 'public, max-age=20' });
+  return json({ clases, fundadores, paquetes, promo, terapias, sala: salaCfg }, 200, { 'cache-control': 'public, max-age=20' });
 }
 
 // ---------- Votos por horario (clases nuevas u otro horario) ----------

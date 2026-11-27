@@ -14,6 +14,7 @@
   async function refresh(col){
     try {
       const r = await fetch(API + col, {cache: "no-store"});
+      if (r.status === 401) { (top || window).location.href = "/entrar?v=" + encodeURIComponent("/equipo#proyeccion"); return; }
       if (!r.ok) throw {code: r.status === 403 ? "permission_denied" : "unavailable"};
       const list = await r.json(), sig = JSON.stringify(list.map(d => [d.id, d.actualizado]));
       if (last[col] === sig) return; last[col] = sig;
@@ -1105,6 +1106,7 @@ a.btn{color:inherit;text-decoration:none;display:inline-block}
     <datalist id="ownList"></datalist>
     <datalist id="catList"></datalist>
   </div>
+
 </div>
 
 </div>
@@ -2307,6 +2309,49 @@ function seedLanzamiento(){const L="2027-01-11",d=k=>addD(L,k);
     A("Clases presenciales: horario y sala de Zoom",0,[],[c1])};
   clase("Lanzamiento Hatha yoga (Miranda)");clase("Lanzamiento Consciencia corporal","Diego");
   cmH=root;cmV="crono";cmD=false;cmX=new Set();renderTasks();toast("Cargué el hito con las actividades de las dos clases. Ajusta responsables y fechas.")}
+// plantilla: hitos del Plan maestro comercial 2027 (una fase por hito; fechas editables)
+function seedPlan2027(){
+  const F=(title,start,due,own,acts)=>{const root=newTask({title,milestone:true,start,due,owner:own,area:"Plan maestro"});
+    let prev=null;acts.forEach(([t,du,o,notes,chain])=>{const id=newTask({title:t,parent:root,start,due:du,owner:o||own,notes:notes||"",deps:chain&&prev?[prev]:[]});prev=id});return root};
+  F("Fase 0 · Cimientos","2026-12-01","2027-01-03","Diego",[
+    ["Página de reserva del espacio en vivo (clases, eventos y renta por hora)","2026-12-08","Diego","Una sola sala sin traslapes; ticket pendiente hasta verificar pago."],
+    ["Cargar los bloques de horario de la sala (Luigi, Miranda y bloques de después)","2026-12-10","Diego","Rocket yoga mar–vie 7:00; chi kung y consciencia después; Miranda lun–jue tarde; vinyasa, consciencia y meditación después."],
+    ["Meta Business: portafolio, dominio verificado, Instagram, Facebook y WhatsApp","2026-12-15","Diego"],
+    ["Pixel y API de conversiones: evento por reserva y por mensaje a WhatsApp","2026-12-20","Diego"],
+    ["UTM en todos los enlaces de anuncio y bio (utm_source, utm_campaign)","2026-12-20","Diego","El CRM guarda el origen (UTM) de cada reserva."],
+    ["Reclamar y verificar la ficha de Google Maps","2026-12-22","Isa"],
+    ["WhatsApp: bienvenida, recordatorio 24 h y 2 h, aviso de 7 días sin asistir y encuesta","2026-12-28","Diego","Plantillas fuera de la ventana de 24 h requieren aprobación de Meta."],
+    ["24 piezas de contenido en reserva (lote de 8 cada 2 semanas)","2027-01-02","Isa"],
+    ["Compuerta: reserva de prueba de punta a punta (anuncio → WhatsApp → reserva → CRM)","2027-01-03","Diego"]]);
+  F("Fase 1 · Tracción con clases","2027-01-04","2027-03-31","Isa",[
+    ["Arrancan las clases y el anuncio de clase de prueba gratis","2027-01-11","Isa"],
+    ["Capturar cada lunes gasto, contactos y alumnos en el tablero de KPIs","2027-03-29","Diego","Decisiones de escalar solo con 60 a 90 días de datos."],
+    ["Comunidad de 50 a 200 personas y 2,000 seguidores en Instagram","2027-03-31","Isa"],
+    ["25 alumnos activos","2027-03-31","Diego"],
+    ["Un evento mensual con 20 o más personas","2027-03-31","Isa"],
+    ["Compuerta: costo por contacto estable 3 semanas seguidas","2027-03-31","Diego"]]);
+  F("Fase 2 · Monetizar el embudo","2027-04-01","2027-06-30","Diego",[
+    ["Abrir terapias 1:1 a alumnos","2027-04-15","Isa"],
+    ["Sesión informativa EC1375 con Posturalia","2027-05-31","Diego"],
+    ["Primer taller o formación con cupo lleno","2027-06-30","Diego"],
+    ["Compuerta: ingreso fuera de membresías ≥ $12,000 al mes","2027-06-30","Diego"]]);
+  F("Fase 3 · Residentes piloto","2027-07-01","2027-09-30","Diego",[
+    ["Oferta de residentes: cama de masaje, amenidades y precio por bloques de horas","2027-07-15","Isa"],
+    ["Vender a 2 o 3 residentes fundadores con reporte real de alcance","2027-08-31","Diego"],
+    ["Compuerta: 3 residentes con renovación al segundo mes","2027-09-30","Diego"]]);
+  F("Fase 4 · Escalar y sistematizar","2027-10-01","2027-12-31","Diego",[
+    ["Meta de 7 residentes (≈ $24,500 al mes)","2027-10-31","Diego"],
+    ["Manual de operación y egresados como supervisores","2027-12-15","Isa"],
+    ["Compuerta: costos fijos cubiertos 3 meses seguidos; decidir replicar en otra ciudad","2027-12-31","Diego"]]);
+  const MES=[["Ene","El Poder del OM + masterclass de consciencia corporal","2027-01-31"],["Feb","El Poder del OM + masterclass de respiración","2027-02-28"],["Mar","El Poder del OM + breathwork con baño de gongs","2027-03-31"],["Abr","El Poder del OM + taller de yin y sonido","2027-04-30"],["May","El Poder del OM + masterclass de consciencia corporal 2","2027-05-31"],["Jun","El Poder del OM + breathwork con baño de gongs","2027-06-30"],["Jul","El Poder del OM + masterclass de respiración 2","2027-07-31"],["Ago","El Poder del OM + evento de terapeutas del directorio","2027-08-31"],["Sep","El Poder del OM + breathwork con baño de gongs","2027-09-30"],["Oct","El Poder del OM + taller de certificación (reiki o breathwork)","2027-10-31"],["Nov","El Poder del OM + masterclass de cierre de año","2027-11-30"],["Dic","El Poder del OM + cierre de ciclo, ceremonia","2027-12-31"]];
+  F("Agenda 2027 · eventos de fin de semana","2026-12-01","2027-12-31","Isa",MES.map(([m,t,d])=>[m+": "+t,d,"Isa","Fecha por quincena, por confirmar. Cada evento abre su boleto en /reservar y su campaña con UTM."]));
+  F("Automatización de lo repetitivo","2026-12-01","2027-03-31","Diego",[
+    ["Confirmación y recordatorios por WhatsApp (24 h y 2 h antes)","2027-01-15","Diego"],
+    ["Evento de calendario con enlace de Google Calendar en cada ticket","2026-12-08","Diego","Ya sale en el ticket de /reservar."],
+    ["Resumen semanal de lunes: contactos, costo por contacto, alumnos y ocupación","2027-01-31","Diego","Sale del tablero de KPIs y del CRM."],
+    ["Confirmar el pago de una renta desde /equipo y avisar al cliente por WhatsApp","2027-01-31","Diego"],
+    ["Panel del residente: reservar su bloque y ver visitas a su ficha","2027-07-15","Diego"]]);
+  cmH="all";cmV="tabla";cmD=false;cmX=new Set();renderTasks();toast("Cargué los hitos del plan maestro: 5 fases, la agenda de eventos 2027 y la automatización. Ajusta responsables y fechas.")}
 function renderTasks(){
   NUM=cmNums();
   const all=cache.tasks,T=topsL().filter(h=>cmD||effSt(h)!=="hecho"),O=orphanRoots().filter(o=>cmD||effSt(o)!=="hecho");
@@ -2316,7 +2361,7 @@ function renderTasks(){
   const hasSeed=topsL().some(h=>/^lanzamiento enero$/i.test((h.title||"").trim()));
   $("#cmCards").innerHTML=`<div class="cm-sel"><select data-hf aria-label="Hito"><option value="all">Todos los hitos</option>${T.map(h=>`<option value="${h.id}" ${cmH===h.id?"selected":""}>◆ ${esc(h.title||"Hito sin nombre")} · ${prog(h)}%</option>`).join("")}${O.length?`<option value="none" ${cmH==="none"?"selected":""}>Sin hito (${O.length})</option>`:""}</select>${owners.length?`<select data-of aria-label="Responsable"><option value="all">Todos</option>${owners.map(o=>`<option ${cmO===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`:""}<button type="button" class="btn sm needw" data-hadd>+ Hito</button></div>`;
   $("#cmEdit").innerHTML="";
-  $("#cmOwners").innerHTML=`<button aria-pressed="${cmD}" data-done>${cmD?"Ocultar cerradas":"Mostrar cerradas"}</button>`+(hasSeed?"":`<button class="needw" data-seed>+ Plantilla: Lanzamiento enero</button>`);
+  $("#cmOwners").innerHTML=`<button aria-pressed="${cmD}" data-done>${cmD?"Ocultar cerradas":"Mostrar cerradas"}</button>`+(hasSeed?"":`<button class="needw" data-seed>+ Plantilla: Lanzamiento enero</button>`)+(topsL().some(h=>/^fase 0/i.test((h.title||"").trim()))?"":`<button class="needw" data-seed2>+ Plantilla: Plan maestro 2027</button>`);
   $("#ownList").innerHTML=[...new Set(["Diego","Isa","Diane",...all.map(t=>(t.owner||"").trim()).filter(Boolean)])].map(o=>`<option value="${esc(o)}">`).join("");
   $("#catList").innerHTML=[...new Set(CATS.concat(all.map(t=>(t.area||"").trim()).filter(Boolean)))].map(c=>`<option value="${esc(c)}">`).join("");
   const V=[["crono","Gantt"],["tabla","Lista"],["semanas","Semana"]];
@@ -2345,6 +2390,7 @@ function openIssue(id){cmDetail=id;if(location.hash!=="#cronograma")location.has
     if(b=g("[data-dclose]")){cmDetail=null;renderTasks();return}
     if(!canWrite)return;
     if(b=g("[data-seed]")){seedLanzamiento();return}
+    if(b=g("[data-seed2]")){seedPlan2027();return}
     if(b=g("[data-hadd]")){const id=newTask({title:"Nuevo hito",milestone:true});cmH=id;cmV="tabla";cmD=false;cmDetail=id;renderTasks();const i=document.querySelector("#cmDetail .sh-t");if(i){i.focus();i.select()}return}
     if(b=g("[data-ordup]")||g("[data-orddn]")){const id=b.dataset.ordup||b.dataset.orddn,dir=b.dataset.ordup?-1:1,t=byId(id);if(!t)return;const L=sibsOf(t),i=L.findIndex(x=>x.id===id),o=L[i+dir];if(!o){toast(dir<0?"Ya es la primera.":"Ya es la última.");return}
       const a=ordv(t),c=ordv(o);upd(t.id,x=>{x.ord=c===a?c+dir*0.001:c},0);upd(o.id,x=>{x.ord=a},0);renderTasks();return}

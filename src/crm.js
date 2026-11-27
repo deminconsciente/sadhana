@@ -3,7 +3,8 @@
 // Público:
 //   GET  /api/confirmar?f=FOLIO&t=TOKEN     datos mínimos de la reserva para la página /confirmar/
 //   POST /api/confirmar {f, t, r:"si"|"no"}  el cliente confirma o avisa que no podrá ir
-// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE):
+// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE; se entra en /entrar
+// y queda una cookie de 90 días, ver src/sesion.js; Basic Auth sigue valiendo):
 //   GET  /equipo                          panel (src/equipo.html)
 //   GET  /api/crm/yo                      quién entró y con qué rol
 //   GET  /api/crm/reservas?filtro=hoy|proximas|pendientes|todas
@@ -27,6 +28,7 @@ import equipoHTML from './equipo.html';
 import proyeccionHTML from './proyeccion.html';
 import { tablaVotos } from './api.js';
 import { calcular as calcularKpis, guardarResumenSemanal } from './kpis.js';
+import { deSesion, validar, sinSesion, renovar } from './sesion.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -80,19 +82,19 @@ export async function crm(request, env) {
     }
 
     if (p === '/equipo' && M === 'GET')
-      return new Response(equipoHTML, {
+      return await renovar(new Response(equipoHTML, {
         headers: {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'no-store',
           'x-robots-tag': 'noindex',
           'x-frame-options': 'DENY',
         },
-      });
+      }), env, yo);
     if (M === 'POST' && !mismoOrigen(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
 
     const r = p.slice('/api/crm/'.length).split('/').map(decodeURIComponent);
     const [a, b, c] = r;
-    if (a === 'yo') return json(yo);
+    if (a === 'yo') return json({ usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol });
     if (a === 'reservas') {
       if (!b && M === 'GET') return await listarReservas(url, env);
       if (!b && M === 'POST') return await altaManual(request, env, yo);
@@ -153,28 +155,23 @@ function mismoOrigen(request) {
 // ---------- Acceso ----------
 
 async function quien(request, env) {
+  // 1) Cookie de sesión (formulario /entrar, se guarda 90 días).
+  const ses = await deSesion(request, env);
+  if (ses) return ses;
+  // 2) Acceso anterior por Basic Auth (sigue funcionando para no romper nada).
   const h = request.headers.get('authorization') || '';
-  let usuario = '', pass = '';
   if (h.startsWith('Basic ')) {
+    let usuario = '', pass = '';
     try {
       const raw = new TextDecoder().decode(Uint8Array.from(atob(h.slice(6)), ch => ch.charCodeAt(0)));
       const i = raw.indexOf(':');
       usuario = raw.slice(0, i).trim().toLowerCase();
       pass = raw.slice(i + 1);
     } catch (e) {}
+    const yo = await validar(env, usuario, pass);
+    if (yo) return { usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol };
   }
-  if (pass) {
-    if (env.ADMIN_CLAVE && iguales(pass, env.ADMIN_CLAVE))
-      return { usuario: usuario || 'admin', nombre: usuario ? usuario[0].toUpperCase() + usuario.slice(1) : 'Administración', rol: 'admin' };
-    if (usuario) {
-      const m = await env.DB.prepare('SELECT * FROM equipo WHERE usuario = ? AND activo = 1').bind(usuario).first();
-      if (m && (await verificaClave(pass, m.clave_hash))) return { usuario: m.usuario, nombre: m.nombre, rol: m.rol };
-    }
-  }
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana equipo", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {
@@ -381,6 +378,7 @@ async function cambiarReserva(folio, request, env) {
     sets.push('actualizado = ?'); vals.push(ahora());
     const r = await env.DB.prepare(`UPDATE reservas SET ${sets.join(', ')} WHERE folio = ?`).bind(...vals, folio).run();
     if (!r.meta.changes) return json({ ok: false, error: 'No existe ese folio' }, 404);
+    if (b.estado === 'confirmado') await activarPaqueteHoras(env, folio);
   }
   if (b.maestro !== undefined) {
     const existe = await env.DB.prepare('SELECT 1 FROM reservas WHERE folio = ?').bind(folio).first();
@@ -390,6 +388,27 @@ async function cambiarReserva(folio, request, env) {
   }
   if (!sets.length && b.maestro === undefined) return json({ ok: false, error: 'Nada que cambiar' }, 400);
   return json({ ok: true });
+}
+
+// Al confirmar el pago de un «Paquete de horas» (sala) se abre su membresía: clases = horas, con su vigencia.
+// Las rentas pagadas con el paquete restan de ahí (ver horasDisponibles en src/sala.js).
+async function activarPaqueteHoras(env, folio) {
+  const r = await env.DB.prepare("SELECT * FROM reservas WHERE folio = ? AND tipo = 'Paquete de horas'").bind(folio).first();
+  if (!r) return;
+  const nota = 'Folio ' + folio;
+  if (await env.DB.prepare('SELECT 1 FROM membresias WHERE nota = ?').bind(nota).first()) return;
+  let det = [];
+  try { det = JSON.parse(r.detalle || '[]'); } catch (e) {}
+  const val = k => (det.find(x => new RegExp(k, 'i').test(x[0])) || [])[1] || '';
+  const horas = parseInt(val('horas'), 10) || 0, dias = parseInt(val('vigencia'), 10) || 90;
+  if (!horas) return;
+  await sincronizarAlumnos(env);
+  const al = await env.DB.prepare('SELECT id FROM alumnos WHERE tel = ?').bind(r.tel).first();
+  if (!al) return;
+  const inicio = hoyMTY();
+  await env.DB.prepare(
+    'INSERT INTO membresias (alumno_id, plan, inicio, fin, clases, monto, metodo, nota, registrado_por, creado) VALUES (?,?,?,?,?,?,?,?,?,?)'
+  ).bind(al.id, `Paquete ${horas} h de sala`, inicio, sumaDias(inicio, dias), horas, r.monto || 0, r.metodo, nota, 'automático', ahora()).run();
 }
 
 // ---------- Confirmación de asistencia en línea ----------

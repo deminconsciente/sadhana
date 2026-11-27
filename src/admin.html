@@ -56,6 +56,7 @@ let filtro = "pendientes", datos = [];
 
 async function cargar(){
   const r = await fetch("/admin/api/reservas?filtro=" + filtro, {cache:"no-store"});
+  if (r.status === 401) { location.href = "/entrar?v=/admin"; return; }
   datos = r.ok ? await r.json() : [];
   pintar();
 }
