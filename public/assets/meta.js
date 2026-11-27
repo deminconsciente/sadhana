@@ -3,7 +3,8 @@
    - Guarda utm_* y fbclid de la primera visita (30 días) para mandarlos con la reserva al CRM.
    - Eventos: ReservaIniciada, ReservaPendiente, ClasePrueba (con el folio como eventID para deduplicar). */
 (function(){
-  var PIXEL_ID = "";
+  var PIXEL_ID = "1032460172463453"; // conjunto de datos «Sadhana Web» (Meta Business)
+  var CONSENT = "sad_medicion"; // "1" acepta, "0" rechaza; sin valor = aún no decide
   var KEY = "sad_utm", DIAS = 30;
   var CAMPOS = ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","fbclid"];
 
@@ -31,12 +32,35 @@
     return Object.keys(o).length ? o : null;
   }
 
-  if (PIXEL_ID){
+  function consent(){ try { return localStorage.getItem(CONSENT); } catch(e){ return null; } }
+  function cargar(){
+    if (!PIXEL_ID || window.fbq) return;
     /* eslint-disable */
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
     /* eslint-enable */
     fbq("init", PIXEL_ID);
     fbq("track", "PageView");
+  }
+
+  // Aviso de medición: el Pixel solo carga si la persona acepta.
+  function aviso(){
+    var d = document.createElement("div");
+    d.setAttribute("role","dialog"); d.setAttribute("aria-label","Medición de visitas");
+    d.style.cssText = "position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));right:84px;max-width:380px;z-index:60;background:rgba(42,20,36,.92);color:#f5ece6;border-radius:22px;padding:14px 16px;font:14px/1.45 'Glacial Indifference',system-ui,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 24px rgba(0,0,0,.25)";
+    d.innerHTML = '<div>Usamos el Pixel de Meta para medir qué anuncios traen reservas. ¿Lo permites? <a href="/privacidad/" style="color:#e0a074">Más información</a></div><div style="display:flex;gap:8px;margin-top:10px"><button data-r="1" style="flex:1;border:0;border-radius:999px;padding:9px 12px;font:inherit;background:#e0a074;color:#2a1424;cursor:pointer">Permitir</button><button data-r="0" style="flex:1;border:1px solid rgba(245,236,230,.4);border-radius:999px;padding:9px 12px;font:inherit;background:transparent;color:inherit;cursor:pointer">No, gracias</button></div>';
+    d.onclick = function(e){
+      var r = e.target && e.target.getAttribute && e.target.getAttribute("data-r"); if (r === null || r === undefined) return;
+      try { localStorage.setItem(CONSENT, r); } catch(x){}
+      d.remove(); if (r === "1") cargar();
+    };
+    document.body.appendChild(d);
+  }
+  if (PIXEL_ID){
+    var c = consent();
+    if (c === "1") cargar();
+    else if (c === null){
+      if (document.body) aviso(); else document.addEventListener("DOMContentLoaded", aviso);
+    }
   }
 
   // track("ReservaPendiente", {titulo, valor}, folio). Sin Pixel no hace nada.
