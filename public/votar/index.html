@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vota tu horario · Sadhana</title>
+<meta name="description" content="Elige la clase, los días y las horas que te sirven. Abrimos donde se junte más gente.">
+<script>location.replace("/?votar=" + encodeURIComponent(new URLSearchParams(location.search).get("clase") || ""));</script>
+<meta http-equiv="refresh" content="0; url=/?votar">
+<style>body{font-family:system-ui,sans-serif;background:#f6efe6;color:#2c1f33;display:grid;place-items:center;min-height:100vh;margin:0}</style>
+</head><body><p><a href="/?votar">Abrir la votación de horarios</a></p></body></html>

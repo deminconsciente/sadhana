@@ -5,13 +5,18 @@
 //   GET  /api/reservas/estado   ?folios=A,B → {A:"pendiente",B:"confirmado"} (sin datos personales).
 //   GET  /api/catalogo          directorio de clases editable desde /equipo → {clases:[...], fundadores}.
 //                               Vacío = la landing usa el directorio que trae escrito.
-//                               Trae también `paquetes` (máx. 3) si el equipo los activó y `promo`
+//                               Trae también `paquetes` (máx. 4) si el equipo los activó y `promo`
 //                               (precio de apertura de la clase individual y primera clase gratis).
+//   GET  /api/sala/disponibilidad · POST /api/sala/reservar   renta de la sala por hora, sin traslapes (src/sala.js).
+//   POST /api/votos             voto por días y horas de una clase {clase, titulo, dias, horas, modalidad, nombre, tel}.
+//   GET  /api/votos/conteo      {claseId: personas} (sin datos personales) para la barra «interesados».
 // Privado (contraseña en el secreto ADMIN_CLAVE):
 //   GET  /admin                 panel para Isa y Diego.
 //   GET  /admin/api/reservas    lista (JSON) o ?formato=csv.
 //   POST /admin/api/reservas/:folio  {estado?, nota?}
 import panelHTML from './admin.html';
+import { deSesion, sinSesion } from './sesion.js';
+import { esSala, sala, configPublica } from './sala.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -35,12 +40,15 @@ export async function api(request, env) {
   if (!env.DB) return json({ ok: false, error: 'Base de datos no configurada' }, 503);
 
   try {
+    if (esSala(p)) return await sala(request, env, url);
     if (p === '/api/reservas' && request.method === 'POST') return await crear(request, env);
     if (p === '/api/reservas/estado' && request.method === 'GET') return await estados(url, env);
     if (p === '/api/catalogo' && request.method === 'GET') return await catalogo(env);
+    if (p === '/api/votos' && request.method === 'POST') return await votar(request, env);
+    if (p === '/api/votos/conteo' && request.method === 'GET') return await conteoVotos(env);
 
     if (p === '/admin' || p.startsWith('/admin/')) {
-      const auth = autorizado(request, env);
+      const auth = await autorizado(request, env);
       if (auth) return auth;
       if (p === '/admin' && request.method === 'GET')
         return new Response(panelHTML, {
@@ -110,19 +118,38 @@ async function crear(request, env) {
   const estado = b.estado === 'confirmado' && (b.metodo === 'credito' || !Number(b.monto)) ? 'confirmado' : 'pendiente';
   const ahora = new Date().toISOString();
 
+  const utm = limpiarUtm(b.utm);
+
   // INSERT OR IGNORE: si la landing reintenta el mismo folio, no se duplica ni se pisa.
-  const res = await env.DB.prepare(
-    `INSERT OR IGNORE INTO reservas
-     (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(
+  const valores = [
     folio, ahora, txt(b.tipo, 40), titulo, txt(b.ini, 40), detalle, nombre, tel, txt(b.email, 160),
     Math.max(0, Math.round(Number(b.monto) || 0)), txt(b.metodo, 30), estado, ahora,
     b.aceptaPrivacidad ? 1 : 0, b.aceptaComunidad ? 1 : 0
-  ).run();
+  ];
+  const SQL = `INSERT OR IGNORE INTO reservas
+     (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad`;
+  let res;
+  try {
+    res = await env.DB.prepare(SQL + `, utm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(...valores, utm).run();
+  } catch (e) {
+    // Base sin la migración 0004 todavía: guarda la reserva sin el origen en vez de perderla.
+    if (!/utm/i.test(String(e && e.message))) throw e;
+    res = await env.DB.prepare(SQL + `) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(...valores).run();
+  }
   console.log(res.meta && res.meta.changes ? 'reserva guardada' : 'reserva repetida (ya existía)', JSON.stringify({ ...rastro, estado }));
 
   return json({ ok: true, folio, estado }, 201);
+}
+
+// Origen del contacto: solo las llaves conocidas, texto corto, guardado como JSON (o null).
+function limpiarUtm(u) {
+  if (!u || typeof u !== 'object') return null;
+  const o = {};
+  for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ref']) {
+    const v = txt(u[k], 100);
+    if (v) o[k] = v;
+  }
+  return Object.keys(o).length ? JSON.stringify(o) : null;
 }
 
 async function leerPromo(env) {
@@ -155,19 +182,18 @@ async function estados(url, env) {
   return json(Object.fromEntries(results.map(r => [r.folio, r.estado])));
 }
 
-function autorizado(request, env) {
-  const clave = env.ADMIN_CLAVE;
-  if (!clave) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+async function autorizado(request, env) {
+  if (!env.ADMIN_CLAVE) return new Response('Falta configurar ADMIN_CLAVE', { status: 503 });
+  const ses = await deSesion(request, env); // cookie de /entrar (90 días)
+  if (ses && ses.rol === 'admin') return null;
   const h = request.headers.get('authorization') || '';
   let pass = '';
   if (h.startsWith('Basic ')) {
     try { pass = atob(h.slice(6)).split(':').slice(1).join(':'); } catch (e) {}
   }
-  if (pass && iguales(pass, clave)) return null;
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana admin", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  if (pass && iguales(pass, env.ADMIN_CLAVE)) return null;
+  if (ses) return new Response('Solo administración', { status: 403 });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {
@@ -228,7 +254,7 @@ async function catalogo(env) {
   } catch (e) {
     rows = []; // la tabla aún no existe: la landing usa su directorio escrito
   }
-  let fundadores = null, paquetes = null, promo = null;
+  let fundadores = null, paquetes = null, promo = null, terapias = null, salaCfg = configPublica({});
   const clases = [];
   for (const r of rows) {
     let d;
@@ -236,10 +262,68 @@ async function catalogo(env) {
     if (r.id === '_fundadores') { fundadores = { cupo: d.cupo, tomados: d.tomados ?? null, descuento: d.descuento }; continue; }
     // Paquetes de alumno: solo salen si el equipo activó «Mostrar en la página».
     // La promo de apertura (precio de la clase individual y primera clase gratis) sale siempre que exista.
-    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 3); if (d.promo) promo = d.promo; continue; }
+    if (r.id === '_paquetes') { if (d.publicar && Array.isArray(d.items)) paquetes = d.items.slice(0, 4); if (d.promo) promo = d.promo; continue; }
+    // Terapias 1:1: solo salen las activas.
+    // Sala y rentas: precios, paquetes de horas y bloque mensual de la sección «Soy terapeuta».
+    if (r.id === '_sala') { salaCfg = configPublica(d); continue; }
+    if (r.id === '_terapias') { if (Array.isArray(d.items)) terapias = d.items.filter(x => x && x.estado !== 'oculta'); continue; }
     if (r.id.startsWith('_') || d.estado === 'oculta') continue;
     clases.push({ ...d, id: r.id });
   }
   clases.sort((a, b) => (Number(a.orden) || 99) - (Number(b.orden) || 99));
-  return json({ clases, fundadores, paquetes, promo }, 200, { 'cache-control': 'public, max-age=20' });
+  return json({ clases, fundadores, paquetes, promo, terapias, sala: salaCfg }, 200, { 'cache-control': 'public, max-age=20' });
+}
+
+// ---------- Votos por horario (clases nuevas u otro horario) ----------
+let votosLista = false;
+export async function tablaVotos(env) {
+  if (votosLista) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS votos (clase TEXT NOT NULL, tel TEXT NOT NULL, titulo TEXT, nombre TEXT NOT NULL, dias TEXT NOT NULL, horas TEXT NOT NULL,
+     modalidad TEXT, acepta_comunidad INTEGER NOT NULL DEFAULT 0, creado TEXT NOT NULL, actualizado TEXT NOT NULL, PRIMARY KEY (clase, tel))`
+  ).run();
+  try { await env.DB.prepare('ALTER TABLE votos ADD COLUMN slots TEXT').run(); } catch (e) {} // «día-hora» exactos; ya existe en bases nuevas
+  votosLista = true;
+}
+
+async function votar(request, env) {
+  const origen = request.headers.get('origin');
+  if (origen) {
+    let host = '';
+    try { host = new URL(origen).host; } catch (e) {}
+    if (host !== new URL(request.url).host && !/(^|\.)sadhanaholistics\.com$/.test(host))
+      return json({ ok: false, error: 'Origen no permitido' }, 403);
+  }
+  let b;
+  try { b = await leerJSON(request); } catch (e) { return json({ ok: false, error: 'JSON inválido' }, e.status || 400); }
+  const clase = String(b.clase || '').trim().slice(0, 60);
+  const nombre = txt(b.nombre, 120);
+  const tel = String(b.tel || '').replace(/\D/g, '').slice(-13);
+  const enteros = (v, min, max) => [...new Set((Array.isArray(v) ? v : []).map(Number).filter(n => Number.isInteger(n) && n >= min && n <= max))].sort((x, y) => x - y);
+  // slots: ["1-19","6-9"] = día-hora exactos que la persona pulsó. Si vienen, de ahí salen dias y horas.
+  const slots = [...new Set((Array.isArray(b.slots) ? b.slots : []).map(String).filter(k => /^[0-6]-([5-9]|1\d|2[0-3])$/.test(k)))].slice(0, 40);
+  const dias = slots.length ? enteros(slots.map(k => k.split('-')[0]), 0, 6) : enteros(b.dias, 0, 6);
+  const horas = slots.length ? enteros(slots.map(k => k.split('-')[1]), 5, 23) : enteros(b.horas, 5, 23);
+  const modalidad = ['Presencial', 'En línea', 'Cualquiera'].includes(b.modalidad) ? b.modalidad : 'Presencial';
+  if (!/^[A-Za-z0-9_.-]{1,60}$/.test(clase)) return json({ ok: false, error: 'Clase inválida' }, 400);
+  if (!nombre || tel.length < 10 || !dias.length || !horas.length) return json({ ok: false, error: 'Faltan datos' }, 400);
+
+  await tablaVotos(env);
+  // Límite suave contra spam: un mismo WhatsApp vota hasta 12 clases.
+  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE tel = ? AND clase <> ?').bind(tel, clase).first();
+  if (n >= 12) return json({ ok: false, error: 'Demasiados votos' }, 429);
+  const ahora = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO votos (clase, tel, titulo, nombre, dias, horas, slots, modalidad, acepta_comunidad, creado, actualizado) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(clase, tel) DO UPDATE SET titulo = excluded.titulo, nombre = excluded.nombre, dias = excluded.dias, horas = excluded.horas, slots = excluded.slots,
+       modalidad = excluded.modalidad, acepta_comunidad = excluded.acepta_comunidad, actualizado = excluded.actualizado`
+  ).bind(clase, tel, txt(b.titulo, 120), nombre, JSON.stringify(dias), JSON.stringify(horas), slots.length ? JSON.stringify(slots) : null, modalidad, b.comunidad ? 1 : 0, ahora, ahora).run();
+  const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM votos WHERE clase = ?').bind(clase).first();
+  return json({ ok: true, interesados: r.n }, 201);
+}
+
+async function conteoVotos(env) {
+  let rows = [];
+  try { ({ results: rows } = await env.DB.prepare('SELECT clase, COUNT(*) AS n FROM votos GROUP BY clase').all()); } catch (e) { rows = []; }
+  return json(Object.fromEntries(rows.map(r => [r.clase, r.n])), 200, { 'cache-control': 'public, max-age=30' });
 }

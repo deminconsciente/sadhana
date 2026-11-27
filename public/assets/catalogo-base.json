@@ -187,5 +187,152 @@
   "cupo": 50,
   "tomados": null,
   "descuento": 20
- }
+ },
+ "terapias": [
+  {
+   "ter": "isa",
+   "id": "reiki",
+   "t": "Reiki",
+   "precio": 900,
+   "dur": 120,
+   "d": "Imposición de manos de origen japonés para inducir relajación profunda y acompañar procesos de estrés, cansancio o cambio.",
+   "tags": [
+    "Estrés",
+    "Descanso",
+    "Calma"
+   ],
+   "g": "sun",
+   "estado": "activa",
+   "orden": 1
+  },
+  {
+   "ter": "isa",
+   "id": "craneo",
+   "t": "Terapia craneosacral",
+   "precio": 1000,
+   "dur": 120,
+   "d": "Toques suaves en cráneo, columna y sacro para soltar la tensión acumulada y ayudar al sistema nervioso a bajar el ritmo.",
+   "tags": [
+    "Tensión",
+    "Cuello y espalda",
+    "Sistema nervioso"
+   ],
+   "g": "spine",
+   "estado": "activa",
+   "orden": 2
+  },
+  {
+   "ter": "isa",
+   "id": "tameana",
+   "t": "Tameana",
+   "precio": 2500,
+   "dur": 90,
+   "d": "Ciclo de 3 sesiones, una cada 7 días. Técnica vibracional con cristales de cuarzo y geometría sagrada para limpiar y ordenar tu campo energético.",
+   "tags": [
+    "Energía",
+    "Cambios",
+    "Claridad"
+   ],
+   "g": "star",
+   "ciclo": 3,
+   "estado": "activa",
+   "orden": 3
+  },
+  {
+   "ter": "isa",
+   "id": "sonora",
+   "t": "Armonización sonora",
+   "precio": 900,
+   "dur": 90,
+   "d": "Gong, cuencos tibetanos y de cuarzo. El sonido sostenido lleva la mente hacia ritmos lentos, los de la meditación profunda.",
+   "tags": [
+    "Sonido",
+    "Meditación",
+    "Sueño"
+   ],
+   "g": "sound",
+   "estado": "activa",
+   "orden": 4
+  },
+  {
+   "ter": "isa",
+   "id": "personal",
+   "t": "Terapia personalizada",
+   "precio": 1000,
+   "dur": 120,
+   "d": "Reiki, craneosacral y sonido combinados según lo que necesitas ese día.",
+   "tags": [
+    "Reiki",
+    "Craneosacral",
+    "Sonido"
+   ],
+   "g": "lotus",
+   "estado": "activa",
+   "orden": 5
+  },
+  {
+   "ter": "isa",
+   "id": "tarot",
+   "t": "Tarot terapéutico",
+   "precio": 700,
+   "dur": 60,
+   "d": "El tarot como espejo simbólico para ordenar una pregunta y ver tus opciones con claridad.",
+   "tags": [
+    "Decisiones",
+    "Claridad",
+    "Símbolo"
+   ],
+   "g": "moon",
+   "estado": "activa",
+   "orden": 6
+  },
+  {
+   "ter": "isa",
+   "id": "mini",
+   "t": "Terapia personalizada 30 min",
+   "precio": 0,
+   "dur": 30,
+   "d": "Incluida en las mensualidades Conexión, Práctica e Inmersión. Se reserva con tus créditos.",
+   "tags": [
+    "Con créditos",
+    "Mensualidades"
+   ],
+   "g": "lotus",
+   "credito": "terapias",
+   "estado": "activa",
+   "orden": 7
+  },
+  {
+   "ter": "diego",
+   "id": "desprog",
+   "t": "Desprogramación biológica",
+   "precio": 1000,
+   "dur": 90,
+   "d": "Explora la relación entre lo que vives, lo que sientes y lo que expresa tu cuerpo, para resignificar la historia detrás de lo que te pasa. Según lo que necesites, la sesión integra hipnosis no clínica, coaching y lectura transgeneracional de tu árbol familiar.",
+   "tags": [
+    "Emociones",
+    "Cuerpo",
+    "Linaje"
+   ],
+   "g": "tree",
+   "estado": "activa",
+   "orden": 8
+  },
+  {
+   "ter": "diego",
+   "id": "breath1",
+   "t": "Breathwork 1:1",
+   "precio": 900,
+   "dur": 75,
+   "d": "Respiración consciente guiada para regular tu sistema nervioso y procesar emoción a través del cuerpo.",
+   "tags": [
+    "Respiración",
+    "Regulación",
+    "Emoción"
+   ],
+   "g": "wave",
+   "estado": "activa",
+   "orden": 9
+  }
+ ]
 }

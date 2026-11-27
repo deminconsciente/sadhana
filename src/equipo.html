@@ -98,13 +98,14 @@ body.proy{padding-bottom:0}
 body.proy main{max-width:none;padding:0}
 body.proy header{max-width:none}
 body.proy nav.tab{display:none}
+.vcard{display:grid;gap:6px}.vb{display:grid;grid-template-columns:76px 1fr 28px;align-items:center;gap:6px;font-size:.82rem;margin-top:4px}.vb i{display:block;height:8px;border-radius:99px;background:var(--acc);min-width:4px}.vb b{text-align:right}
 #ifProy{display:block;width:100%;border:0;background:var(--bg)}
-@media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 11px}}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}nav.tab button{padding:9px 9px;font-size:.92rem}}
 </style>
 </head>
 <body>
 <header>
-  <div class="top"><h1>Sadhana · Equipo</h1><span class="who" id="who"></span></div>
+  <div class="top"><h1>Sadhana · Equipo</h1><span class="who"><span id="who"></span> · <a href="/salir">Salir</a></span></div>
   <div class="areas" id="areas" role="group" aria-label="Área de trabajo" hidden>
     <button data-area="crm" aria-pressed="true">CRM</button>
     <button data-area="dir" aria-pressed="false">Directorio</button>
@@ -204,6 +205,12 @@ body.proy nav.tab{display:none}
     </form>
   </section>
 
+  <!-- VOTOS: qué clase y qué horario pide la gente -->
+  <section id="v-votos" hidden>
+    <p class="hint" style="margin:8px 0 12px">Lo que vota la gente en <b>sadhanaholistics.com/votar</b>. Cada persona cuenta una vez por clase; si marca varios días y horas, cuenta en todos. Abre el horario con más votos y avísales por WhatsApp.</p>
+    <div class="list" id="listaV"><p class="empty">Cargando…</p></div>
+  </section>
+
   <!-- PROYECCIÓN (admin): la calculadora de siempre, embebida -->
   <section id="v-proy" hidden><iframe id="ifProy" title="Proyección Sadhana"></iframe></section>
 
@@ -213,20 +220,38 @@ body.proy nav.tab{display:none}
     <div id="dirVacio" class="r" hidden><p class="hint">El directorio todavía usa lo que viene escrito en la página. Cárgalo aquí una vez para poder editarlo.</p><button class="btn p" id="dirSeed">Cargar el directorio actual</button></div>
     <div class="list" id="listaDir"></div>
     <div class="row" style="margin-top:12px"><button class="btn p" id="dirNueva">+ Nueva clase</button></div>
-    <form class="form" id="fPaq" autocomplete="off" style="margin-top:16px">
-      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· máximo 3</small></h2>
-      <p class="hint">Son los mismos de Proyección (sección 3 · Paquetes). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Terapias 1:1</h2>
+    <p class="hint" style="margin:0 0 10px">Las sesiones que se ven en «Terapias con Isa y con Diego». <b>Activa</b> sale con botón de agendar; <b>Oculta</b> no se ve. Los cambios se ven en la página en unos segundos.</p>
+    <p class="hint" id="terNota" hidden style="margin:0 0 10px;color:var(--warn);font-weight:600">Estas son las terapias que hoy trae la página. Se guardan en la base al primer cambio.</p>
+    <div class="list" id="listaTer"></div>
+    <div class="row" style="margin-top:12px"><button class="btn p" id="terNueva">+ Nueva terapia</button></div>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Sala y rentas</h2>
+    <p class="hint" style="margin:0 0 10px">Lo que se ve en «Soy terapeuta»: precio por hora, bloque mensual y paquetes de horas. Hay <b>una sola sala</b>: las clases, los eventos, las terapias y tus propios bloqueos la ocupan primero, y solo se puede rentar lo que queda libre.</p>
+    <div class="r" id="salaResumen"><p class="hint">Cargando…</p></div>
+    <div class="row" style="margin-top:12px"><button class="btn p" id="salaEditar">Editar sala y rentas</button></div>
+    <h2 style="margin:22px 0 4px;font-size:1.1rem">Certificaciones y talleres</h2>
+    <p class="hint" style="margin:0 0 10px">Lo que aparece en «Soy terapeuta → Certificación». Por ahora solo Reiki Usui nivel 1; prende las demás cuando estén listas. Se ve en la página al guardar.</p>
+    <div class="r" id="certLista" style="display:grid;gap:6px"></div>
+    <form class="form" id="fPaq" autocomplete="off" novalidate style="margin-top:16px">
+      <h2 style="margin:0;font-size:1.1rem">Paquetes de alumno <small style="font-weight:400;color:var(--ink-2)">· clase suelta + 3 mensualidades</small></h2>
+      <p class="hint">Puedes traerlos de un escenario de Proyección (sale elegido el plan vigente). Pocas opciones hacen más fácil decidir. El precio fundador se calcula con el descuento de abajo.</p>
       <div id="paqs" style="display:grid;gap:10px"></div>
-      <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Cargar los de Proyección</button></div>
+      <div class="row"><button type="button" class="btn s" id="paqAdd">+ Agregar paquete</button><button type="button" class="btn s" id="paqSeed">Traer de un escenario de Proyección</button></div>
+      <div id="paqEscBox" class="pq" hidden>
+        <label>¿De qué escenario?<select id="paqEsc"></select></label>
+        <small class="hint" id="paqEscVer"></small>
+        <div class="row"><button type="button" class="btn s p" id="paqEscOk">Traer estos paquetes</button><button type="button" class="btn s" id="paqEscX">Cancelar</button></div>
+      </div>
       <fieldset class="pq" id="promoBox" style="border:1px solid var(--line);margin:0">
         <legend style="font-weight:700;padding:0 6px">Promo de apertura</legend>
         <p class="hint" style="margin:0 0 8px">El precio de la clase individual no cambia. Mientras la promo esté prendida, la página lo muestra tachado junto al precio de apertura. Al apagarla o al pasar la fecha de fin vuelve solo al precio normal.</p>
         <label class="tog"><input type="checkbox" name="promoActiva"> <span>Precio de apertura en la clase individual</span></label>
-        <div class="grid2"><label>Precio de apertura<input name="promoPrecio" type="number" min="0" step="50" inputmode="numeric"></label>
+        <div class="grid2"><label>Precio de apertura<input name="promoPrecio" type="number" min="0" step="1" inputmode="numeric"></label>
           <label>Termina el <small class="hint">(opcional)</small><input name="promoHasta" type="date"></label></div>
         <label class="tog"><input type="checkbox" name="promoGratis"> <span>Primera clase gratis <small class="hint">(una por WhatsApp; reservan sin pagar y queda «pendiente» hasta que la confirmen)</small></span></label>
       </fieldset>
       <label class="tog"><input type="checkbox" name="publicar"> <span>Mostrar en la página pública <small class="hint">(si no, la página usa los que trae escritos)</small></span></label>
+      <p class="hint" id="paqSin" hidden style="margin:0;color:var(--bad);font-weight:600">Tienes cambios sin guardar en los paquetes.</p>
       <button class="btn p w" type="submit">Guardar paquetes</button>
     </form>
     <form class="form" id="fFund" autocomplete="off" style="margin-top:16px">
@@ -244,6 +269,7 @@ body.proy nav.tab{display:none}
 <nav class="tab" aria-label="Secciones">
   <button data-v="agenda" aria-current="page">Agenda</button>
   <button data-v="alumnos">Alumnos</button>
+  <button data-v="votos">Votos</button>
   <button data-v="nueva">+ Registrar</button>
   <button data-v="equipo" hidden id="tabEq">Equipo</button>
 </nav>
@@ -277,8 +303,27 @@ function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); 
 async function api(path, body){
   const r = await fetch("/api/crm/"+path, body===undefined?{cache:"no-store"}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
   const j = await r.json().catch(()=>({}));
+  if (r.status===401) { location.href = "/entrar?v=" + encodeURIComponent("/equipo" + location.hash); throw new Error(j.error || "Vuelve a entrar"); }
   if (!r.ok) throw new Error(j.error || "No se pudo guardar");
   return j;
+}
+
+// ---------- Votos por horario ----------
+const DIAS_V = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const hV = h => new Date(2000,0,1,h).toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit"});
+async function cargarV(){
+  let L = []; try { L = await api("votos"); } catch(e){ toast(e.message); }
+  const el = $("#listaV");
+  if (!L.length){ el.innerHTML = `<p class="empty">Aún no hay votos. Comparte sadhanaholistics.com/votar en Instagram, en el parque y en la comunidad.</p>`; return; }
+  const barras = (obj, lbl) => { const E = Object.entries(obj).sort((a,b)=>b[1]-a[1]); const mx = Math.max(1, ...E.map(e=>e[1]));
+    return E.map(([k,n]) => `<div class="vb"><span>${esc(lbl(+k))}</span><i style="width:${Math.round(n/mx*100)}%"></i><b>${n}</b></div>`).join(""); };
+  el.innerHTML = L.map(c => `<article class="r vcard">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0;font-size:1.05rem">${esc(c.titulo)}</h3><b>${c.personas.length} ${c.personas.length>1?"personas":"persona"}</b></div>
+    ${c.top.length?`<p class="hint" style="margin:6px 0">Más votado: <b>${c.top.slice(0,3).map(t => `${DIAS_V[t.dia]} ${hV(t.h)} (${t.n})`).join(" · ")}</b></p>`:""}
+    <div class="grid2"><div><small class="hint">Por día</small>${barras(c.dias, d=>DIAS_V[d])}</div><div><small class="hint">Por hora</small>${barras(c.horas, hV)}</div></div>
+    <p class="hint" style="margin:6px 0">${Object.entries(c.modalidad).map(([k,n])=>`${esc(k)}: ${n}`).join(" · ")}</p>
+    <details><summary>Ver quién votó</summary>${c.personas.map(p => `<div class="row" style="justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)"><span><b>${esc(p.nombre)}</b><br><small class="hint">${p.dias.map(d=>DIAS_V[d].slice(0,3)).join(", ")} · ${p.horas.map(hV).join(", ")} · ${esc(p.modalidad||"")}</small></span><a class="btn s" href="${wa(p.tel)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Sadhana por tu voto para ${c.titulo}.`)}" target="_blank" rel="noopener">WhatsApp</a></div>`).join("")}</details>
+  </article>`).join("");
 }
 
 // ---------- Agenda ----------
@@ -493,7 +538,9 @@ const choques = (mine, otros) => { const r = [];
   }
   return [...new Set(r)]; };
 const PROMO_DEF = {activa:true, precio:200, hasta:"", gratis:true}; // igual que la página cuando aún no se guarda nada
-let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}};
+let D = [], FUND = null, PAQ = {publicar:false, items:[], promo:{...PROMO_DEF}}, paqSucio = false;
+// Si hay cambios de paquetes sin guardar, recargar el directorio (p. ej. al guardar una clase) no los borra.
+const marcarPaq = v => { paqSucio = v; const el = $("#paqSin"); if (el){ el.hidden = !v; el.textContent = "Tienes cambios sin guardar en los paquetes."; } };
 async function docs(path, body, metodo){
   const r = await fetch("/api/crm/docs/catalogo"+(path?"/"+encodeURIComponent(path):""), body===undefined && !metodo ? {cache:"no-store"} : {method:metodo||"POST",headers:{"content-type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   const j = await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error || "No se pudo guardar"); return j;
@@ -501,8 +548,10 @@ async function docs(path, body, metodo){
 async function cargarDir(){
   let l = []; try { l = await docs(""); } catch(e){ toast(e.message); }
   FUND = (l.find(x=>x.id==="_fundadores")||{}).data || null;
-  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,3), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
+  const pq = (l.find(x=>x.id==="_paquetes")||{}).data; if (!paqSucio) PAQ = {publicar:!!(pq&&pq.publicar), items:(pq&&Array.isArray(pq.items)?pq.items:[]).slice(0,4), promo:{...PROMO_DEF, ...((pq&&pq.promo)||{})}};
   planesDesdePaquetes(PAQ.items);
+  cargarTer(l);
+  cargarSalaDoc(l);
   D = l.filter(x=>!x.id.startsWith("_")).map(x=>({...x.data, id:x.id})).sort((a,b)=>(+a.orden||99)-(+b.orden||99));
   $("#dirVacio").hidden = D.length>0;
   $("#listaDir").innerHTML = D.map(c=>`<div class="r dir-c" data-cid="${esc(c.id)}">
@@ -513,7 +562,7 @@ async function cargarDir(){
         <button class="btn s" data-edit>Editar</button>
       </div></div>`).join("");
   const f = $("#fFund"), F = FUND || {cupo:50, descuento:20, tomados:null};
-  pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo();
+  if (!paqSucio){ pintarPaq(); $("#fPaq").publicar.checked = PAQ.publicar; pintarPromo(); if (!pq) precargarPaq(); }
   f.cupo.value = F.cupo ?? ""; f.descuento.value = F.descuento ?? ""; f.tomados.value = F.tomados ?? "";
 }
 $("#dirSeed").onclick = async () => {
@@ -529,25 +578,28 @@ async function guardarClase(c){ const {id, ...d} = c; await docs(id, d); }
 function editarClase(c){
   const nueva = !c; c = c || {id:"", titulo:"", guia:"", fam:"yoga", estado:"pronto", intensidad:"Suave", regula:"", desc:"", orden:(D.length+1), horarios:[]};
   let B = aBloques(c.horarios||[]);
+  // La hora escrita en «Otra» cuenta aunque no se toque «+ Otra» (antes se perdía y el horario quedaba sin hora).
+  const otraDe = i => { const el = document.querySelector(`#hrs [data-b="${i}"] [data-k=otra]`); return el && el.value ? el.value : ""; };
+  const conOtras = () => B.map((b,i) => { const v = otraDe(i); return v && !b.horas.includes(v) ? {...b, horas:[...b.horas,v].sort()} : b; });
   $("#dT").textContent = nueva ? "Nueva clase" : c.titulo;
-  const resumen = () => { const H = aHorarios(B.filter(b=>b.dias.length&&b.horas.length), "x", []); const el = $("#resH"); if (!el) return;
+  const resumen = () => { const H = aHorarios(conOtras().filter(b=>b.dias.length&&b.horas.length), "x", []); const el = $("#resH"); if (!el) return;
     el.textContent = H.length ? `Se da: ${resumenH(H)} (${H.length} ${H.length===1?"horario":"horarios"} por semana)` : "Todavía sin horarios."; };
   const pintarH = () => { $("#hrs").innerHTML = B.map((b,i)=>{ const extra = b.horas.filter(t=>!HORAS.includes(t));
     return `<div class="hb" data-b="${i}">
       <b class="hint">1 · ¿Qué días?</b>
       <div class="dchips" role="group" aria-label="Días de la semana">${DORD.map(d=>`<button type="button" data-d="${d}" aria-pressed="${b.dias.includes(d)}" aria-label="${DIAS[d]}">${DC[d]}</button>`).join("")}</div>
       <div class="dq"><button type="button" class="lnk" data-q="lv">Lun a Vie</button><button type="button" class="lnk" data-q="fin">Sáb y Dom</button><button type="button" class="lnk" data-q="todos">Todos</button><button type="button" class="lnk" data-q="nada">Quitar días</button></div>
-      <b class="hint">2 · ¿A qué hora? <span style="font-weight:400">(toca una o varias)</span></b>
+      <b class="hint">2 · ¿A qué hora? <span style="font-weight:400">(toca una o varias, o escribe otra)</span></b>
       <div class="hchips" role="group" aria-label="Horas">${[...HORAS,...extra].sort().map(t=>`<button type="button" data-t="${t}" aria-pressed="${b.horas.includes(t)}">${hAmPm(t)}</button>`).join("")}
         <span class="hotra"><input data-k="otra" type="time" step="300" aria-label="Otra hora"><button type="button" class="btn s" data-otra>+ Otra</button></span></div>
       <details><summary class="hint" style="cursor:pointer">Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})</summary>
         <div class="hr" style="margin-top:6px">
-          <label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${b.dur||60}"></label>
+          <label>Minutos<input data-k="dur" type="number" min="15" step="5" value="${b.dur||60}"></label>
           <label>Cupo<input data-k="cupo" type="number" min="1" value="${b.cupo||12}"></label>
-          <label>Precio<input data-k="precio" type="number" min="0" step="50" value="${b.precio??300}"></label></div></details>
+          <label>Precio<input data-k="precio" type="number" min="0" step="1" value="${b.precio??300}"></label></div></details>
       <button type="button" class="btn s" data-quitar="${i}" style="justify-self:start">Quitar este horario</button></div>`; }).join("") || `<p class="hint">Sin horario. Una clase activa necesita al menos uno para que se pueda reservar.</p>`;
     resumen(); };
-  $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" style="border:0;padding:0;background:none">
+  $("#dB").innerHTML = `<form class="form" id="fCl" autocomplete="off" novalidate style="border:0;padding:0;background:none">
     <label>Nombre de la clase<input name="titulo" required value="${esc(c.titulo)}" placeholder="Yin yoga"></label>
     <div class="grid2"><label>Maestro o maestra<input name="guia" value="${esc(c.guia)}" placeholder="Por anunciar"></label>
       <label>Estado<select name="estado">${Object.entries(EST).map(([k,v])=>`<option value="${k}" ${c.estado===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
@@ -565,22 +617,26 @@ function editarClase(c){
   </form>`;
   pintarH();
   const leerH = () => $$("#hrs [data-b]").forEach(row => { const b = B[+row.dataset.b], v = k => row.querySelector(`[data-k=${k}]`).value;
-    Object.assign(b,{dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0}); });
+    Object.assign(b,{dur:+v("dur")||60,cupo:+v("cupo")||12,precio:+v("precio")||0});
+    const o = v("otra"); if (o && !b.horas.includes(o)) b.horas = [...b.horas,o].sort(); });
   $("#hrs").onclick = e => {
     const q = e.target.closest("[data-quitar]"); if (q){ leerH(); B.splice(+q.dataset.quitar,1); pintarH(); return; }
     const row = e.target.closest("[data-b]"); if (!row) return; const b = B[+row.dataset.b];
     const d = e.target.closest("[data-d]"); if (d){ const k = +d.dataset.d, on = !b.dias.includes(k); b.dias = on ? [...b.dias,k] : b.dias.filter(x=>x!==k); d.setAttribute("aria-pressed", on); resumen(); return; }
     const t = e.target.closest("[data-t]"); if (t){ const k = t.dataset.t, on = !b.horas.includes(k); b.horas = on ? [...b.horas,k].sort() : b.horas.filter(x=>x!==k); t.setAttribute("aria-pressed", on); resumen(); return; }
-    const o = e.target.closest("[data-otra]"); if (o){ const v = row.querySelector('[data-k=otra]').value; if (!v) { toast("Elige la hora y toca + Otra"); return; } leerH(); if (!b.horas.includes(v)) b.horas = [...b.horas,v].sort(); pintarH(); return; }
+    const o = e.target.closest("[data-otra]"); if (o){ const v = row.querySelector('[data-k=otra]').value; if (!v) { toast("Escribe la hora en el recuadro"); return; } leerH(); pintarH(); return; }
     const z = e.target.closest("[data-q]"); if (z){ leerH(); b.dias = {lv:[1,2,3,4,5], fin:[6,0], todos:[0,1,2,3,4,5,6], nada:[]}[z.dataset.q]; pintarH(); }
   };
-  $("#hrs").addEventListener("change", e => { if (e.target.closest("details")) { leerH(); const sm = e.target.closest("details").querySelector("summary"), b = B[+e.target.closest("[data-b]").dataset.b]; sm.textContent = `Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})`; } });
+  $("#hrs").addEventListener("input", e => { if (e.target.matches("[data-k=otra]")) resumen(); });
+  $("#hrs").addEventListener("change", e => { if (e.target.matches("[data-k=otra]")) { resumen(); return; } if (e.target.closest("details")) { leerH(); const sm = e.target.closest("details").querySelector("summary"), b = B[+e.target.closest("[data-b]").dataset.b]; sm.textContent = `Duración, cupo y precio (${b.dur} min · cupo ${b.cupo} · ${money(b.precio)})`; } });
   $("#addH").onclick = () => { leerH(); const u = B[B.length-1]; B.push({dias:[],horas:u?[...u.horas]:["19:00"],dur:u?u.dur:60,cupo:u?u.cupo:12,precio:u?u.precio:300}); pintarH(); };
   $("#fCl").onsubmit = async e => {
     e.preventDefault(); leerH(); const d = Object.fromEntries(new FormData(e.target));
     let id = c.id || d.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "clase";
     if (nueva && D.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-3);
-    if (B.some(b=>!b.dias.length || !b.horas.length)) { toast("Cada horario necesita al menos un día y una hora, o quítalo"); return; }
+    if (!(d.titulo||"").trim()) { toast("Ponle nombre a la clase"); return; }
+    const malo = B.findIndex(b=>!b.dias.length || !b.horas.length);
+    if (malo >= 0) { const b = B[malo]; toast(`Horario ${malo+1}: ${!b.dias.length?"elige al menos un día":"elige o escribe una hora"}, o quítalo`); return; }
     if (B.length && d.estado==="pronto" && confirm("Tiene horarios pero está en «Próximamente», y así no se ven ni se puede reservar.\n¿Pasarla a Activa?")) d.estado = "activa";
     if (d.estado==="activa" && !B.length) { toast("Agrega un horario o déjala en Próximamente"); return; }
     const horarios = aHorarios(B, id, c.horarios||[]);
@@ -600,12 +656,196 @@ $("#listaDir").addEventListener("click", async e => {
   if (es.dataset.est==="activa" && !(c.horarios||[]).length) { toast("Primero ponle un horario (Editar)"); editarClase(c); return; }
   try { await guardarClase({...c, estado:es.dataset.est}); toast(`${c.titulo}: ${EST[es.dataset.est]}`); cargarDir(); } catch(err){ toast(err.message); }
 });
-// ---------- Paquetes de alumno (máx. 3): los mismos de Proyección · sección 3 ----------
+// ---------- Sala y rentas (doc _sala) ----------
+// Mismos valores base que BASE en src/sala.js. Si no hay doc guardado, se edita sobre esto.
+const SALA_DEF = {precios:{consultorio:400, salon:500}, bloqueMensual:{activo:true, t:"Bloque mensual fijo", precio:3200, horasSemana:4, d:"4 horas por semana, el mismo día y hora, durante un mes."},
+  paquetes:[], horario:{abre:420, cierra:1290}, minHoras:1, maxHoras:4, margen:15, rentaFinSemana:false, cerrados:["2026-12-25","2027-01-01"], eventos:[], bloques:[], calToken:"", talleresActivos:["reiki1"]};
+let SALA = null, salaGuardada = false;
+const mmHHMM = m => String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const hhmmMin = v => { const [h,m] = String(v||"0:0").split(":").map(Number); return (h||0)*60+(m||0); };
+function cargarSalaDoc(l){
+  const d = (l.find(x=>x.id==="_sala")||{}).data; salaGuardada = !!d;
+  SALA = {...SALA_DEF, ...(d||{}), precios:{...SALA_DEF.precios, ...((d||{}).precios||{})}, horario:{...SALA_DEF.horario, ...((d||{}).horario||{})},
+    bloqueMensual: d && d.bloqueMensual === null ? null : {...SALA_DEF.bloqueMensual, ...((d||{}).bloqueMensual||{})}};
+  pintarSala(); pintarCerts();
+}
+function pintarSala(){
+  const S = SALA, pq = (S.paquetes||[]).filter(p=>p.estado!=="oculta");
+  $("#salaResumen").innerHTML = `${salaGuardada?"":`<p class="hint" style="color:var(--warn);font-weight:600;margin:0 0 6px">Estos son los valores que hoy trae la página. Se guardan en la base al primer cambio.</p>`}
+    <div class="meta" style="display:grid;gap:4px">
+      <span><b>Por hora:</b> ${money(S.precios.consultorio)} 1:1 · ${money(S.precios.salon)} talleres y clases (${S.minHoras} a ${S.maxHoras} h por reserva)</span>
+      <span><b>Bloque mensual:</b> ${S.bloqueMensual&&S.bloqueMensual.activo!==false?`${money(S.bloqueMensual.precio)} · ${S.bloqueMensual.horasSemana} h por semana`:"apagado"}</span>
+      <span><b>Paquetes de horas:</b> ${pq.length?pq.map(p=>`${p.horas} h ${money(p.precio)}`).join(" · "):"ninguno"}</span>
+      <span><b>Horario de renta:</b> lunes a viernes, ${hAmPm(mmHHMM(S.horario.abre))} a ${hAmPm(mmHHMM(S.horario.cierra))}${S.rentaFinSemana?" y fines de semana":" (fines de semana: eventos)"}</span>
+      <span><b>Bloqueos y eventos:</b> ${(S.eventos||[]).filter(e=>e.fecha>=new Date().toISOString().slice(0,10)).length} próximos · ${(S.bloques||[]).length} sesiones fijas propias</span>
+      <span><b>Calendario de Google:</b> ${S.calToken?"activo":"sin activar"}</span></div>`;
+}
+const DIA_C = ["D","L","M","X","J","V","S"];
+function editarSala(){
+  const S = JSON.parse(JSON.stringify(SALA)), bm = S.bloqueMensual || {...SALA_DEF.bloqueMensual, activo:false};
+  $("#dT").textContent = "Sala y rentas";
+  const rowPaq = p => `<div class="pq" data-paq style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <div class="grid2"><label>Nombre<input data-k="t" value="${esc(p.t)}" placeholder="Paquete 10 horas"></label><label>Horas<input data-k="horas" type="number" min="1" value="${esc(p.horas)}"></label></div>
+      <div class="grid2"><label>Precio (MXN)<input data-k="precio" type="number" min="0" value="${esc(p.precio)}"></label><label>Vigencia (días)<input data-k="dias" type="number" min="7" value="${esc(p.dias||90)}"></label></div>
+      <label class="tog"><input type="checkbox" data-k="oculto" ${p.estado==="oculta"?"checked":""}> <span>Oculto (no se vende)</span></label>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const rowEv = e => `<div class="pq" data-ev style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <div class="grid2"><label>Fecha<input data-k="fecha" type="date" value="${esc(e.fecha||"")}"></label><label>Nombre<input data-k="n" value="${esc(e.n||"")}" placeholder="El Poder del OM"></label></div>
+      <div class="grid2"><label>Empieza<input data-k="h" type="time" value="${esc(e.h!=null?mmHHMM(e.h*60+(e.m||0)):"10:00")}"></label><label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${esc(e.dur||120)}"></label></div>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const rowBl = b => `<div class="pq" data-bl style="display:grid;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px">
+      <label>Nombre<input data-k="n" value="${esc(b.n||"")}" placeholder="Terapias de Isa"></label>
+      <div class="dchips" role="group" aria-label="Días">${[1,2,3,4,5,6,0].map(d=>`<button type="button" data-d="${d}" aria-pressed="${(b.dias||[]).includes(d)}" aria-label="${DIAS[d]}">${DIA_C[d]}</button>`).join("")}</div>
+      <div class="grid2"><label>Empieza<input data-k="h" type="time" value="${esc(b.h!=null?mmHHMM(b.h*60+(b.m||0)):"10:00")}"></label><label>Minutos<input data-k="dur" type="number" min="15" step="15" value="${esc(b.dur||60)}"></label></div>
+      <button type="button" class="btn s" data-quitar style="justify-self:start">Quitar</button></div>`;
+  const url = t => `${location.origin}/api/sala/calendario.ics?t=${t}`;
+  $("#dB").innerHTML = `<form class="form" id="fSala" autocomplete="off" novalidate style="border:0;padding:0;background:none">
+    <h3>Precio por hora</h3>
+    <div class="grid2"><label>Sesión 1:1 (consultorio)<input name="pc" type="number" min="0" value="${esc(S.precios.consultorio)}"></label><label>Taller o clase (salón)<input name="ps" type="number" min="0" value="${esc(S.precios.salon)}"></label></div>
+    <p class="hint" style="margin:0">Son la misma sala: si uno se aparta, el otro también. La competencia cobra de $380 a $420 por hora.</p>
+    <h3>Bloque mensual</h3>
+    <label class="tog"><input type="checkbox" name="bmOn" ${S.bloqueMensual&&bm.activo!==false?"checked":""}> <span>Ofrecer bloque mensual fijo</span></label>
+    <div class="grid2"><label>Precio del mes<input name="bmP" type="number" min="0" value="${esc(bm.precio)}"></label><label>Horas por semana<input name="bmH" type="number" min="1" max="20" value="${esc(bm.horasSemana)}"></label></div>
+    <h3>Paquetes de horas</h3>
+    <p class="hint" style="margin:0">Se compran como reserva; al confirmar el pago en «Hoy» se activan las horas con ese WhatsApp.</p>
+    <div id="sPaq" style="display:grid;gap:8px">${(S.paquetes||[]).map(rowPaq).join("")}</div>
+    <button type="button" class="btn s" id="sPaqAdd">+ Agregar paquete</button>
+    <h3>Horario de renta</h3>
+    <div class="grid2"><label>Abre<input name="ab" type="time" value="${mmHHMM(S.horario.abre)}"></label><label>Cierra<input name="ci" type="time" value="${mmHHMM(S.horario.cierra)}"></label></div>
+    <div class="grid2"><label>Mínimo de horas<input name="mn" type="number" min="1" max="8" value="${esc(S.minHoras)}"></label><label>Máximo de horas<input name="mx" type="number" min="1" max="12" value="${esc(S.maxHoras)}"></label></div>
+    <label>Margen entre bloques (minutos)<input name="mg" type="number" min="0" step="5" value="${esc(S.margen)}"></label>
+    <label class="tog"><input type="checkbox" name="fin" ${S.rentaFinSemana?"checked":""}> <span>Rentar también sábado y domingo <small class="hint">(hoy son para eventos fijos y variables)</small></span></label>
+    <label>Días cerrados <small class="hint">(uno por línea, AAAA-MM-DD)</small><textarea name="cer" rows="3">${esc((S.cerrados||[]).join("\n"))}</textarea></label>
+    <h3>Bloqueos y eventos de fecha</h3>
+    <p class="hint" style="margin:0">Una sesión tuya, un evento de fin de semana o un facilitador externo: bloquean la sala para que nadie la rente encima.</p>
+    <div id="sEv" style="display:grid;gap:8px">${(S.eventos||[]).map(rowEv).join("")}</div>
+    <button type="button" class="btn s" id="sEvAdd">+ Bloquear una fecha</button>
+    <h3>Sesiones fijas propias <small class="hint">(se repiten cada semana)</small></h3>
+    <div id="sBl" style="display:grid;gap:8px">${(S.bloques||[]).map(rowBl).join("")}</div>
+    <button type="button" class="btn s" id="sBlAdd">+ Agregar sesión fija</button>
+    <h3>Calendario de Google</h3>
+    <p class="hint" style="margin:0">Genera una clave y suscribe el enlace una vez en Google Calendar (Otros calendarios → Desde URL). Verán rentas, terapias, clases y eventos de la sala junto a su agenda. Google lo actualiza solo cada varias horas.</p>
+    <label>Clave del calendario<input name="tok" value="${esc(S.calToken||"")}" readonly placeholder="Sin activar"></label>
+    <div class="row"><button type="button" class="btn s" id="sTok">${S.calToken?"Cambiar la clave":"Activar calendario"}</button>${S.calToken?`<button type="button" class="btn s" id="sTokCopia" data-url="${esc(url(S.calToken))}">Copiar enlace</button><button type="button" class="btn s" id="sTokQuita">Apagar</button>`:""}</div>
+    <button class="btn p w" type="submit">Guardar</button>
+  </form>`;
+  const f = $("#fSala");
+  f.addEventListener("click", e => {
+    const q = e.target.closest("[data-quitar]"); if (q){ q.closest(".pq").remove(); return; }
+    const d = e.target.closest("[data-d]"); if (d){ d.setAttribute("aria-pressed", d.getAttribute("aria-pressed")!=="true"); return; }
+  });
+  $("#sPaqAdd").onclick = () => $("#sPaq").insertAdjacentHTML("beforeend", rowPaq({t:"", horas:10, precio:3500, dias:90}));
+  $("#sEvAdd").onclick = () => $("#sEv").insertAdjacentHTML("beforeend", rowEv({}));
+  $("#sBlAdd").onclick = () => $("#sBl").insertAdjacentHTML("beforeend", rowBl({dias:[]}));
+  $("#sTok").onclick = () => { const a = new Uint8Array(18); crypto.getRandomValues(a); f.tok.value = [...a].map(x=>x.toString(36).padStart(2,"0")).join("").slice(0,24); toast("Clave nueva. Toca Guardar para activarla."); };
+  const cp = $("#sTokCopia"); if (cp) cp.onclick = () => { navigator.clipboard.writeText(cp.dataset.url).then(()=>toast("Enlace copiado"), ()=>toast(cp.dataset.url)); };
+  const qk = $("#sTokQuita"); if (qk) qk.onclick = () => { f.tok.value = ""; toast("Calendario apagado. Toca Guardar."); };
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const n = (k) => +f[k].value || 0, v = (row, k) => row.querySelector(`[data-k=${k}]`);
+    const paquetes = [...f.querySelectorAll("[data-paq]")].map((r,i) => ({id:"p"+(i+1)+"-"+(+v(r,"horas").value||0)+"h", t:v(r,"t").value.trim(), horas:+v(r,"horas").value||0, precio:+v(r,"precio").value||0, dias:+v(r,"dias").value||90, estado:v(r,"oculto").checked?"oculta":"activa"}));
+    const mala = paquetes.find(p=>!p.t || p.horas<1 || p.precio<1);
+    if (mala){ toast("Cada paquete necesita nombre, horas y precio (o quítalo)"); return; }
+    const eventos = [...f.querySelectorAll("[data-ev]")].map(r => { const [h,m] = (v(r,"h").value||"10:00").split(":").map(Number); return {fecha:v(r,"fecha").value, n:v(r,"n").value.trim()||"Bloqueado", h, m, dur:+v(r,"dur").value||60}; }).filter(x=>x.fecha);
+    const bloques = [...f.querySelectorAll("[data-bl]")].map(r => { const [h,m] = (v(r,"h").value||"10:00").split(":").map(Number); return {n:v(r,"n").value.trim()||"Sesión fija", dias:[...r.querySelectorAll("[data-d][aria-pressed=true]")].map(x=>+x.dataset.d), h, m, dur:+v(r,"dur").value||60}; });
+    if (bloques.some(b=>!b.dias.length)){ toast("Elige los días de cada sesión fija (o quítala)"); return; }
+    const cerrados = f.cer.value.split(/\s+/).map(x=>x.trim()).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x));
+    if (hhmmMin(f.ci.value) <= hhmmMin(f.ab.value)){ toast("El cierre debe ser después de la apertura"); return; }
+    const doc = {...(salaGuardada?SALA:{}), precios:{consultorio:n("pc"), salon:n("ps")},
+      bloqueMensual: {activo:f.bmOn.checked, t:SALA_DEF.bloqueMensual.t, precio:n("bmP"), horasSemana:n("bmH")||4, d:`${n("bmH")||4} horas por semana, el mismo día y hora, durante un mes.`},
+      paquetes, horario:{abre:hhmmMin(f.ab.value), cierra:hhmmMin(f.ci.value)}, minHoras:Math.max(1,n("mn")), maxHoras:Math.max(n("mn")||1,n("mx")||4), margen:n("mg"),
+      rentaFinSemana:f.fin.checked, cerrados, eventos, bloques, calToken:f.tok.value.trim()};
+    if (doc.precios.consultorio<1 || doc.precios.salon<1){ toast("Pon el precio por hora"); return; }
+    try { await docs("_sala", doc); SALA = {...SALA_DEF, ...doc}; salaGuardada = true; toast("Guardado. Ya se ve en la página."); $("#dlg").close(); pintarSala(); } catch(err){ toast(err.message); }
+  };
+  $("#dlg").showModal();
+}
+$("#salaEditar").onclick = editarSala;
+// ---------- Certificaciones visibles (doc _sala.talleresActivos) ----------
+const CERTS = [["reiki1","Reiki Usui nivel 1"],["reiki2","Reiki Usui nivel 2"],["reikim","Reiki máster"],["tarotf","Tarot terapéutico"],["craneo1","Terapia craneosacral nivel 1"],["soundf","Sound healing y gong"],["breathf","Facilitador de breathwork"],["hipnof","Hipnosis no clínica"],["pnlf","PNL aplicada a la sesión"],["coachf","Coaching ontológico"],["biof","Biodescodificación y desprogramación emocional"],["transf","Terapia transgeneracional"],["pauxf","Primeros auxilios para terapeutas"]];
+function pintarCerts(){
+  const on = new Set(SALA.talleresActivos || []);
+  $("#certLista").innerHTML = CERTS.map(([id,t]) => `<label class="tog"><input type="checkbox" data-cert="${id}" ${on.has(id)?"checked":""}> <span>${esc(t)}</span></label>`).join("") + `<p class="hint" style="margin:4px 0 0">${on.size} visible${on.size===1?"":"s"}. Las demás no se muestran.</p>`;
+}
+$("#certLista").addEventListener("change", async e => {
+  const c = e.target.closest("[data-cert]"); if (!c) return;
+  const on = new Set(SALA.talleresActivos || []); c.checked ? on.add(c.dataset.cert) : on.delete(c.dataset.cert);
+  const doc = {...(salaGuardada?SALA:{}), talleresActivos:CERTS.map(x=>x[0]).filter(x=>on.has(x))};
+  try { await docs("_sala", doc); SALA = {...SALA_DEF, ...doc}; salaGuardada = true; toast("Guardado. Ya se ve en la página."); }
+  catch(err){ toast(err.message); c.checked = !c.checked; }
+  pintarCerts(); pintarSala();
+});
+
+// ---------- Terapias 1:1 (doc _terapias {items}) ----------
+const TERAPEUTA = {isa:"Isa", diego:"Diego"};
+const GLIFOS = {lotus:"Loto", sun:"Sol", spine:"Columna", star:"Estrella", sound:"Sonido", moon:"Luna", tree:"Árbol", wave:"Onda", spiral:"Espiral", eye:"Ojo"};
+let TER = [], terGuardadas = false;
+async function cargarTer(l){
+  const d = (l.find(x=>x.id==="_terapias")||{}).data;
+  terGuardadas = !!(d && Array.isArray(d.items));
+  if (terGuardadas) TER = d.items;
+  else { try { TER = (await (await fetch("/assets/catalogo-base.json",{cache:"no-store"})).json()).terapias || []; } catch(e){ TER = []; } }
+  pintarTer();
+}
+function pintarTer(){
+  $("#terNota").hidden = terGuardadas;
+  const orden = [...TER].sort((a,b)=>(a.ter>b.ter?1:a.ter<b.ter?-1:0)||(+a.orden||99)-(+b.orden||99));
+  $("#listaTer").innerHTML = orden.map(x=>`<div class="r dir-c" data-tid="${esc(x.ter+":"+x.id)}">
+      <div><h2>${esc(x.t)}</h2><span class="meta">Con ${esc(TERAPEUTA[x.ter]||x.ter)} · ${x.precio?money(x.precio):"Con créditos"} · ${x.ciclo>1?x.ciclo+" × ":""}${x.dur} min</span></div>
+      <span class="chip est-${x.estado==="oculta"?"oculta":"activa"}">${x.estado==="oculta"?"Oculta":"Activa"}</span>
+      <div class="row" style="grid-column:1/-1">
+        <div class="seg"><button type="button" data-test="activa" aria-pressed="${x.estado!=="oculta"}">Activa</button><button type="button" data-test="oculta" aria-pressed="${x.estado==="oculta"}">Oculta</button></div>
+        <button class="btn s" data-tedit>Editar</button>
+      </div></div>`).join("") || `<p class="empty">Sin terapias.</p>`;
+}
+async function guardarTer(){ await docs("_terapias", {items:TER}); terGuardadas = true; }
+const terDe = key => TER.find(x => x.ter+":"+x.id === key);
+function editarTer(x){
+  const nueva = !x; x = x || {ter:"isa", id:"", t:"", precio:900, dur:60, d:"", tags:[], g:"lotus", estado:"activa", orden:TER.length+1};
+  $("#dT").textContent = nueva ? "Nueva terapia" : x.t;
+  $("#dB").innerHTML = `<form class="form" id="fTer" autocomplete="off" novalidate style="border:0;padding:0;background:none">
+    <label>Nombre de la terapia<input name="t" required value="${esc(x.t)}" placeholder="Breathwork 1:1"></label>
+    <div class="grid2"><label>Terapeuta<select name="ter">${Object.entries(TERAPEUTA).map(([k,v])=>`<option value="${k}" ${x.ter===k?"selected":""}>${v}</option>`).join("")}</select></label>
+      <label>Estado<select name="estado"><option value="activa" ${x.estado!=="oculta"?"selected":""}>Activa</option><option value="oculta" ${x.estado==="oculta"?"selected":""}>Oculta</option></select></label></div>
+    <div class="grid2"><label>Precio (MXN)<input name="precio" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.precio)}"></label>
+      <label>Duración (minutos)<input name="dur" type="number" min="15" step="5" inputmode="numeric" value="${esc(x.dur)}"></label></div>
+    <label>Descripción<textarea name="d" rows="4" maxlength="400">${esc(x.d)}</textarea></label>
+    <label>Etiquetas <small class="hint">(separadas por coma, máx. 3)</small><input name="tags" value="${esc((x.tags||[]).join(", "))}" placeholder="Estrés, Calma"></label>
+    <details><summary class="hint" style="cursor:pointer">Más opciones (ícono, sesiones por ciclo, orden)</summary>
+      <div class="grid2" style="margin-top:6px"><label>Ícono<select name="g">${Object.entries(GLIFOS).map(([k,v])=>`<option value="${k}" ${x.g===k?"selected":""}>${v}</option>`).join("")}</select></label>
+        <label>Sesiones por ciclo<input name="ciclo" type="number" min="1" max="12" value="${esc(x.ciclo||1)}"></label></div>
+      <label>Orden<input name="orden" type="number" min="1" value="${esc(x.orden||1)}"></label></details>
+    <p class="hint" style="margin:0">Terapia complementaria: no diagnostica ni trata enfermedades.</p>
+    <button class="btn p w" type="submit">Guardar</button>
+    ${nueva?"":`<button type="button" class="btn w" id="delTer" style="color:var(--bad)">Borrar esta terapia</button>`}
+  </form>`;
+  $("#fTer").onsubmit = async e => {
+    e.preventDefault(); const d = Object.fromEntries(new FormData(e.target));
+    if (!(d.t||"").trim()) { toast("Ponle nombre a la terapia"); return; }
+    let id = x.id || d.t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "terapia";
+    if (nueva && TER.some(y=>y.ter===d.ter && y.id===id)) id += "-" + Date.now().toString(36).slice(-3);
+    const nuevo = {...x, ter:d.ter, id, t:d.t.trim(), estado:d.estado, precio:Math.max(0,+d.precio||0), dur:Math.max(15,+d.dur||60), d:d.d.trim(),
+      tags:d.tags.split(",").map(t=>t.trim()).filter(Boolean).slice(0,3), g:d.g, orden:+d.orden||99};
+    if (+d.ciclo>1) nuevo.ciclo = +d.ciclo; else delete nuevo.ciclo;
+    const antes = TER; TER = nueva ? [...TER, nuevo] : TER.map(y => y===x ? nuevo : y);
+    try { await guardarTer(); toast("Guardado. Ya se ve en la página."); $("#dlg").close(); pintarTer(); } catch(err){ TER = antes; toast(err.message); }
+  };
+  const del = $("#delTer"); if (del) del.onclick = async () => { if (!confirm(`¿Borrar ${x.t}? Si solo quieres esconderla, usa Oculta.`)) return;
+    const antes = TER; TER = TER.filter(y => y!==x);
+    try { await guardarTer(); toast("Borrada"); $("#dlg").close(); pintarTer(); } catch(err){ TER = antes; toast(err.message); } };
+  $("#dlg").showModal();
+}
+$("#terNueva").onclick = () => editarTer(null);
+$("#listaTer").addEventListener("click", async e => {
+  const card = e.target.closest("[data-tid]"); if (!card) return; const x = terDe(card.dataset.tid); if (!x) return;
+  if (e.target.closest("[data-tedit]")) { editarTer(x); return; }
+  const es = e.target.closest("[data-test]"); if (!es || es.dataset.test===(x.estado==="oculta"?"oculta":"activa")) return;
+  const antes = TER; TER = TER.map(y => y===x ? {...y, estado:es.dataset.test} : y);
+  try { await guardarTer(); toast(`${x.t}: ${es.dataset.test==="oculta"?"Oculta":"Activa"}`); pintarTer(); } catch(err){ TER = antes; toast(err.message); }
+});
+
+// ---------- Paquetes de alumno (máx. 4: clase suelta + 3 mensualidades): los mismos de Proyección · sección 3 ----------
 const TIPOS = {suelta:"Clase suelta", paquete:"Paquete de clases", ilimitada:"Membresía ilimitada"};
-const PAQ_BASE = () => [
-  {id:"suelta", nombre:"Clase suelta", tipo:"suelta", clases:1, precio:300, plazos:[], incluye:""},
-  {id:"mensual-8", nombre:"Paquete 8 clases al mes", tipo:"paquete", clases:8, precio:1300, plazos:[], incluye:""},
-  {id:"ilimitada", nombre:"Membresía ilimitada", tipo:"ilimitada", clases:0, precio:1600, plazos:[], incluye:""}];
 // Las altas manuales de membresía (pestaña Alumnos) ofrecen los mismos paquetes.
 function planesDesdePaquetes(items){
   const L = [];
@@ -623,13 +863,15 @@ function pintarPaq(){
     <div class="grid2"><label>Nombre<input data-k="nombre" value="${esc(p.nombre)}" maxlength="40"></label>
       <label>Tipo<select data-k="tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${p.tipo===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
     <div class="grid2">${p.tipo==="paquete"?`<label>Clases al mes<input data-k="clases" type="number" min="2" inputmode="numeric" value="${esc(p.clases)}"></label>`:`<span></span>`}
-      <label>${p.tipo==="suelta"?"Precio por clase":"Precio al mes"}<input data-k="precio" type="number" min="0" step="50" inputmode="numeric" value="${esc(p.precio)}"></label></div>
+      <label>${p.tipo==="suelta"?"Precio por clase":"Precio al mes"}<input data-k="precio" type="number" min="0" step="1" inputmode="numeric" value="${esc(p.precio)}"></label></div>
     ${p.tipo==="ilimitada"?`<small class="hint">La membresía ilimitada es solo mensual (1 mes).</small>`:""}
     <label>Qué incluye <small class="hint">(una línea por cosa, opcional)</small><textarea data-k="incluye" rows="2" maxlength="200">${esc(p.incluye||"")}</textarea></label>
     <div class="row" style="justify-content:space-between;align-items:center"><small class="hint" data-reg>${regular(p,desc)?`Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}`:"Sin precio fundador"}</small>
-      <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Cargar los de Proyección» para empezar.</p>`;
-  $("#paqAdd").hidden = PAQ.items.length >= 3;
+      <button type="button" class="btn s" data-quitarp="${i}">Quitar</button></div></div>`).join("") || `<p class="hint">Sin paquetes. Usa «Traer de un escenario de Proyección» o «+ Agregar paquete».</p>`;
+  $("#paqAdd").hidden = PAQ.items.length >= 4;
 }
+$("#fPaq").addEventListener("input", () => marcarPaq(true));
+$("#fPaq").addEventListener("change", () => marcarPaq(true));
 $("#paqs").addEventListener("input", e => {
   const row = e.target.closest("[data-p]"); if (!row) return; const p = PAQ.items[+row.dataset.p], k = e.target.dataset.k;
   if (!k) return;
@@ -637,9 +879,47 @@ $("#paqs").addEventListener("input", e => {
   if (k==="tipo") { p.clases = p.tipo==="suelta" ? 1 : p.tipo==="ilimitada" ? 0 : Math.max(p.clases||8, 2); p.plazos = []; pintarPaq(); return; }
   const g = row.querySelector("[data-reg]"), desc = (FUND && FUND.descuento) ?? 20; if (g) g.textContent = regular(p,desc) ? `Precio regular ${money(regular(p,desc))} · fundador −${desc}% = ${money(p.precio)}` : "Sin precio fundador";
 });
-$("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); pintarPaq(); });
-$("#paqAdd").onclick = () => { if (PAQ.items.length>=3) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); pintarPaq(); };
-$("#paqSeed").onclick = () => { if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return; PAQ.items = PAQ_BASE(); pintarPaq(); };
+$("#paqs").addEventListener("click", e => { const q = e.target.closest("[data-quitarp]"); if (!q) return; PAQ.items.splice(+q.dataset.quitarp,1); marcarPaq(true); pintarPaq(); });
+$("#paqAdd").onclick = () => { if (PAQ.items.length>=4) return; PAQ.items.push({id:"", nombre:"Nuevo paquete", tipo:"paquete", clases:4, precio:800, plazos:[], incluye:""}); marcarPaq(true); pintarPaq(); };
+// Trae los paquetes de un escenario de Proyección. Sale elegido el escenario que es el plan
+// (Proyección → Presupuesto vs real); si no hay plan, el que se llame «Bolillo».
+let ESC = [];
+const leerCol = async col => { const r = await fetch("/api/crm/docs/"+col, {cache:"no-store"}); if (!r.ok) throw new Error("No se pudo leer Proyección"); return r.json(); };
+const escAPaq = sc => { let L = (sc.packages||[]).filter(p => p && p.name && +p.price > 0);
+  if (L.length > 4) L = [...L].sort((a,b) => (+b.mix||0) - (+a.mix||0)).slice(0,4);
+  const ord = p => +p.classes===1 ? 0 : +p.classes===0 ? 999 : +p.classes;
+  return L.sort((a,b) => ord(a)-ord(b)).map(p => { const c = +p.classes||0, tipo = c===1 ? "suelta" : c===0 ? "ilimitada" : "paquete";
+    return {id:"", nombre:String(p.name).slice(0,40), tipo, clases:tipo==="suelta"?1:tipo==="ilimitada"?0:c, precio:+p.price, plazos:[], incluye:""}; }); };
+const verEsc = () => { const sc = ESC.find(x => x.id===$("#paqEsc").value); const L = sc ? escAPaq(sc) : [];
+  $("#paqEscVer").textContent = L.length ? L.map(p => `${p.nombre} ${money(p.precio)}`).join(" · ") + ((sc.packages||[]).length>3 ? " (los 3 que más se eligen)" : "") : "Este escenario no tiene paquetes."; };
+async function escVigente(){
+  const [escs, meta] = await Promise.all([leerCol("escenarios"), leerCol("meta").catch(() => [])]);
+  ESC = escs.map(x => ({...x.data, id:x.id})).filter(x => !x.bk && (x.packages||[]).length).sort((a,b) => (+a.order||0) - (+b.order||0));
+  const plan = ((meta.find(x => x.id==="plan")||{}).data||{}).plan;
+  return {plan, def: ESC.find(x => x.id===plan) || ESC.find(x => /bolillo/i.test(x.name||"")) || ESC[0]};
+}
+// Si todavía no hay paquetes guardados, salen precargados del escenario vigente para editarlos y guardarlos.
+async function precargarPaq(){
+  try { const {def} = await escVigente(); const L = def ? escAPaq(def) : [];
+    if (!L.length || paqSucio || PAQ.items.length) return;
+    PAQ.items = L; PAQ.publicar = true; $("#fPaq").publicar.checked = true; marcarPaq(true); pintarPaq();
+    const el = $("#paqSin"); if (el) el.textContent = `Precargados del escenario «${def.name}». Cámbialos si quieres y toca Guardar paquetes para que salgan en la página.`;
+  } catch(e){}
+}
+$("#paqSeed").onclick = async () => {
+  try {
+    const {plan, def} = await escVigente();
+    if (!ESC.length) { toast("Ningún escenario de Proyección tiene paquetes"); return; }
+    $("#paqEsc").innerHTML = ESC.map(x => `<option value="${esc(x.id)}" ${x.id===def.id?"selected":""}>${esc(x.name||"Sin nombre")}${x.id===plan?" · plan vigente":""}</option>`).join("");
+    verEsc(); $("#paqEscBox").hidden = false;
+  } catch(err){ toast(err.message); }
+};
+$("#paqEsc").onchange = e => { e.stopPropagation(); verEsc(); }; $("#paqEsc").oninput = e => e.stopPropagation();
+$("#paqEscX").onclick = () => { $("#paqEscBox").hidden = true; };
+$("#paqEscOk").onclick = () => { const sc = ESC.find(x => x.id===$("#paqEsc").value), L = sc ? escAPaq(sc) : [];
+  if (!L.length) { toast("Ese escenario no tiene paquetes"); return; }
+  if (PAQ.items.length && !confirm("Esto reemplaza los paquetes que tienes en pantalla. ¿Seguir?")) return;
+  PAQ.items = L; $("#paqEscBox").hidden = true; marcarPaq(true); pintarPaq(); toast(`Traídos de «${sc.name}». Revisa y toca Guardar paquetes.`); };
 function pintarPromo(){ const f = $("#fPaq"), p = PAQ.promo;
   f.promoActiva.checked = !!p.activa; f.promoPrecio.value = p.precio ?? ""; f.promoHasta.value = p.hasta || ""; f.promoGratis.checked = p.gratis !== false; }
 $("#fPaq").onsubmit = async e => {
@@ -654,7 +934,7 @@ $("#fPaq").onsubmit = async e => {
   const f = e.target, promo = {activa:f.promoActiva.checked, precio:+f.promoPrecio.value||0, hasta:f.promoHasta.value||"", gratis:f.promoGratis.checked};
   if (promo.activa && !(promo.precio>0)) { toast("Pon el precio de apertura o apaga la promo"); return; }
   PAQ.promo = promo;
-  try { await docs("_paquetes", {publicar:f.publicar.checked && items.length>0, items, promo}); toast(e.target.publicar.checked ? "Paquetes guardados. Ya se ven en la página." : "Paquetes guardados (la página sigue con los suyos)"); cargarDir(); } catch(err){ toast(err.message); }
+  try { await docs("_paquetes", {publicar:f.publicar.checked && items.length>0, items, promo}); marcarPaq(false); toast(e.target.publicar.checked ? "Paquetes guardados. Ya se ven en la página." : "Paquetes guardados (la página sigue con los suyos)"); cargarDir(); } catch(err){ toast(err.message); }
 };
 $("#fFund").onsubmit = async e => {
   e.preventDefault(); const f = e.target; const t = f.tomados.value.trim();
@@ -671,7 +951,7 @@ function area(a, sinHash){
   document.body.classList.toggle("proy", a==="proy");
   if (a==="crm") vista(vCRM);
   else {
-    ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==a);
+    ["agenda","alumnos","votos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==a);
     if (a==="dir") cargarDir();
     if (a==="proy"){ const f = $("#ifProy"); if (!f.getAttribute("src")) f.src = "/proyeccion?embed=1"; requestAnimationFrame(altoProy); }
     scrollTo(0,0);
@@ -686,8 +966,8 @@ function vista(v){
   vCRM = v;
   $$("nav.tab button").forEach(b=>b.toggleAttribute("aria-current", b.dataset.v===v) || b.removeAttribute("aria-current"));
   $$("nav.tab button").forEach(b=>{ if (b.dataset.v===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  ["agenda","alumnos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==v);
-  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE();
+  ["agenda","alumnos","votos","nueva","equipo","dir","proy"].forEach(x => $("#v-"+x).hidden = x!==v);
+  if (v==="agenda") cargarR(); if (v==="alumnos") cargarA(); if (v==="equipo") cargarE(); if (v==="votos") cargarV();
   scrollTo(0,0);
 }
 document.addEventListener("click", async e => {

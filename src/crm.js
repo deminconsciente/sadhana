@@ -3,7 +3,8 @@
 // Público:
 //   GET  /api/confirmar?f=FOLIO&t=TOKEN     datos mínimos de la reserva para la página /confirmar/
 //   POST /api/confirmar {f, t, r:"si"|"no"}  el cliente confirma o avisa que no podrá ir
-// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE):
+// Equipo (usuario y clave propios de la tabla `equipo`, o la clave maestra ADMIN_CLAVE; se entra en /entrar
+// y queda una cookie de 90 días, ver src/sesion.js; Basic Auth sigue valiendo):
 //   GET  /equipo                          panel (src/equipo.html)
 //   GET  /api/crm/yo                      quién entró y con qué rol
 //   GET  /api/crm/reservas?filtro=hoy|proximas|pendientes|todas
@@ -15,14 +16,19 @@
 //   POST /api/crm/alumnos                 {id?, nombre, tel, email, origen, etiquetas, nota}
 //   POST /api/crm/membresias              {alumno_id, plan, inicio, meses|fin, clases, monto, metodo}
 //   POST /api/crm/membresias/:id          {estado?, nota?}
+//   GET  /api/crm/votos                   votos por horario: por clase, personas, conteo por día, hora y día+hora
 // Solo administradores:
 //   GET  /api/crm/equipo · POST /api/crm/equipo · POST /api/crm/equipo/:id
 //   GET  /api/crm/resumen?mes=YYYY-MM     números del mes para Proyección Sadhana (presupuesto vs real)
+//   GET  /api/crm/kpis?semana=YYYY-MM-DD  tablero de KPIs (Proyección → Tablero): 16 indicadores, semáforos, publicidad y equilibrio
 //   GET  /proyeccion                      → /equipo#proyeccion (la calculadora va embebida con ?embed=1)
 //   GET  /api/crm/docs/:col · POST/DELETE /api/crm/docs/:col/:id   sus datos (escenarios, pendientes, presupuesto)
 // Importación única (encabezado x-import-token = secreto IMPORT_TOKEN): POST /api/crm/docs-import
 import equipoHTML from './equipo.html';
 import proyeccionHTML from './proyeccion.html';
+import { tablaVotos } from './api.js';
+import { calcular as calcularKpis, guardarResumenSemanal } from './kpis.js';
+import { deSesion, validar, sinSesion, renovar } from './sesion.js';
 
 const ESTADOS = ['pendiente', 'confirmado', 'cancelado', 'asistio'];
 const FOLIO = /^SAD-[A-Z0-9]{2,8}-\d{4}$/;
@@ -76,19 +82,19 @@ export async function crm(request, env) {
     }
 
     if (p === '/equipo' && M === 'GET')
-      return new Response(equipoHTML, {
+      return await renovar(new Response(equipoHTML, {
         headers: {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'no-store',
           'x-robots-tag': 'noindex',
           'x-frame-options': 'DENY',
         },
-      });
+      }), env, yo);
     if (M === 'POST' && !mismoOrigen(request)) return json({ ok: false, error: 'Origen no permitido' }, 403);
 
     const r = p.slice('/api/crm/'.length).split('/').map(decodeURIComponent);
     const [a, b, c] = r;
-    if (a === 'yo') return json(yo);
+    if (a === 'yo') return json({ usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol });
     if (a === 'reservas') {
       if (!b && M === 'GET') return await listarReservas(url, env);
       if (!b && M === 'POST') return await altaManual(request, env, yo);
@@ -100,6 +106,7 @@ export async function crm(request, env) {
       if (!b && M === 'POST') return await guardarAlumno(request, env);
       if (b && M === 'GET') return await fichaAlumno(b, env);
     }
+    if (a === 'votos' && !b && M === 'GET') return await listarVotos(env);
     if (a === 'membresias') {
       if (!b && M === 'POST') return await nuevaMembresia(request, env, yo);
       if (b && M === 'POST') return await cambiarMembresia(b, request, env);
@@ -111,6 +118,10 @@ export async function crm(request, env) {
       if (!c && M === 'GET') return await listarDocs(b, env);
       if (c && M === 'POST') return await guardarDoc(b, c, request, env, yo);
       if (c && M === 'DELETE') return await borrarDoc(b, c, env);
+    }
+    if (a === 'kpis' && M === 'GET') {
+      if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administradores' }, 403);
+      return json(await calcularKpis(env, { semana: url.searchParams.get('semana') }, sincronizarAlumnos));
     }
     if (a === 'equipo' || a === 'resumen') {
       if (yo.rol !== 'admin') return json({ ok: false, error: 'Solo administradores' }, 403);
@@ -144,28 +155,23 @@ function mismoOrigen(request) {
 // ---------- Acceso ----------
 
 async function quien(request, env) {
+  // 1) Cookie de sesión (formulario /entrar, se guarda 90 días).
+  const ses = await deSesion(request, env);
+  if (ses) return ses;
+  // 2) Acceso anterior por Basic Auth (sigue funcionando para no romper nada).
   const h = request.headers.get('authorization') || '';
-  let usuario = '', pass = '';
   if (h.startsWith('Basic ')) {
+    let usuario = '', pass = '';
     try {
       const raw = new TextDecoder().decode(Uint8Array.from(atob(h.slice(6)), ch => ch.charCodeAt(0)));
       const i = raw.indexOf(':');
       usuario = raw.slice(0, i).trim().toLowerCase();
       pass = raw.slice(i + 1);
     } catch (e) {}
+    const yo = await validar(env, usuario, pass);
+    if (yo) return { usuario: yo.usuario, nombre: yo.nombre, rol: yo.rol };
   }
-  if (pass) {
-    if (env.ADMIN_CLAVE && iguales(pass, env.ADMIN_CLAVE))
-      return { usuario: usuario || 'admin', nombre: usuario ? usuario[0].toUpperCase() + usuario.slice(1) : 'Administración', rol: 'admin' };
-    if (usuario) {
-      const m = await env.DB.prepare('SELECT * FROM equipo WHERE usuario = ? AND activo = 1').bind(usuario).first();
-      if (m && (await verificaClave(pass, m.clave_hash))) return { usuario: m.usuario, nombre: m.nombre, rol: m.rol };
-    }
-  }
-  return new Response('Acceso solo para el equipo de Sadhana', {
-    status: 401,
-    headers: { 'www-authenticate': 'Basic realm="Sadhana equipo", charset="UTF-8"', 'cache-control': 'no-store' },
-  });
+  return sinSesion(request);
 }
 
 function iguales(a, b) {
@@ -199,6 +205,18 @@ function nuevoToken() {
 // ---------- Alumnos: cada teléfono que reservó tiene su ficha ----------
 
 async function sincronizarAlumnos(env) {
+  try {
+    // Origen = fuente[:campaña] de su primera reserva con UTM (p. ej. meta:enero); si no hay, 'web'.
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO alumnos (tel, nombre, email, origen, acepta_comunidad, creado)
+       SELECT tel, nombre, email,
+              COALESCE((SELECT json_extract(r2.utm, '$.utm_source') ||
+                               COALESCE(':' || json_extract(r2.utm, '$.utm_campaign'), '') FROM reservas r2
+                        WHERE r2.tel = reservas.tel AND r2.utm IS NOT NULL ORDER BY r2.creado LIMIT 1), 'web'),
+              MAX(acepta_comunidad), MIN(creado) FROM reservas GROUP BY tel`
+    ).run();
+    return;
+  } catch (e) { /* sin la columna utm (migración 0004 pendiente): sigue con el origen 'web' */ }
   await env.DB.prepare(
     `INSERT OR IGNORE INTO alumnos (tel, nombre, email, origen, acepta_comunidad, creado)
      SELECT tel, nombre, email, 'web', MAX(acepta_comunidad), MIN(creado) FROM reservas GROUP BY tel`
@@ -372,6 +390,7 @@ async function cambiarReserva(folio, request, env) {
     sets.push('actualizado = ?'); vals.push(ahora());
     const r = await env.DB.prepare(`UPDATE reservas SET ${sets.join(', ')} WHERE folio = ?`).bind(...vals, folio).run();
     if (!r.meta.changes) return json({ ok: false, error: 'No existe ese folio' }, 404);
+    if (b.estado === 'confirmado') await activarPaqueteHoras(env, folio);
   }
   if (b.maestro !== undefined) {
     const existe = await env.DB.prepare('SELECT 1 FROM reservas WHERE folio = ?').bind(folio).first();
@@ -381,6 +400,27 @@ async function cambiarReserva(folio, request, env) {
   }
   if (!sets.length && b.maestro === undefined) return json({ ok: false, error: 'Nada que cambiar' }, 400);
   return json({ ok: true });
+}
+
+// Al confirmar el pago de un «Paquete de horas» (sala) se abre su membresía: clases = horas, con su vigencia.
+// Las rentas pagadas con el paquete restan de ahí (ver horasDisponibles en src/sala.js).
+async function activarPaqueteHoras(env, folio) {
+  const r = await env.DB.prepare("SELECT * FROM reservas WHERE folio = ? AND tipo = 'Paquete de horas'").bind(folio).first();
+  if (!r) return;
+  const nota = 'Folio ' + folio;
+  if (await env.DB.prepare('SELECT 1 FROM membresias WHERE nota = ?').bind(nota).first()) return;
+  let det = [];
+  try { det = JSON.parse(r.detalle || '[]'); } catch (e) {}
+  const val = k => (det.find(x => new RegExp(k, 'i').test(x[0])) || [])[1] || '';
+  const horas = parseInt(val('horas'), 10) || 0, dias = parseInt(val('vigencia'), 10) || 90;
+  if (!horas) return;
+  await sincronizarAlumnos(env);
+  const al = await env.DB.prepare('SELECT id FROM alumnos WHERE tel = ?').bind(r.tel).first();
+  if (!al) return;
+  const inicio = hoyMTY();
+  await env.DB.prepare(
+    'INSERT INTO membresias (alumno_id, plan, inicio, fin, clases, monto, metodo, nota, registrado_por, creado) VALUES (?,?,?,?,?,?,?,?,?,?)'
+  ).bind(al.id, `Paquete ${horas} h de sala`, inicio, sumaDias(inicio, dias), horas, r.monto || 0, r.metodo, nota, 'automático', ahora()).run();
 }
 
 // ---------- Confirmación de asistencia en línea ----------
@@ -565,7 +605,7 @@ async function resumen(url, env) {
 
 // ---------- Datos de Proyección Sadhana (la calculadora) ----------
 // Cada documento es el mismo objeto que guardaba el artefacto, como JSON.
-const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks', 'catalogo'];
+const COLS = ['escenarios', 'meta', 'actuals', 'invest', 'tasks', 'catalogo', 'kpis'];
 const DOC_ID = /^[A-Za-z0-9_.-]{1,60}$/;
 let tablaLista = false;
 async function tablaDocs(env) {
@@ -617,3 +657,32 @@ async function importarDocs(request, env) {
   const r = stmts.length ? await env.DB.batch(stmts) : [];
   return json({ ok: true, recibidos: stmts.length, nuevos: r.reduce((s, x) => s + (x.meta.changes || 0), 0) });
 }
+
+// ---------- Votos por horario ----------
+// Agrupa por clase: cuántas personas, cuántas marcaron cada día, cada hora y cada combinación día+hora.
+async function listarVotos(env) {
+  await tablaVotos(env);
+  const { results } = await env.DB.prepare('SELECT * FROM votos ORDER BY actualizado DESC').all();
+  const porClase = new Map();
+  for (const v of results) {
+    let dias = [], horas = [], slots = null;
+    try { dias = JSON.parse(v.dias); horas = JSON.parse(v.horas); if (v.slots) slots = JSON.parse(v.slots); } catch (e) {}
+    if (!porClase.has(v.clase)) porClase.set(v.clase, { clase: v.clase, titulo: v.titulo || v.clase, personas: [], dias: {}, horas: {}, combos: {}, modalidad: {} });
+    const c = porClase.get(v.clase);
+    c.personas.push({ nombre: v.nombre, tel: v.tel, dias, horas, modalidad: v.modalidad, comunidad: !!v.acepta_comunidad, actualizado: v.actualizado });
+    for (const d of dias) c.dias[d] = (c.dias[d] || 0) + 1;
+    for (const h of horas) c.horas[h] = (c.horas[h] || 0) + 1;
+    if (slots) for (const k of slots) c.combos[k] = (c.combos[k] || 0) + 1; // día-hora exactos (voto de un toque)
+    else for (const d of dias) for (const h of horas) c.combos[d + '-' + h] = (c.combos[d + '-' + h] || 0) + 1;
+    c.modalidad[v.modalidad || 'Presencial'] = (c.modalidad[v.modalidad || 'Presencial'] || 0) + 1;
+  }
+  const out = [...porClase.values()].map(c => ({
+    ...c,
+    top: Object.entries(c.combos).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([k, n]) => { const [d, h] = k.split('-').map(Number); return { dia: d, h, n }; }),
+  }));
+  out.sort((x, y) => y.personas.length - x.personas.length);
+  return json(out);
+}
+
+// Resumen de los lunes (lo llama el cron de src/index.js).
+export const resumenKpisDeLosLunes = env => guardarResumenSemanal(env, sincronizarAlumnos);
