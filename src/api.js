@@ -115,18 +115,36 @@ async function crear(request, env) {
   const estado = b.estado === 'confirmado' && (b.metodo === 'credito' || !Number(b.monto)) ? 'confirmado' : 'pendiente';
   const ahora = new Date().toISOString();
 
+  const utm = limpiarUtm(b.utm);
+
   // INSERT OR IGNORE: si la landing reintenta el mismo folio, no se duplica ni se pisa.
-  await env.DB.prepare(
-    `INSERT OR IGNORE INTO reservas
-     (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(
+  const valores = [
     folio, ahora, txt(b.tipo, 40), titulo, txt(b.ini, 40), detalle, nombre, tel, txt(b.email, 160),
     Math.max(0, Math.round(Number(b.monto) || 0)), txt(b.metodo, 30), estado, ahora,
     b.aceptaPrivacidad ? 1 : 0, b.aceptaComunidad ? 1 : 0
-  ).run();
+  ];
+  const SQL = `INSERT OR IGNORE INTO reservas
+     (folio, creado, tipo, titulo, ini, detalle, nombre, tel, email, monto, metodo, estado, actualizado, acepta_privacidad, acepta_comunidad`;
+  try {
+    await env.DB.prepare(SQL + `, utm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(...valores, utm).run();
+  } catch (e) {
+    // Base sin la migración 0004 todavía: guarda la reserva sin el origen en vez de perderla.
+    if (!/utm/i.test(String(e && e.message))) throw e;
+    await env.DB.prepare(SQL + `) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(...valores).run();
+  }
 
   return json({ ok: true, folio, estado }, 201);
+}
+
+// Origen del contacto: solo las llaves conocidas, texto corto, guardado como JSON (o null).
+function limpiarUtm(u) {
+  if (!u || typeof u !== 'object') return null;
+  const o = {};
+  for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ref']) {
+    const v = txt(u[k], 100);
+    if (v) o[k] = v;
+  }
+  return Object.keys(o).length ? JSON.stringify(o) : null;
 }
 
 async function leerPromo(env) {

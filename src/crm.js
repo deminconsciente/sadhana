@@ -205,6 +205,18 @@ function nuevoToken() {
 // ---------- Alumnos: cada teléfono que reservó tiene su ficha ----------
 
 async function sincronizarAlumnos(env) {
+  try {
+    // Origen = fuente[:campaña] de su primera reserva con UTM (p. ej. meta:enero); si no hay, 'web'.
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO alumnos (tel, nombre, email, origen, acepta_comunidad, creado)
+       SELECT tel, nombre, email,
+              COALESCE((SELECT json_extract(r2.utm, '$.utm_source') ||
+                               COALESCE(':' || json_extract(r2.utm, '$.utm_campaign'), '') FROM reservas r2
+                        WHERE r2.tel = reservas.tel AND r2.utm IS NOT NULL ORDER BY r2.creado LIMIT 1), 'web'),
+              MAX(acepta_comunidad), MIN(creado) FROM reservas GROUP BY tel`
+    ).run();
+    return;
+  } catch (e) { /* sin la columna utm (migración 0004 pendiente): sigue con el origen 'web' */ }
   await env.DB.prepare(
     `INSERT OR IGNORE INTO alumnos (tel, nombre, email, origen, acepta_comunidad, creado)
      SELECT tel, nombre, email, 'web', MAX(acepta_comunidad), MIN(creado) FROM reservas GROUP BY tel`
