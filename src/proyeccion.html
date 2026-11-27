@@ -14,6 +14,7 @@
   async function refresh(col){
     try {
       const r = await fetch(API + col, {cache: "no-store"});
+      if (r.status === 401) { (top || window).location.href = "/entrar?v=" + encodeURIComponent("/equipo#proyeccion"); return; }
       if (!r.ok) throw {code: r.status === 403 ? "permission_denied" : "unavailable"};
       const list = await r.json(), sig = JSON.stringify(list.map(d => [d.id, d.actualizado]));
       if (last[col] === sig) return; last[col] = sig;

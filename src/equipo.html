@@ -105,7 +105,7 @@ body.proy nav.tab{display:none}
 </head>
 <body>
 <header>
-  <div class="top"><h1>Sadhana · Equipo</h1><span class="who" id="who"></span></div>
+  <div class="top"><h1>Sadhana · Equipo</h1><span class="who"><span id="who"></span> · <a href="/salir">Salir</a></span></div>
   <div class="areas" id="areas" role="group" aria-label="Área de trabajo" hidden>
     <button data-area="crm" aria-pressed="true">CRM</button>
     <button data-area="dir" aria-pressed="false">Directorio</button>
@@ -303,6 +303,7 @@ function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); 
 async function api(path, body){
   const r = await fetch("/api/crm/"+path, body===undefined?{cache:"no-store"}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
   const j = await r.json().catch(()=>({}));
+  if (r.status===401) { location.href = "/entrar?v=" + encodeURIComponent("/equipo" + location.hash); throw new Error(j.error || "Vuelve a entrar"); }
   if (!r.ok) throw new Error(j.error || "No se pudo guardar");
   return j;
 }
